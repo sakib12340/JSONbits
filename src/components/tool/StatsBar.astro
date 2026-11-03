@@ -1,0 +1,44 @@
+---
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const stats = [
+  { key: 'size', label: t(locale, 'tool.stats.size') },
+  { key: 'lines', label: t(locale, 'tool.stats.lines') },
+  { key: 'depth', label: t(locale, 'tool.stats.depth') },
+  { key: 'time', label: t(locale, 'tool.stats.time') },
+];
+---
+
+<div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line px-3 py-2.5 sm:px-4">
+  <dl class="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[12px] leading-5">
+    {
+      stats.map((stat) => (
+        <div class="flex items-baseline gap-1.5">
+          <dt class="font-sans text-[12px] text-body-mid">{stat.label}</dt>
+          <dd class="text-ink" data-stat={stat.key}>—</dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  <p class="text-[12px] leading-5 text-body-mid" data-status>
+    {t(locale, 'tool.waiting')}
+  </p>
+
+  <p class="hidden text-[12px] leading-5 text-warning" data-engine-note />
+
+  <button
+    type="button"
+    data-action="cancel"
+    hidden
+    class="ms-auto inline-flex h-8 items-center rounded-[8px] px-2 text-[12px] font-semibold text-danger underline underline-offset-2 hover:bg-cream"
+  >
+    {t(locale, 'tool.cancel')}
+  </button>
+</div>

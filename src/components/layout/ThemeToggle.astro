@@ -1,0 +1,36 @@
+---
+import Icon from '../ui/Icon.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const labels = {
+  light: t(locale, 'theme.light'),
+  dark: t(locale, 'theme.dark'),
+  system: t(locale, 'theme.system'),
+};
+---
+
+<div class="grid size-11 place-items-center">
+  <button
+    type="button"
+    data-theme-toggle
+    hidden
+    aria-label={t(locale, 'theme.toggle', { mode: labels.system })}
+    data-label-light={labels.light}
+    data-label-dark={labels.dark}
+    data-label-system={labels.system}
+    data-label-template={t(locale, 'theme.toggle')}
+    data-announce-template={t(locale, 'theme.announce')}
+    class="inline-flex size-11 items-center justify-center rounded-[12px] text-ink hover:bg-cream"
+  >
+    <span data-theme-icon="light" hidden><Icon name="sun" class="size-[18px]" /></span>
+    <span data-theme-icon="dark" hidden><Icon name="moon" class="size-[18px]" /></span>
+    <span data-theme-icon="system" hidden><Icon name="monitor" class="size-[18px]" /></span>
+  </button>
+</div>
+<span class="sr-only" role="status" data-theme-status></span>

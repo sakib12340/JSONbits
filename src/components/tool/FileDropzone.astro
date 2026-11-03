@@ -1,0 +1,25 @@
+---
+import Icon from '../ui/Icon.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+---
+
+<div
+  data-drop-overlay
+  class="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-canvas/95 p-4"
+  hidden
+>
+  <div
+    class="flex h-full w-full flex-col items-center justify-center gap-2 rounded-[12px] border-2 border-dashed border-line-strong"
+  >
+    <Icon name="file" class="size-7 text-primary" />
+    <p class="text-[16px] font-semibold text-ink">{t(locale, 'tool.drop')}</p>
+    <p class="text-[13px] text-body-mid">{t(locale, 'tool.dropHint')}</p>
+  </div>
+</div>

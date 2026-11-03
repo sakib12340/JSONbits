@@ -1,0 +1,71 @@
+---
+import '../styles/global.css';
+import Footer from '../components/layout/Footer.astro';
+import Header from '../components/layout/Header.astro';
+import { localeMeta, type Locale } from '../i18n/config';
+import { t } from '../i18n/t';
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+}
+
+const { title, description, locale } = Astro.props;
+const meta = localeMeta[locale];
+---
+
+<!doctype html>
+<html lang={meta.lang} dir={meta.dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="preload"
+      href="/fonts/inter-latin-var.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        let mode = 'system';
+
+        try {
+          const stored = localStorage.getItem('theme');
+          if (stored === 'light' || stored === 'dark' || stored === 'system') mode = stored;
+        } catch {}
+
+        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = mode === 'system' ? (dark ? 'dark' : 'light') : mode;
+        root.dataset.theme = theme;
+        root.dataset.themeMode = mode;
+      })();
+    </script>
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fffefb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0f0e" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+  </head>
+  <body class="flex min-h-dvh flex-col bg-canvas text-body antialiased">
+    <a
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-[12px] focus:border focus:border-line focus:bg-canvas focus:px-5 focus:py-3 focus:text-base focus:text-ink focus:shadow-[var(--shadow-pop)]"
+      href="#main-content"
+    >
+      {t(locale, 'a11y.skipToContent')}
+    </a>
+    <Header locale={locale} />
+    <main id="main-content" tabindex="-1" class="flex-1 focus:outline-none">
+      <slot />
+    </main>
+    <Footer locale={locale} />
+    <script>
+      import '../lib/theme';
+      import '../lib/lang-menu';
+    </script>
+  </body>
+</html>

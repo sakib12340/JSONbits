@@ -1,0 +1,52 @@
+---
+import Icon from '../ui/Icon.astro';
+import { localeMeta, locales, type Locale } from '../../i18n/config';
+import { switchLocalePath } from '../../lib/paths';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const current = localeMeta[locale];
+const options = locales.map((code) => ({
+  code,
+  label: localeMeta[code].label,
+  lang: localeMeta[code].lang,
+  href: switchLocalePath(Astro.url.pathname, code),
+}));
+---
+
+<details class="relative" data-lang-switcher>
+  <summary
+    class="flex h-11 cursor-pointer list-none items-center gap-1.5 rounded-[12px] px-3 text-base text-ink hover:bg-cream [&::-webkit-details-marker]:hidden"
+    aria-label={`${t(locale, 'lang.switch')}: ${current.label}`}
+  >
+    <span>{current.label}</span>
+    <Icon name="chevron-down" class="size-4 text-body-mid" />
+  </summary>
+  <div class="absolute right-0 z-50 mt-2 w-52 max-w-[calc(100vw-2rem)] rounded-[12px] border border-line bg-canvas p-1.5 shadow-[var(--shadow-pop)]">
+    <ul class="flex flex-col">
+      {
+        options.map((option) => (
+          <li>
+            <a
+              href={option.href}
+              hreflang={option.lang}
+              lang={option.lang}
+              aria-current={option.code === locale ? 'page' : undefined}
+              class:list={[
+                'flex min-h-11 items-center justify-between gap-3 rounded-[6px] px-3 text-base hover:bg-cream',
+                option.code === locale ? 'text-ink' : 'text-body',
+              ]}
+            >
+              <span>{option.label}</span>
+              {option.code === locale && <Icon name="check" class="size-4 text-primary" />}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</details>

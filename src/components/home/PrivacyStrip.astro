@@ -1,0 +1,53 @@
+---
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const items = [
+  {
+    number: '01',
+    title: t(locale, 'home.privacy.local.title'),
+    body: t(locale, 'home.privacy.local.body'),
+  },
+  {
+    number: '02',
+    title: t(locale, 'home.privacy.upload.title'),
+    body: t(locale, 'home.privacy.upload.body'),
+  },
+  {
+    number: '03',
+    title: t(locale, 'home.privacy.tracking.title'),
+    body: t(locale, 'home.privacy.tracking.body'),
+  },
+];
+---
+
+<section aria-labelledby="privacy-heading" class="bg-night text-night-text">
+  <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:pt-16 sm:pb-20">
+    <h2
+      id="privacy-heading"
+      class="max-w-2xl text-[32px] font-medium leading-[1.15] tracking-[-0.02em] text-night-text sm:text-[48px] sm:leading-[48px]"
+    >
+      {t(locale, 'home.privacy.title')}
+    </h2>
+    <div class="mt-10 grid gap-8 sm:grid-cols-3">
+      {
+        items.map((item) => (
+          <div class="border-t border-night-line pt-5">
+            <span class="font-mono text-[14px] leading-none text-night-accent" aria-hidden="true">
+              {item.number}
+            </span>
+            <h3 class="mt-3 text-[18px] font-semibold leading-[27px] text-night-text">
+              {item.title}
+            </h3>
+            <p class="mt-1.5 text-base leading-6 text-night-body">{item.body}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

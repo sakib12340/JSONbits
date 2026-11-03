@@ -1,0 +1,20 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import ToolShell from '../components/tool/ToolShell.astro';
+import type { Locale } from '../i18n/config';
+import type { ToolDef } from '../tools/types';
+import { t } from '../i18n/t';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+const { locale, tool } = Astro.props;
+const title = t(locale, 'tool.metaTitle', { tool: tool.name });
+const description = t(locale, 'tool.metaDescription', { description: tool.description });
+---
+
+<BaseLayout locale={locale} title={title} description={description}>
+  <ToolShell locale={locale} tool={tool} />
+</BaseLayout>

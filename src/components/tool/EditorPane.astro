@@ -1,0 +1,103 @@
+---
+import { t } from '../../i18n/t';
+import type { Locale } from '../../i18n/config';
+
+interface Props {
+  kind: 'input' | 'output';
+  locale: Locale;
+}
+
+const { kind, locale } = Astro.props;
+const widths = [62, 44, 76, 52, 68, 36, 58, 30];
+---
+
+<div
+  class="relative h-[clamp(300px,44vh,520px)] overflow-hidden sm:h-[clamp(360px,50vh,520px)]"
+  data-editor-wrap={kind}
+>
+  <div class="absolute inset-0" data-editor-mount={kind}></div>
+
+  <div
+    class="absolute inset-0 flex flex-col justify-between bg-canvas p-4 sm:p-5"
+    data-editor-skeleton={kind}
+    aria-hidden="true"
+  >
+    <div class="flex gap-3">
+      <div class="w-5 shrink-0 space-y-3 pt-0.5 text-right font-mono text-[11px] leading-[13px] text-body-mid/40">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <p>{n}</p>)}
+      </div>
+      <div class="min-w-0 flex-1 space-y-3">
+        {
+          widths.map((width) => (
+            <div class="flex h-[13px] items-center gap-2">
+              <span
+                class="h-[9px] animate-pulse rounded-full bg-mute"
+                style={`width: ${width}%`}
+              />
+              <span class="h-[9px] w-[8%] animate-pulse rounded-full bg-mute/70" />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+    <p class="font-mono text-[12px] leading-5 text-body-mid" data-skeleton-label>
+      {t(locale, 'tool.loadingEditor')}
+    </p>
+  </div>
+
+  {
+    kind === 'input' && (
+      <div
+        class="absolute inset-0 z-10 flex flex-col justify-center gap-3 bg-canvas p-6"
+        data-large-input
+        hidden
+      >
+        <p class="eyebrow text-body-mid">{t(locale, 'tool.largeMode')}</p>
+        <p class="break-all font-mono text-[14px] leading-6 text-ink" data-large-name />
+        <p class="text-sm leading-6 text-body" data-large-meta />
+        <p class="text-sm leading-6 text-warning" data-large-warning hidden>
+          {t(locale, 'tool.largeWarning')}
+        </p>
+        <p class="max-w-sm text-sm leading-6 text-body-mid">
+          {t(locale, 'tool.largePreviewOff')}
+        </p>
+        <div class="pt-1">
+          <button
+            type="button"
+            data-action="format-large"
+            class="inline-flex h-11 items-center rounded-[10px] bg-primary px-4 text-[15px] font-semibold text-on-primary hover:bg-primary-hover"
+          >
+            {t(locale, 'tool.formatFile')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    kind === 'output' && (
+      <div
+        class="absolute inset-0 z-10 flex flex-col justify-center gap-3 bg-canvas p-6"
+        data-large-output
+        hidden
+      >
+        <p class="eyebrow text-body-mid">{t(locale, 'tool.outputReady')}</p>
+        <p class="font-mono text-[20px] leading-7 text-ink" data-large-size />
+        <p class="max-w-sm text-sm leading-6 text-body">
+          {t(locale, 'tool.largeOutput')}
+        </p>
+        <div class="pt-1">
+          <button
+            type="button"
+            data-action="download-large"
+            class="inline-flex h-11 items-center rounded-[10px] bg-primary px-4 text-[15px] font-semibold text-on-primary hover:bg-primary-hover"
+          >
+            {t(locale, 'tool.download')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  <slot />
+</div>

@@ -1,0 +1,36 @@
+---
+import LangSwitcher from './LangSwitcher.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import BrandMark from '../ui/BrandMark.astro';
+import type { Locale } from '../../i18n/config';
+import { localePath } from '../../lib/paths';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const home = localePath(locale, '/');
+const toolsHref = `${home}#tools`;
+---
+
+<header class="sticky top-0 z-40 border-b border-line bg-canvas">
+  <div class="mx-auto flex min-h-[72px] max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
+    <a href={home} class="flex min-h-11 items-center gap-2.5 rounded-[12px] text-ink">
+      <BrandMark class="size-7 text-primary" />
+      <span class="text-[18px] font-semibold tracking-[-0.01em]">{t(locale, 'site.name')}</span>
+    </a>
+
+    <nav class="flex items-center gap-1">
+      <a
+        href={toolsHref}
+        class="hidden h-11 items-center rounded-[12px] px-4 text-base text-ink hover:bg-cream sm:inline-flex"
+      >
+        {t(locale, 'header.tools')}
+      </a>
+      <ThemeToggle locale={locale} />
+      <LangSwitcher locale={locale} />
+    </nav>
+  </div>
+</header>

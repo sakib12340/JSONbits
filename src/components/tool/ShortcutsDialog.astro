@@ -1,0 +1,59 @@
+---
+import Icon from '../ui/Icon.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const rows = [
+  { label: t(locale, 'tool.shortcuts.run'), keys: ['Ctrl / ⌘', 'Enter'] },
+  { label: t(locale, 'tool.shortcuts.copy'), keys: ['Ctrl / ⌘', 'Shift', 'C'] },
+  { label: t(locale, 'tool.shortcuts.help'), keys: ['?'] },
+];
+---
+
+<dialog
+  data-shortcuts-dialog
+  class="shortcut-dialog w-[calc(100vw-2rem)] max-w-md rounded-[16px] border border-line bg-canvas p-0 text-body shadow-[var(--shadow-pop)]"
+  aria-labelledby="shortcuts-title"
+>
+  <div class="flex items-center justify-between gap-4 border-b border-line px-5 py-4">
+    <h2 id="shortcuts-title" class="text-[18px] font-semibold leading-6 text-ink">
+      {t(locale, 'tool.shortcuts.title')}
+    </h2>
+    <button
+      type="button"
+      data-shortcuts-close
+      class="grid size-11 place-items-center rounded-[10px] text-ink hover:bg-cream"
+      aria-label={t(locale, 'tool.close')}
+    >
+      <Icon name="x" class="size-[18px]" />
+    </button>
+  </div>
+
+  <dl class="grid gap-3 px-5 py-5">
+    {
+      rows.map((row) => (
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <dt class="text-[14px] leading-5 text-body">{row.label}</dt>
+          <dd class="flex items-center gap-1">
+            {row.keys.map((key) => (
+              <kbd class="rounded-[6px] border border-line bg-cream px-2 py-1 font-mono text-[11px] leading-none text-ink">
+                {key}
+              </kbd>
+            ))}
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</dialog>
+
+<style>
+  .shortcut-dialog::backdrop {
+    background: rgb(10 15 14 / 0.45);
+  }
+</style>

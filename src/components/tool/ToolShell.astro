@@ -1,0 +1,232 @@
+---
+import Icon from '../ui/Icon.astro';
+import Toolbar from './Toolbar.astro';
+import EditorPane from './EditorPane.astro';
+import ErrorPanel from './ErrorPanel.astro';
+import FileDropzone from './FileDropzone.astro';
+import StatsBar from './StatsBar.astro';
+import ShortcutsDialog from './ShortcutsDialog.astro';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import { t, type TranslationKey } from '../../i18n/t';
+import { localePath } from '../../lib/paths';
+import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../../tools/limits';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+const { locale, tool } = Astro.props;
+const home = localePath(locale, '/');
+const category = t(locale, `category.${tool.category}` as TranslationKey);
+const strings = {
+  loadingEditor: t(locale, 'tool.loadingEditor'),
+  loadingEngine: t(locale, 'tool.loadingEngine'),
+  formatting: t(locale, 'tool.formatting'),
+  reading: t(locale, 'tool.reading'),
+  ready: t(locale, 'tool.ready'),
+  waiting: t(locale, 'tool.waiting'),
+  done: t(locale, 'tool.done'),
+  cancelled: t(locale, 'tool.cancelled'),
+  error: t(locale, 'tool.error'),
+  errorAt: t(locale, 'tool.errorAt'),
+  largeRun: t(locale, 'tool.largeRun'),
+  largeLoaded: t(locale, 'tool.largeLoaded'),
+  largeWarning: t(locale, 'tool.largeWarning'),
+  fileTooBig: t(locale, 'tool.fileTooBig'),
+  invalidFile: t(locale, 'tool.invalidFile'),
+  readFailed: t(locale, 'tool.readFailed'),
+  copied: t(locale, 'tool.copied'),
+  copyFailed: t(locale, 'tool.copyFailed'),
+  pasteUnavailable: t(locale, 'tool.pasteUnavailable'),
+  workerFallback: t(locale, 'tool.workerFallback'),
+  workerFailed: t(locale, 'tool.workerFailed'),
+  workerFailedHint: t(locale, 'tool.workerFailedHint'),
+  oom: t(locale, 'tool.oom'),
+  oomHint: t(locale, 'tool.oomHint'),
+  emptyInput: t(locale, 'tool.emptyInput'),
+  emptyInputHint: t(locale, 'tool.emptyInputHint'),
+  chooseSmaller: t(locale, 'tool.chooseSmaller'),
+  tryAgain: t(locale, 'tool.tryAgain'),
+  encodingHint: t(locale, 'tool.encodingHint'),
+  announceDone: t(locale, 'tool.announceDone'),
+  announceError: t(locale, 'tool.announceError'),
+  inputLabel: t(locale, 'tool.inputLabel'),
+  outputLabel: t(locale, 'tool.outputLabel'),
+  placeholder: t(locale, 'tool.placeholder'),
+  outputPlaceholder: t(locale, 'tool.outputPlaceholder'),
+  loadFailed: t(locale, 'tool.loadFailed'),
+};
+const stringsJson = JSON.stringify(strings);
+---
+
+<section
+  class="pb-16 sm:pb-20"
+  data-tool-shell
+  data-tool-id={tool.id}
+  data-locale={locale}
+  data-live-limit={LIVE_LIMIT}
+  data-preview-limit={PREVIEW_LIMIT}
+  data-max-file={MAX_FILE}
+  data-strings={stringsJson}
+  aria-labelledby="tool-title"
+>
+  <div class="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-7">
+    <nav
+      class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-5 text-body-mid"
+      aria-label={t(locale, 'a11y.breadcrumb')}
+    >
+      <a href={home} class="rounded-[6px] hover:text-ink">{t(locale, 'site.name')}</a>
+      <span aria-hidden="true">/</span>
+      <a href={`${home}#tools`} class="rounded-[6px] hover:text-ink">{category}</a>
+      <span aria-hidden="true">/</span>
+      <span class="text-ink" aria-current="page">{tool.name}</span>
+    </nav>
+
+    <div class="mt-4 flex flex-col gap-4 sm:mt-5 sm:flex-row sm:items-end sm:justify-between">
+      <div class="max-w-2xl">
+        <h1
+          id="tool-title"
+          class="text-[30px] font-medium leading-[1.05] tracking-[-0.02em] text-ink sm:text-[44px] sm:leading-[46px]"
+        >
+          {tool.name}
+        </h1>
+        <p class="mt-2 max-w-xl text-[15px] leading-6 text-body sm:text-[17px] sm:leading-7">
+          {tool.description}
+        </p>
+      </div>
+      <p class="inline-flex items-center gap-2 text-[13px] leading-5 text-body-mid">
+        <Icon name="lock" class="size-4 text-primary" />
+        {t(locale, 'tool.privacy')}
+      </p>
+    </div>
+
+    <noscript>
+      <p class="mt-4 rounded-[10px] border border-line bg-cream px-4 py-3 text-[14px] leading-6 text-body">
+        {t(locale, 'tool.noscript')}
+      </p>
+    </noscript>
+
+    <div
+      class="mt-5 overflow-hidden rounded-[16px] border border-line bg-canvas sm:mt-7"
+      data-tool-frame
+    >
+      <Toolbar locale={locale} />
+
+      <div
+        class="flex items-center gap-1 border-b border-line px-2 md:hidden"
+        role="tablist"
+        aria-label={`${t(locale, 'tool.input')} / ${t(locale, 'tool.output')}`}
+        data-mobile-tabs
+      >
+        <button
+          type="button"
+          id="tab-input"
+          data-tab="input"
+          role="tab"
+          aria-selected="true"
+          aria-controls="pane-input"
+          tabindex="0"
+          class="tool-tab"
+        >
+          {t(locale, 'tool.input')}
+        </button>
+        <button
+          type="button"
+          id="tab-output"
+          data-tab="output"
+          role="tab"
+          aria-selected="false"
+          aria-controls="pane-output"
+          tabindex="-1"
+          class="tool-tab"
+        >
+          {t(locale, 'tool.output')}
+          <span class="ml-1 inline-block size-1.5 rounded-full bg-primary align-middle" data-output-dot hidden></span>
+        </button>
+      </div>
+
+      <div class="tool-panes md:grid md:grid-cols-2" data-mobile-view="input">
+        <section
+          class="tool-pane is-active min-w-0 flex-col"
+          data-pane="input"
+          id="pane-input"
+          role="tabpanel"
+          aria-label={t(locale, 'tool.input')}
+        >
+          <div class="flex min-h-[46px] flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2">
+            <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+              {t(locale, 'tool.input')}
+            </h2>
+            <span
+              data-file-chip
+              hidden
+              class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
+            >
+              <Icon name="file" class="size-3 shrink-0 text-body-mid" />
+              <span data-file-name class="truncate" />
+            </span>
+          </div>
+
+          <EditorPane kind="input" locale={locale}>
+            <FileDropzone locale={locale} />
+          </EditorPane>
+        </section>
+
+        <section
+          class="tool-pane min-w-0 flex-col md:border-l md:border-line"
+          data-pane="output"
+          id="pane-output"
+          role="tabpanel"
+          aria-label={t(locale, 'tool.output')}
+        >
+          <div class="flex min-h-[46px] items-center justify-between gap-2 border-b border-line px-4 py-2">
+            <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+              {t(locale, 'tool.output')}
+            </h2>
+            <span class="font-mono text-[11px] leading-4 text-body-mid" data-output-meta></span>
+          </div>
+
+          <EditorPane kind="output" locale={locale}>
+            <ErrorPanel locale={locale} />
+          </EditorPane>
+        </section>
+      </div>
+
+      <StatsBar locale={locale} />
+    </div>
+
+    <p class="sr-only" data-live aria-live="polite" aria-atomic="true"></p>
+  </div>
+
+  <ShortcutsDialog locale={locale} />
+</section>
+
+<style>
+  .tool-tab {
+    position: relative;
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--body-mid);
+  }
+
+  .tool-tab[aria-selected="true"] {
+    color: var(--ink);
+    box-shadow: inset 0 -2px 0 var(--primary);
+  }
+
+  @media (max-width: 767px) {
+    .tool-pane {
+      display: none;
+    }
+
+    .tool-pane.is-active {
+      display: flex;
+    }
+  }
+</style>

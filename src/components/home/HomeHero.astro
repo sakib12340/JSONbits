@@ -1,0 +1,67 @@
+---
+import Icon from '../ui/Icon.astro';
+import { tools } from '../../tools/registry';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const badge = t(locale, 'home.privacy.local.title');
+const note = t(locale, 'home.privacy.local.body');
+const siteName = t(locale, 'site.name');
+---
+
+<section class="bg-canvas">
+  <div
+    class="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16 lg:py-24"
+  >
+    <div class="min-w-0">
+      <p class="eyebrow text-ink">{t(locale, 'home.eyebrow')}</p>
+      <h1
+        class="mt-5 max-w-[15ch] text-balance text-[40px] font-medium leading-[1.05] tracking-[-0.02em] text-ink sm:text-[56px] sm:leading-[56px]"
+      >
+        {t(locale, 'home.title')}
+      </h1>
+      <p class="mt-6 max-w-xl text-[20px] leading-[30px] text-body">
+        {t(locale, 'home.intro')}
+      </p>
+      <div class="mt-8 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-6">
+        <a
+          href="#tools"
+          class="inline-flex min-h-[51px] shrink-0 items-center whitespace-nowrap rounded-[12px] bg-primary px-6 text-[18px] font-semibold leading-[27px] text-on-primary hover:bg-primary-hover"
+        >
+          {t(locale, 'home.browse')}
+        </a>
+        <p class="flex max-w-sm items-start gap-2.5 text-base leading-6 text-body-mid">
+          <Icon name="lock" class="mt-0.5 size-[18px] shrink-0 text-primary" />
+          <span>{t(locale, 'home.privacy')}</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="min-w-0 rounded-[12px] border border-line bg-cream p-6 sm:p-7">
+      <div class="flex items-center justify-between gap-4 border-b border-line pb-4">
+        <span class="font-mono text-[14px] uppercase tracking-[0.08em] text-body-mid">json</span>
+        <span
+          class="inline-flex items-center gap-2 rounded-full border border-line bg-canvas px-3 py-1 text-[14px] leading-[21px] text-ink"
+        >
+          <span class="size-1.5 rounded-full bg-primary" aria-hidden="true"></span>
+          {badge}
+        </span>
+      </div>
+      <pre
+        class="mt-5 overflow-x-auto font-mono text-[13px] leading-[26px] text-ink sm:text-[14px]"><code><span class="text-body-mid">&#123;</span>
+  <span class="text-primary">"name"</span><span class="text-body-mid">:</span> <span class="text-ink">"{siteName}"</span><span class="text-body-mid">,</span>
+  <span class="text-primary">"private"</span><span class="text-body-mid">:</span> <span class="text-primary">true</span><span class="text-body-mid">,</span>
+  <span class="text-primary">"uploads"</span><span class="text-body-mid">:</span> <span class="text-primary">0</span><span class="text-body-mid">,</span>
+  <span class="text-primary">"tools"</span><span class="text-body-mid">:</span> <span class="text-primary">{tools.length}</span>
+<span class="text-body-mid">&#125;</span></code></pre>
+      <p class="mt-5 border-t border-line pt-4 text-[14px] leading-[21px] text-body-mid">
+        {note}
+      </p>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,45 @@
+---
+import BrandMark from '../ui/BrandMark.astro';
+import type { Locale } from '../../i18n/config';
+import { localePath } from '../../lib/paths';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-night-line bg-night text-night-text">
+  <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+    <div class="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <a
+          href={localePath(locale, '/')}
+          class="inline-flex min-h-11 items-center gap-2.5 rounded-[12px] text-night-text"
+        >
+          <BrandMark class="size-7 text-night-accent" />
+          <span class="text-[18px] font-semibold tracking-[-0.01em]">{t(locale, 'site.name')}</span>
+        </a>
+        <p class="mt-3 max-w-sm text-base leading-6 text-night-body">
+          {t(locale, 'footer.tagline')}
+        </p>
+      </div>
+      <p class="text-base leading-6 text-night-body">
+        {t(locale, 'home.privacy')}
+      </p>
+    </div>
+    <div
+      class="mt-10 flex flex-col gap-2 border-t border-night-line pt-6 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p class="font-mono text-[14px] leading-[21px] text-night-mute">
+        {t(locale, 'footer.copyright', { year })}
+      </p>
+      <p class="text-[14px] leading-[21px] text-night-mute">
+        {t(locale, 'home.privacy.local.title')}
+      </p>
+    </div>
+  </div>
+</footer>

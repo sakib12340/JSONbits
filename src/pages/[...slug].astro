@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolLayout from '../layouts/ToolLayout.astro';
+import HomeHero from '../components/home/HomeHero.astro';
+import PrivacyStrip from '../components/home/PrivacyStrip.astro';
+import ToolGrid from '../components/home/ToolGrid.astro';
+import { defaultLocale, locales, type Locale } from '../i18n/config';
+import { tools } from '../tools/registry';
+import { t } from '../i18n/t';
+
+export function getStaticPaths() {
+  const homes = [
+    { params: { slug: undefined }, props: { locale: defaultLocale, toolId: null } },
+    ...locales
+      .filter((locale) => locale !== defaultLocale)
+      .map((locale) => ({
+        params: { slug: locale },
+        props: { locale, toolId: null },
+      })),
+  ];
+
+  const toolPages = locales.flatMap((locale) =>
+    tools
+      .filter((tool) => tool.available)
+      .map((tool) => ({
+        params: {
+          slug: locale === defaultLocale ? tool.slug : `${locale}/${tool.slug}`,
+        },
+        props: { locale, toolId: tool.id },
+      })),
+  );
+
+  return [...homes, ...toolPages];
+}
+
+interface Props {
+  locale: Locale;
+  toolId: string | null;
+}
+
+const { locale, toolId } = Astro.props;
+const tool = toolId ? tools.find((item) => item.id === toolId) : undefined;
+const title = t(locale, 'home.metaTitle');
+const description = t(locale, 'site.description');
+---
+
+{
+  tool ? (
+    <ToolLayout locale={locale} tool={tool} />
+  ) : (
+    <BaseLayout locale={locale} title={title} description={description}>
+      <HomeHero locale={locale} />
+      <ToolGrid locale={locale} />
+      <PrivacyStrip locale={locale} />
+    </BaseLayout>
+  )
+}
+
+<script>
+  import '../lib/home-search';
+  import '../lib/tool-boot';
+</script>

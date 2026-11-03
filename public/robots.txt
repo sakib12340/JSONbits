@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jsonbits.com/sitemap-index.xml

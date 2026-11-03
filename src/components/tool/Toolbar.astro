@@ -1,0 +1,144 @@
+---
+import Icon from '../ui/Icon.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const labels = {
+  format: t(locale, 'tool.format'),
+  sample: t(locale, 'tool.sample'),
+  open: t(locale, 'tool.open'),
+  paste: t(locale, 'tool.paste'),
+  copy: t(locale, 'tool.copy'),
+  download: t(locale, 'tool.download'),
+  clear: t(locale, 'tool.clear'),
+  help: t(locale, 'tool.shortcuts'),
+};
+---
+
+<div
+  class="flex flex-wrap items-center gap-2 border-b border-line px-3 py-3 sm:px-4"
+  role="group"
+  aria-label={t(locale, 'tool.actions')}
+>
+  <div class="flex flex-wrap items-center gap-2">
+    <button
+      type="button"
+      data-action="format"
+      aria-keyshortcuts="Control+Enter Meta+Enter"
+      class="inline-flex h-11 items-center gap-2 rounded-[10px] bg-primary px-4 text-[15px] font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <Icon name="play" class="size-4" />
+      <span>{labels.format}</span>
+    </button>
+
+    <button type="button" data-action="sample" class="ghost-button">
+      {labels.sample}
+    </button>
+
+    <div class="flex h-11 items-center gap-2 rounded-[10px] border border-line px-3">
+      <label for="tool-indent" class="sr-only text-[13px] text-body-mid sm:not-sr-only">
+        {t(locale, 'tool.indent')}
+      </label>
+      <select
+        id="tool-indent"
+        data-indent
+        class="h-full bg-transparent pr-1 text-[14px] text-ink"
+      >
+        <option value="2">{t(locale, 'tool.indent.2')}</option>
+        <option value="4">{t(locale, 'tool.indent.4')}</option>
+        <option value="tab">{t(locale, 'tool.indent.tab')}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="ms-auto flex flex-wrap items-center gap-0.5">
+    <button type="button" data-action="open" class="icon-button" aria-label={labels.open} title={labels.open}>
+      <Icon name="folder" class="size-[18px]" />
+    </button>
+    <button type="button" data-action="paste" class="icon-button" aria-label={labels.paste} title={labels.paste}>
+      <Icon name="clipboard" class="size-[18px]" />
+    </button>
+    <button
+      type="button"
+      data-action="copy"
+      class="icon-button"
+      aria-label={labels.copy}
+      title={labels.copy}
+      aria-keyshortcuts="Control+Shift+C Meta+Shift+C"
+      disabled
+    >
+      <Icon name="copy" class="size-[18px]" />
+    </button>
+    <button
+      type="button"
+      data-action="download"
+      class="icon-button"
+      aria-label={labels.download}
+      title={labels.download}
+      disabled
+    >
+      <Icon name="download" class="size-[18px]" />
+    </button>
+    <button
+      type="button"
+      data-action="clear"
+      class="icon-button"
+      aria-label={labels.clear}
+      title={labels.clear}
+      disabled
+    >
+      <Icon name="trash" class="size-[18px]" />
+    </button>
+    <button type="button" data-action="help" class="icon-button" aria-label={labels.help} title={labels.help}>
+      <Icon name="help" class="size-[18px]" />
+    </button>
+  </div>
+
+  <input
+    type="file"
+    data-file-input
+    accept=".json,.txt,.geojson,application/json,text/plain"
+    class="hidden"
+    tabindex="-1"
+  />
+</div>
+
+<style>
+  .ghost-button {
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .ghost-button:hover {
+    background: var(--cream);
+  }
+
+  .icon-button {
+    display: inline-flex;
+    height: 44px;
+    width: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: var(--ink);
+  }
+
+  .icon-button:hover {
+    background: var(--cream);
+  }
+
+  .icon-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+</style>
