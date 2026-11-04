@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-02
-Status: Phase 2 complete. Warm-professional redesign from DESIGN.md applied; tool engine not implemented yet.
+Last updated: 2026-11-04
+Status: Phase 3 complete. Worker engine and `json-formatter` verified end-to-end; Tier 1 tools remain.
 
 ## Product identity
 
@@ -101,6 +101,23 @@ The registry is the single source of truth for tool metadata, navigation, pages,
 - User accounts, saved documents, server-side processing, API endpoints, analytics.
 - Additional locales beyond the five launch locales.
 - iOS-specific design work (not applicable to this web product).
+
+## Phase 3 engine verification (resumed on new OS)
+
+Work resumed on a fresh OS with no Node/pnpm installed; the project files were intact.
+
+- Toolchain restored: Node 26.13.0 (nvm) + pnpm 12.16.1; `pnpm install --frozen-lockfile` restores all 299 packages.
+- `pnpm astro check`: 0 errors, 0 warnings, 0 hints. `pnpm build`: 10 pages (5 home + `json-formatter` in 5 locales).
+- Formatter verified in a production preview, not just dev: sample data formats, 4-space indent re-runs and persists in `jsonbits:indent`, `9007199254740993` / `4.999999999999999` survive unchanged (token-based formatter, no `JSON.parse` round-trip).
+- Error path is precise: trailing comma reports “Line 4, column 1” with a plain-English hint and a Go-to-error action; empty input reports an explicit-run message.
+- Controls verified: Ctrl/Cmd+Enter run, Clear, Sample, Download (`formatted.json`), drag-and-drop file load (file chip + stats), theme cycle with CodeMirror tokens following the palette, no-flash bootstrap intact.
+- Size tiers behave as specified: a 6.87 MB drop switches to large-file mode (no preview), formats in 592 ms with a 12.5 MB result; a 9.44 MB input returns a 16.1 MB Blob instead of a DOM string. Instrumented run showed no long task attributable to the app on the main thread.
+- Network during a full tool session: 8 same-origin requests only (document, font, CSS, base script, page script, tool UI, editor, worker). Zero third-party requests, zero console errors.
+- Lighthouse on the production tool page: 100 accessibility, 100 best practices, 100 SEO, 0 failures.
+- CSP integrity re-checked: the single inline theme script in `dist/index.html` hashes to the pinned `sha256-LvWPinNh6aFOYKtS1cDZB32jfU2RyoTY3YvVC22hZbo=`.
+- Bundle shape: shell ~2.4 KB gzip, tool UI 7.1 KB gzip, worker 3.6 KB gzip, CodeMirror editor chunk 102 KB gzip loaded lazily via dynamic `import()`.
+- Deliberately deferred: page canonical/hreflang + article content (Phase 6); splitting `json-formatter/session.ts` (551), `workers/ops/format.ts` (412) and `scanner.ts` (357) under the 250-line guidance (Phase 9).
+- Version control started: `git init -b main` with Phases 0–3 committed as `Phase 0-3: scaffold, design system, and json-formatter engine`. Local identity is `Sakib <sakib@localhost>`; update it before any push. `node_modules/`, `dist/`, and `.astro/` stay ignored.
 
 ## Phase 2 design-system verification
 
