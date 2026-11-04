@@ -38,7 +38,6 @@
   "header.tools": "Outils",
   "theme.light": "Clair",
   "theme.dark": "Sombre",
-  "theme.system": "Système",
   "theme.toggle": "Thème : {mode}. Activez pour changer.",
   "theme.announce": "Thème réglé sur {mode}.",
   "lang.switch": "Langue",

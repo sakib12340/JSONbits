@@ -147,6 +147,15 @@
   }
 }
 
+/* OS high-contrast modes override our palette; keep structure and focus visible. */
+@media (forced-colors: active) {
+  :root {
+    --line: CanvasText;
+    --line-strong: CanvasText;
+    --focus-ring: Highlight;
+  }
+}
+
 @media (max-width: 640px) {
   :root {
     --editor-pad: 12px;

@@ -38,7 +38,6 @@
   "header.tools": "Tools",
   "theme.light": "Hell",
   "theme.dark": "Dunkel",
-  "theme.system": "System",
   "theme.toggle": "Design: {mode}. Aktivieren zum Ändern.",
   "theme.announce": "Design auf {mode} gesetzt.",
   "lang.switch": "Sprache",

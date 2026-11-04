@@ -38,7 +38,6 @@
   "header.tools": "Herramientas",
   "theme.light": "Claro",
   "theme.dark": "Oscuro",
-  "theme.system": "Sistema",
   "theme.toggle": "Tema: {mode}. Activa para cambiar.",
   "theme.announce": "Tema cambiado a {mode}.",
   "lang.switch": "Idioma",

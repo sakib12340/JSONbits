@@ -1,18 +1,27 @@
 const STORAGE_KEY = 'theme';
 
-type ThemeMode = 'light' | 'dark' | 'system';
+/**
+ * The site owns its theme: the operating system preference never changes it.
+ * Only light and dark exist, and light is the default.
+ */
+type ThemeMode = 'light' | 'dark';
 
-const modes: readonly ThemeMode[] = ['light', 'dark', 'system'];
+const modes: readonly ThemeMode[] = ['light', 'dark'];
+
+const THEME_COLORS: Record<ThemeMode, string> = {
+  light: '#fffefb',
+  dark: '#0a0f0e',
+};
 
 const root = document.documentElement;
-const media = window.matchMedia('(prefers-color-scheme: dark)');
 const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
 const liveStatus = document.querySelector<HTMLElement>('[data-theme-status]');
+const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
 
-let memoryMode: ThemeMode = 'system';
+let memoryMode: ThemeMode = 'light';
 
 function isMode(value: string | null): value is ThemeMode {
-  return value === 'light' || value === 'dark' || value === 'system';
+  return value === 'light' || value === 'dark';
 }
 
 function readMode(): ThemeMode {
@@ -36,25 +45,19 @@ function writeMode(mode: ThemeMode): void {
   }
 }
 
-function effective(mode: ThemeMode): 'light' | 'dark' {
-  if (mode === 'system') {
-    return media.matches ? 'dark' : 'light';
-  }
-
-  return mode;
-}
-
 function modeLabel(mode: ThemeMode): string {
   if (!button) return mode;
 
-  if (mode === 'light') return button.dataset.labelLight ?? mode;
-  if (mode === 'dark') return button.dataset.labelDark ?? mode;
-  return button.dataset.labelSystem ?? mode;
+  return mode === 'light'
+    ? (button.dataset.labelLight ?? mode)
+    : (button.dataset.labelDark ?? mode);
 }
 
 function apply(mode: ThemeMode, announce = false): void {
-  root.dataset.theme = effective(mode);
+  root.dataset.theme = mode;
   root.dataset.themeMode = mode;
+
+  if (themeColor) themeColor.content = THEME_COLORS[mode];
 
   if (!button) return;
 
@@ -81,11 +84,5 @@ if (button) {
     const next = modes[(modes.indexOf(current) + 1) % modes.length];
     writeMode(next);
     apply(next, true);
-  });
-
-  media.addEventListener('change', () => {
-    if (readMode() === 'system') {
-      apply('system');
-    }
   });
 }

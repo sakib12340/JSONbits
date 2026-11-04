@@ -16,10 +16,12 @@ const meta = localeMeta[locale];
 ---
 
 <!doctype html>
-<html lang={meta.lang} dir={meta.dir}>
+<html lang={meta.lang} dir={meta.dir} data-theme="light" data-theme-mode="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#fffefb" />
     <link
       rel="preload"
       href="/fonts/inter-latin-var.woff2"
@@ -30,24 +32,21 @@ const meta = localeMeta[locale];
     <script is:inline>
       (() => {
         const root = document.documentElement;
-        let mode = 'system';
+        let theme = 'light';
 
         try {
-          const stored = localStorage.getItem('theme');
-          if (stored === 'light' || stored === 'dark' || stored === 'system') mode = stored;
+          if (localStorage.getItem('theme') === 'dark') theme = 'dark';
         } catch {}
 
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = mode === 'system' ? (dark ? 'dark' : 'light') : mode;
         root.dataset.theme = theme;
-        root.dataset.themeMode = mode;
+        root.dataset.themeMode = theme;
+
+        const color = document.querySelector('meta[name="theme-color"]');
+        if (color) color.setAttribute('content', theme === 'dark' ? '#0a0f0e' : '#fffefb');
       })();
     </script>
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#fffefb" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0a0f0e" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
   </head>

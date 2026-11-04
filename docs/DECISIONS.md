@@ -85,7 +85,7 @@ The registry is the single source of truth for tool metadata, navigation, pages,
 - No analytics, trackers, external fonts, third-party scripts, or uploads. CSP `connect-src 'none'` in v1.
 - Ads are not shipped. `AdSlot` stays disabled unless `PUBLIC_ADS_ENABLED=true`; ads may later appear only below the tool and in the article area.
 - Persist preferences only: theme, locale hint, indent size. Never persist user JSON.
-- Theme: `light | dark | system`, no-flash inline bootstrap, Tailwind dark variant bound to the selected theme attribute.
+- Theme: `light | dark` only, defaulting to light. The site never reads `prefers-color-scheme`, so OS/browser theme changes cannot alter it. No-flash inline bootstrap; Tailwind dark variant bound to the theme attribute; `color-scheme` and `theme-color` follow the chosen theme.
 
 ## SEO and launch policy
 
@@ -119,6 +119,19 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Light-mode hairlines read as missing: `--line` was 10% ink (1.23:1 on canvas) and card fill was only 1.03:1 against the page, so borders were the sole separator. Light `--line` raised to 20% and `--line-strong` to 36% (≈1.54:1); dark mode values unchanged.
 - Deliberately deferred: page canonical/hreflang + article content (Phase 6); splitting `json-formatter/session.ts` (551), `workers/ops/format.ts` (412) and `scanner.ts` (357) under the 250-line guidance (Phase 9).
 - Version control: `origin` is `git@github.com:sakib12340/JSONbits.git`; the local branch was grafted onto the existing backup commit rather than force-pushed. Commits use `sakib12340 <sadmansakib080212@gmail.com>`. `node_modules/`, `dist/`, and `.astro/` stay ignored.
+
+## Theme independence (supersedes the Phase 2 three-state theme)
+
+The operating system and browser must not change how the site looks; the site owns its appearance.
+
+- Theme is now `light | dark`, default **light**, persisted in `localStorage('theme')`. The `system` state, its icon, its label in all five locales, and the `matchMedia` listener were removed.
+- No `prefers-color-scheme` query remains in `src/` or the built CSS. A stale stored value of `system` falls back to light instead of erroring.
+- `color-scheme` is set only by CSS per theme (`light` / `dark`), so native scrollbars and form controls match the site rather than the OS. `<meta name="color-scheme">` is `light`.
+- `theme-color` is a single dynamic meta updated by the bootstrap and the toggle (`#fffefb` / `#0a0f0e`); the OS-based `media` variants were removed so mobile browser chrome follows the site theme.
+- `<html data-theme="light" data-theme-mode="light">` is emitted statically, so the page is light even before the bootstrap runs.
+- `@media (forced-colors: active)` maps `--line`, `--line-strong`, and `--focus-ring` to system colors, so Windows High Contrast keeps borders and focus visible.
+- Verified with the host OS reporting `prefers-color-scheme: dark` while the site rendered light (`data-theme=light`, `color-scheme: light`, theme-color `#fffefb`, toggle labelled “Light”).
+- The inline bootstrap changed, so the CSP `sha256` in `public/_headers` was recomputed and matches `dist/_headers` (`sha256-CtQmZyoMJ13kQnOdERJ7npj7WO9CaNmDLCSuzqixowU=`).
 
 ## Phase 2 design-system verification
 
