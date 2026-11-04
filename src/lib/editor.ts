@@ -49,9 +49,10 @@ const theme = EditorView.theme({
     backgroundColor: 'var(--editor-bg)',
     color: 'var(--editor-text)',
   },
+  // The caret is the focus indicator here: a ring around the whole pane
+  // competes with the code and reads as a selection box.
   '&.cm-focused': {
-    outline: '2px solid var(--focus-ring)',
-    outlineOffset: '-2px',
+    outline: 'none',
   },
   '.cm-scroller': {
     fontFamily: 'var(--font-mono)',
@@ -62,6 +63,9 @@ const theme = EditorView.theme({
   '.cm-content': {
     padding: '14px 0 20px',
     caretColor: 'var(--primary)',
+  },
+  '.cm-content:focus-visible': {
+    outline: 'none',
   },
   '.cm-line': {
     padding: '0 var(--editor-pad)',
