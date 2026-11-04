@@ -116,8 +116,9 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Lighthouse on the production tool page: 100 accessibility, 100 best practices, 100 SEO, 0 failures.
 - CSP integrity re-checked: the single inline theme script in `dist/index.html` hashes to the pinned `sha256-LvWPinNh6aFOYKtS1cDZB32jfU2RyoTY3YvVC22hZbo=`.
 - Bundle shape: shell ~2.4 KB gzip, tool UI 7.1 KB gzip, worker 3.6 KB gzip, CodeMirror editor chunk 102 KB gzip loaded lazily via dynamic `import()`.
+- Light-mode hairlines read as missing: `--line` was 10% ink (1.23:1 on canvas) and card fill was only 1.03:1 against the page, so borders were the sole separator. Light `--line` raised to 20% and `--line-strong` to 36% (≈1.54:1); dark mode values unchanged.
 - Deliberately deferred: page canonical/hreflang + article content (Phase 6); splitting `json-formatter/session.ts` (551), `workers/ops/format.ts` (412) and `scanner.ts` (357) under the 250-line guidance (Phase 9).
-- Version control started: `git init -b main` with Phases 0–3 committed as `Phase 0-3: scaffold, design system, and json-formatter engine`. Local identity is `Sakib <sakib@localhost>`; update it before any push. `node_modules/`, `dist/`, and `.astro/` stay ignored.
+- Version control: `origin` is `git@github.com:sakib12340/JSONbits.git`; the local branch was grafted onto the existing backup commit rather than force-pushed. Commits use `sakib12340 <sadmansakib080212@gmail.com>`. `node_modules/`, `dist/`, and `.astro/` stay ignored.
 
 ## Phase 2 design-system verification
 
