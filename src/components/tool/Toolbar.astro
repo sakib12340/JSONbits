@@ -8,6 +8,11 @@ interface Props {
 }
 
 const { locale } = Astro.props;
+const indentOptions = [
+  { value: '2', label: t(locale, 'tool.indent.2') },
+  { value: '4', label: t(locale, 'tool.indent.4') },
+  { value: 'tab', label: t(locale, 'tool.indent.tab') },
+];
 const labels = {
   format: t(locale, 'tool.format'),
   sample: t(locale, 'tool.sample'),
@@ -40,19 +45,44 @@ const labels = {
       {labels.sample}
     </button>
 
-    <div class="flex h-11 items-center gap-2 rounded-[10px] border border-line px-3">
-      <label for="tool-indent" class="sr-only text-[13px] text-body-mid sm:not-sr-only">
-        {t(locale, 'tool.indent')}
-      </label>
-      <select
-        id="tool-indent"
-        data-indent
-        class="h-full bg-transparent pr-1 text-[14px] text-ink"
+    <div class="relative h-11 rounded-[10px] border border-line" data-select>
+      <button
+        type="button"
+        data-select-trigger
+        aria-haspopup="listbox"
+        aria-expanded="false"
+        class="flex h-full items-center gap-2 rounded-[10px] px-3 text-[14px] text-ink"
       >
-        <option value="2">{t(locale, 'tool.indent.2')}</option>
-        <option value="4">{t(locale, 'tool.indent.4')}</option>
-        <option value="tab">{t(locale, 'tool.indent.tab')}</option>
-      </select>
+        <span id="tool-indent-label" class="sr-only text-[13px] text-body-mid sm:not-sr-only">
+          {t(locale, 'tool.indent')}
+        </span>
+        <span data-select-value>{indentOptions[0].label}</span>
+        <Icon name="chevron-down" class="size-3.5 shrink-0 text-body-mid" />
+      </button>
+
+      <ul
+        id="tool-indent-list"
+        data-select-list
+        role="listbox"
+        tabindex="-1"
+        aria-labelledby="tool-indent-label"
+        hidden
+        class="absolute left-0 top-full z-50 mt-2 w-44 rounded-[12px] border border-line bg-canvas p-1.5 shadow-[var(--shadow-pop)]"
+      >
+        {
+          indentOptions.map((option) => (
+            <li
+              role="option"
+              data-value={option.value}
+              aria-selected={option.value === '2' ? 'true' : 'false'}
+              class="indent-option"
+            >
+              <span data-select-label>{option.label}</span>
+              <span class="indent-check"><Icon name="check" class="size-4 text-primary" /></span>
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </div>
 
@@ -109,6 +139,41 @@ const labels = {
 </div>
 
 <style>
+  .indent-option {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 14px;
+    color: var(--body);
+    cursor: pointer;
+  }
+
+  .indent-option[data-active='true'] {
+    background: var(--cream);
+  }
+
+  .indent-option:hover {
+    background: var(--cream);
+  }
+
+  .indent-option[aria-selected='true'] {
+    color: var(--ink);
+  }
+
+  .indent-check {
+    display: flex;
+    flex: none;
+    opacity: 0;
+  }
+
+  .indent-option[aria-selected='true'] .indent-check {
+    opacity: 1;
+  }
+
   .ghost-button {
     display: inline-flex;
     height: 44px;

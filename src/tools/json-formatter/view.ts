@@ -1,4 +1,5 @@
 import type { EditorHandle } from '../../lib/editor';
+import { createSelectMenu, type SelectMenu } from '../../lib/select-menu';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import type { FormatResult, FormatStats, JsonError } from '../../workers/protocol';
 import type { ToolStrings } from './strings';
@@ -41,7 +42,7 @@ interface Ui {
   paste: HTMLButtonElement;
   open: HTMLButtonElement;
   fileInput: HTMLInputElement;
-  indent: HTMLSelectElement;
+  indent: SelectMenu;
 }
 
 function el<T extends Element>(root: HTMLElement, selector: string): T {
@@ -112,7 +113,7 @@ export class ToolView {
       paste: el(shell, '[data-action="paste"]'),
       open: el(shell, '[data-action="open"]'),
       fileInput: el(shell, '[data-file-input]'),
-      indent: el(shell, '[data-indent]'),
+      indent: createSelectMenu(el(shell, '[data-select]')),
     };
   }
 
