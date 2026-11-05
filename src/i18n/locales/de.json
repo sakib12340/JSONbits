@@ -115,7 +115,7 @@
   "tool.oomHint": "Versuche eine kleinere Datei oder schließe andere Tabs.",
   "tool.announceDone": "Formatierung abgeschlossen.",
   "tool.announceError": "JSON-Fehler in Zeile {line}, Spalte {column}.",
-  "tool.privacy": "Läuft lokal. Nichts wird hochgeladen.",
+  "tool.shortcutHint": "zum Ausführen",
   "tool.actions": "Werkzeugaktionen",
   "tool.noscript": "Dieses Werkzeug benötigt JavaScript. Danach bleibt jeder Vorgang auf deinem Gerät.",
   "tool.drop": "JSON-Datei ablegen",

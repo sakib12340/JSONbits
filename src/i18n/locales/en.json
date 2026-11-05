@@ -115,7 +115,7 @@
   "tool.oomHint": "Try a smaller file or close other tabs.",
   "tool.announceDone": "Formatting finished.",
   "tool.announceError": "JSON error at line {line}, column {column}.",
-  "tool.privacy": "Runs locally. Nothing is uploaded.",
+  "tool.shortcutHint": "to run",
   "tool.actions": "Tool actions",
   "tool.noscript": "This tool needs JavaScript. When it runs, every operation stays on your device.",
   "tool.drop": "Drop a JSON file",

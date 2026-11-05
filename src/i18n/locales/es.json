@@ -115,7 +115,7 @@
   "tool.oomHint": "Prueba con un archivo más pequeño o cierra otras pestañas.",
   "tool.announceDone": "Formateo terminado.",
   "tool.announceError": "Error de JSON en la línea {line}, columna {column}.",
-  "tool.privacy": "Se ejecuta localmente. No se sube nada.",
+  "tool.shortcutHint": "para ejecutar",
   "tool.actions": "Acciones de la herramienta",
   "tool.noscript": "Esta herramienta necesita JavaScript. Cuando se ejecuta, cada operación se queda en tu dispositivo.",
   "tool.drop": "Suelta un archivo JSON",

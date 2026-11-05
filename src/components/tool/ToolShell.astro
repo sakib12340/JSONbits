@@ -96,9 +96,11 @@ const stringsJson = JSON.stringify(strings);
           {tool.description}
         </p>
       </div>
-      <p class="inline-flex items-center gap-2 text-[13px] leading-5 text-body-mid">
-        <Icon name="lock" class="size-4 text-primary" />
-        {t(locale, 'tool.privacy')}
+      <p class="inline-flex flex-wrap items-center gap-1.5 text-[13px] leading-5 text-body-mid">
+        <kbd class="tool-key">Ctrl / ⌘</kbd>
+        <span aria-hidden="true">+</span>
+        <kbd class="tool-key">Enter</kbd>
+        <span class="ms-1">{t(locale, 'tool.shortcutHint')}</span>
       </p>
     </div>
 
@@ -204,6 +206,17 @@ const stringsJson = JSON.stringify(strings);
 </section>
 
 <style>
+  .tool-key {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--cream);
+    padding: 3px 7px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1;
+    color: var(--ink);
+  }
+
   .tool-tab {
     position: relative;
     display: inline-flex;

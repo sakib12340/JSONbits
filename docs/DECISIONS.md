@@ -121,6 +121,7 @@ Checked against two competitor formatters (OpenReplay, jsonformatter.curiousconc
 - The panel is laid out as a flex row: the search field absorbs the slack. CodeMirror's base theme makes the close button absolutely positioned, so the panel reserves 32 px on the right; under ~460 px the row wraps to two lines without overlapping.
 - The replace row is hidden (`input[name=replace]` + replace buttons); read-only output editors never build it in the first place.
 - Verified: `astro check` 0/0/0; open/close via button, `Ctrl+F` and `Esc`; Enter steps to the next match (the panel handles `keyCode 13`, not `key`); 1 and 9 highlighted matches; 44 px single-row panel at desktop width and 70 px two-row at 320 px; light and dark tokens both correct; editor chunk 108.9 KB gzip (was 102 KB) and still lazy.
+- The tool header shows the primary shortcut (`Ctrl / ⌘ + Enter to run`) instead of repeating “Runs locally. Nothing is uploaded.”, which already appears in the footer tagline and in site copy. Key chips reuse the shortcuts-dialog style; the string is `tool.shortcutHint` and exists in all five locales.
 
 ## Phase 3 engine verification (resumed on new OS)
 
