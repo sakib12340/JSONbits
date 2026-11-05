@@ -125,11 +125,19 @@ const theme = EditorView.theme({
     alignItems: 'center',
     gap: '4px',
   },
+  // Same treatment as the home search field: one hairline that deepens on focus,
+  // never a second ring around it.
   '.cm-panel.cm-search input[name="search"]': {
     flex: '1 1 6em',
     minWidth: '0',
     width: 'auto',
+    borderColor: 'var(--line)',
   },
+  '.cm-panel.cm-search input[name="search"]:focus, .cm-panel.cm-search input[name="search"]:focus-visible':
+    {
+      outline: 'none',
+      borderColor: 'var(--ink)',
+    },
   '.cm-panel.cm-search input': {
     backgroundColor: 'var(--canvas)',
     color: 'var(--ink)',
@@ -140,14 +148,10 @@ const theme = EditorView.theme({
     fontSize: '12px',
     marginRight: '0',
   },
-  '.cm-panel.cm-search input:focus-visible': {
-    outline: '2px solid var(--focus-ring)',
-    outlineOffset: '1px',
-  },
   '.cm-panel.cm-search button': {
     backgroundColor: 'transparent',
     backgroundImage: 'none',
-    color: 'var(--ink)',
+    color: 'var(--body)',
     border: '1px solid var(--line)',
     borderRadius: '6px',
     padding: '3px 6px',
@@ -157,6 +161,7 @@ const theme = EditorView.theme({
   },
   '.cm-panel.cm-search button:hover': {
     backgroundColor: 'var(--cream)',
+    color: 'var(--ink)',
   },
   '.cm-panel.cm-search button[name="close"]': {
     border: 'none',
@@ -179,11 +184,24 @@ const theme = EditorView.theme({
     lineHeight: '1.6',
   },
   '.cm-panel.cm-search input[type="checkbox"]': {
-    accentColor: 'var(--primary)',
-    border: 'none',
+    appearance: 'none',
+    width: '13px',
+    height: '13px',
+    flex: 'none',
     margin: '0',
     padding: '0',
-    flex: 'none',
+    borderRadius: '3px',
+    border: '1px solid var(--line-strong)',
+    backgroundColor: 'var(--canvas)',
+    cursor: 'pointer',
+  },
+  '.cm-panel.cm-search input[type="checkbox"]:checked': {
+    backgroundColor: 'var(--primary)',
+    borderColor: 'var(--primary)',
+  },
+  '.cm-panel.cm-search input[type="checkbox"]:focus-visible': {
+    outline: '2px solid var(--focus-ring)',
+    outlineOffset: '1px',
   },
   // A formatter is for reading, not bulk-editing: keep the panel to one row.
   '.cm-panel.cm-search input[name="replace"], .cm-panel.cm-search button[name="replace"], .cm-panel.cm-search button[name="replaceAll"], .cm-panel.cm-search br, .cm-panel.cm-search label:has(input[name="word"])':

@@ -117,6 +117,7 @@ Checked against two competitor formatters (OpenReplay, jsonformatter.curiousconc
 | Extra indent presets + “Compact” button | **Rejected** | `json-minifier` owns compaction; the indent list stays 2 / 4 / Tab. |
 
 - Search is `@codemirror/search` 6.7.2 with `search({ top: true })`, `highlightSelectionMatches()`, and `searchKeymap`; the toolbar find button targets the focused editor (output when it has focus, input otherwise).
+- The panel follows the home search field: 1 px `--line` border that darkens to ink on focus (no 2 px ring, since the field is focused the moment the panel opens), 6 px radius, `--canvas` fill. The three checkboxes are 13 px custom squares (1 px `--line-strong`, filled with `--primary` when checked) instead of native OS boxes; keyboard focus still gets the global ring.
 - The panel is laid out as a flex row: the search field absorbs the slack. CodeMirror's base theme makes the close button absolutely positioned, so the panel reserves 32 px on the right; under ~460 px the row wraps to two lines without overlapping.
 - The replace row is hidden (`input[name=replace]` + replace buttons); read-only output editors never build it in the first place.
 - Verified: `astro check` 0/0/0; open/close via button, `Ctrl+F` and `Esc`; Enter steps to the next match (the panel handles `keyCode 13`, not `key`); 1 and 9 highlighted matches; 44 px single-row panel at desktop width and 70 px two-row at 320 px; light and dark tokens both correct; editor chunk 108.9 KB gzip (was 102 KB) and still lazy.
