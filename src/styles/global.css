@@ -29,7 +29,6 @@
   --success: #2f6b4f;
   --warning: #8a5a1f;
   --focus-ring: #2e4b46;
-  --shadow-pop: 0 10px 30px rgb(27 19 16 / 0.14);
   --editor-bg: #fffefb;
   --editor-gutter: #f8f4f0;
   --editor-text: #1b1310;
@@ -64,7 +63,6 @@
   --success: #8fd3b4;
   --warning: #e5c07b;
   --focus-ring: #82b7ab;
-  --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.5);
   --editor-bg: #0a0f0e;
   --editor-gutter: #121715;
   --editor-text: #edefec;
