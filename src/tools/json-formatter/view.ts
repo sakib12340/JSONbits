@@ -41,6 +41,7 @@ interface Ui {
   sample: HTMLButtonElement;
   paste: HTMLButtonElement;
   open: HTMLButtonElement;
+  find: HTMLButtonElement;
   fileInput: HTMLInputElement;
   indent: SelectMenu;
 }
@@ -112,6 +113,7 @@ export class ToolView {
       sample: el(shell, '[data-action="sample"]'),
       paste: el(shell, '[data-action="paste"]'),
       open: el(shell, '[data-action="open"]'),
+      find: el(shell, '[data-action="find"]'),
       fileInput: el(shell, '[data-file-input]'),
       indent: createSelectMenu(el(shell, '[data-select]')),
     };
@@ -120,6 +122,11 @@ export class ToolView {
   setStatus(text: string): void {
     this.statusToken += 1;
     this.ui.status.textContent = text;
+  }
+
+  openFind(): void {
+    const target = this.output.hasFocus() ? this.output : this.input;
+    target.openFind();
   }
 
   flash(text: string): void {

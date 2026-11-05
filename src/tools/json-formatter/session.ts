@@ -87,6 +87,7 @@ export class FormatterSession {
       if (file) void this.loadFile(file);
     });
     ui.indent.root.addEventListener('change', () => this.changeIndent());
+    ui.find.addEventListener('click', () => this.view.openFind());
     ui.errorDismiss.addEventListener('click', () => {
       this.view.hideError();
       this.view.setStatus(this.input.getLength() > 0 ? this.strings.ready : this.strings.waiting);

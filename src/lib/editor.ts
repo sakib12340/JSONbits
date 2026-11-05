@@ -9,6 +9,12 @@ import {
   bracketMatching,
   syntaxHighlighting,
 } from '@codemirror/language';
+import {
+  highlightSelectionMatches,
+  openSearchPanel,
+  search,
+  searchKeymap,
+} from '@codemirror/search';
 import { Compartment, EditorState } from '@codemirror/state';
 import {
   EditorView,
@@ -30,6 +36,8 @@ export interface EditorHandle {
   gotoLine(line: number, column?: number): void;
   lineText(line: number): string | null;
   focus(): void;
+  hasFocus(): boolean;
+  openFind(): void;
   refresh(): void;
   destroy(): void;
 }
@@ -98,6 +106,90 @@ const theme = EditorView.theme({
     backgroundColor: 'var(--editor-match)',
     outline: '1px solid var(--line-strong)',
   },
+  '.cm-searchMatch': {
+    backgroundColor: 'var(--editor-match)',
+    outline: '1px solid var(--line-strong)',
+  },
+  '.cm-searchMatch.cm-searchMatch-selected': {
+    backgroundColor: 'var(--editor-selection)',
+  },
+  '.cm-panel.cm-search': {
+    backgroundColor: 'var(--editor-gutter)',
+    color: 'var(--body)',
+    borderBottom: '1px solid var(--line)',
+    padding: '6px 32px 6px 10px',
+    fontFamily: 'var(--font-sans)',
+    fontSize: '12px',
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '4px',
+  },
+  '.cm-panel.cm-search input[name="search"]': {
+    flex: '1 1 6em',
+    minWidth: '0',
+    width: 'auto',
+  },
+  '.cm-panel.cm-search input': {
+    backgroundColor: 'var(--canvas)',
+    color: 'var(--ink)',
+    border: '1px solid var(--line)',
+    borderRadius: '6px',
+    padding: '3px 7px',
+    fontFamily: 'var(--font-sans)',
+    fontSize: '12px',
+    marginRight: '0',
+  },
+  '.cm-panel.cm-search input:focus-visible': {
+    outline: '2px solid var(--focus-ring)',
+    outlineOffset: '1px',
+  },
+  '.cm-panel.cm-search button': {
+    backgroundColor: 'transparent',
+    backgroundImage: 'none',
+    color: 'var(--ink)',
+    border: '1px solid var(--line)',
+    borderRadius: '6px',
+    padding: '3px 6px',
+    fontFamily: 'var(--font-sans)',
+    fontSize: '12px',
+    cursor: 'pointer',
+  },
+  '.cm-panel.cm-search button:hover': {
+    backgroundColor: 'var(--cream)',
+  },
+  '.cm-panel.cm-search button[name="close"]': {
+    border: 'none',
+    color: 'var(--body-mid)',
+    fontSize: '16px',
+    lineHeight: '1',
+    padding: '4px 6px',
+    position: 'absolute',
+    top: '50%',
+    right: '4px',
+    transform: 'translateY(-50%)',
+  },
+  '.cm-panel.cm-search label': {
+    color: 'var(--body-mid)',
+    fontSize: '11px',
+    marginRight: '0',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '3px',
+    lineHeight: '1.6',
+  },
+  '.cm-panel.cm-search input[type="checkbox"]': {
+    accentColor: 'var(--primary)',
+    border: 'none',
+    margin: '0',
+    padding: '0',
+    flex: 'none',
+  },
+  // A formatter is for reading, not bulk-editing: keep the panel to one row.
+  '.cm-panel.cm-search input[name="replace"], .cm-panel.cm-search button[name="replace"], .cm-panel.cm-search button[name="replaceAll"], .cm-panel.cm-search br, .cm-panel.cm-search label:has(input[name="word"])':
+    {
+      display: 'none',
+    },
   '.cm-placeholder': {
     color: 'var(--body-mid)',
   },
@@ -136,7 +228,9 @@ export function createEditor(options: EditorOptions): EditorHandle {
         theme,
         EditorView.lineWrapping,
         placeholderExtension(options.placeholder),
-        keymap.of([...defaultKeymap, ...historyKeymap]),
+        search({ top: true }),
+        highlightSelectionMatches(),
+        keymap.of([...defaultKeymap, ...searchKeymap, ...historyKeymap]),
         readOnlyCompartment.of(readOnlyExtension(options.readOnly)),
         EditorView.contentAttributes.of({
           'aria-label': options.label,
@@ -186,6 +280,10 @@ export function createEditor(options: EditorOptions): EditorHandle {
       return view.state.doc.line(line).text;
     },
     focus: () => view.focus(),
+    hasFocus: () => view.hasFocus,
+    openFind: () => {
+      openSearchPanel(view);
+    },
     refresh: () => view.requestMeasure(),
     destroy: () => view.destroy(),
   };

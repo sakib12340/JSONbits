@@ -16,6 +16,7 @@ const indentOptions = [
 const labels = {
   format: t(locale, 'tool.format'),
   sample: t(locale, 'tool.sample'),
+  find: t(locale, 'tool.find'),
   open: t(locale, 'tool.open'),
   paste: t(locale, 'tool.paste'),
   copy: t(locale, 'tool.copy'),
@@ -87,6 +88,16 @@ const labels = {
   </div>
 
   <div class="ms-auto flex flex-wrap items-center gap-0.5">
+    <button
+      type="button"
+      data-action="find"
+      class="icon-button"
+      aria-label={labels.find}
+      title={labels.find}
+      aria-keyshortcuts="Control+F Meta+F"
+    >
+      <Icon name="search" class="size-[18px]" />
+    </button>
     <button type="button" data-action="open" class="icon-button" aria-label={labels.open} title={labels.open}>
       <Icon name="folder" class="size-[18px]" />
     </button>

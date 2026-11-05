@@ -1,6 +1,6 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-04
+Last updated: 2026-11-05
 Status: Phase 3 complete. Worker engine and `json-formatter` verified end-to-end; Tier 1 tools remain.
 
 ## Product identity
@@ -101,6 +101,25 @@ The registry is the single source of truth for tool metadata, navigation, pages,
 - User accounts, saved documents, server-side processing, API endpoints, analytics.
 - Additional locales beyond the five launch locales.
 - iOS-specific design work (not applicable to this web product).
+
+## Formatter page feature audit
+
+Checked against two competitor formatters (OpenReplay, jsonformatter.curiousconcept.com). Only features that belong to a *formatter* were accepted.
+
+| Feature | Verdict | Reason |
+|---|---|---|
+| Find in editor (`Ctrl/⌘+F`) | **Added** | Searching the formatted output is a formatting-time need and no other page owns it. |
+| Undo / redo | **Kept, keyboard only** | Rows added to the shortcuts dialog; no toolbar buttons — two icons for keys every user already knows is clutter. |
+| Search options (all / match case / regexp) | **Added with the panel** | `by word` hidden: regexp covers whole-word, and the third toggle pushed the row onto a second line. |
+| Tree / Table view toggle | **Rejected** | That is the `json-viewer` page. A formatter should stay a text formatter. |
+| Filter / JSONPath box | **Rejected** | Belongs to `jsonpath-tester`. |
+| JSON-spec dropdown (RFC 8259 / ECMA-404 / JSON5) | **Rejected** | Belongs to `json-validator`. |
+| Extra indent presets + “Compact” button | **Rejected** | `json-minifier` owns compaction; the indent list stays 2 / 4 / Tab. |
+
+- Search is `@codemirror/search` 6.7.2 with `search({ top: true })`, `highlightSelectionMatches()`, and `searchKeymap`; the toolbar find button targets the focused editor (output when it has focus, input otherwise).
+- The panel is laid out as a flex row: the search field absorbs the slack. CodeMirror's base theme makes the close button absolutely positioned, so the panel reserves 32 px on the right; under ~460 px the row wraps to two lines without overlapping.
+- The replace row is hidden (`input[name=replace]` + replace buttons); read-only output editors never build it in the first place.
+- Verified: `astro check` 0/0/0; open/close via button, `Ctrl+F` and `Esc`; Enter steps to the next match (the panel handles `keyCode 13`, not `key`); 1 and 9 highlighted matches; 44 px single-row panel at desktop width and 70 px two-row at 320 px; light and dark tokens both correct; editor chunk 108.9 KB gzip (was 102 KB) and still lazy.
 
 ## Phase 3 engine verification (resumed on new OS)
 

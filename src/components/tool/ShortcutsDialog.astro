@@ -10,6 +10,9 @@ interface Props {
 const { locale } = Astro.props;
 const rows = [
   { label: t(locale, 'tool.shortcuts.run'), keys: ['Ctrl / ⌘', 'Enter'] },
+  { label: t(locale, 'tool.shortcuts.find'), keys: ['Ctrl / ⌘', 'F'] },
+  { label: t(locale, 'tool.shortcuts.undo'), keys: ['Ctrl / ⌘', 'Z'] },
+  { label: t(locale, 'tool.shortcuts.redo'), keys: ['Ctrl / ⌘', 'Shift', 'Z'] },
   { label: t(locale, 'tool.shortcuts.copy'), keys: ['Ctrl / ⌘', 'Shift', 'C'] },
   { label: t(locale, 'tool.shortcuts.help'), keys: ['?'] },
 ];
