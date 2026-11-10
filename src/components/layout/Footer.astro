@@ -12,32 +12,32 @@ const { locale } = Astro.props;
 const year = new Date().getFullYear();
 ---
 
-<footer class="border-t border-night-line bg-night text-night-text">
-  <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+<footer class="border-t border-line bg-canvas">
+  <div class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
     <div class="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <a
           href={localePath(locale, '/')}
-          class="inline-flex min-h-11 items-center gap-2.5 rounded-[12px] text-night-text"
+          class="inline-flex min-h-11 items-center gap-2.5 rounded-[8px] text-ink"
         >
-          <BrandMark class="size-7 text-night-accent" />
-          <span class="text-[18px] font-semibold tracking-[-0.01em]">{t(locale, 'site.name')}</span>
+          <BrandMark class="size-7 text-primary" />
+          <span class="text-[17px] font-semibold tracking-[-0.015em]">{t(locale, 'site.name')}</span>
         </a>
-        <p class="mt-3 max-w-sm text-base leading-6 text-night-body">
+        <p class="mt-3 max-w-sm text-[14px] leading-[22px] text-body">
           {t(locale, 'footer.tagline')}
         </p>
       </div>
-      <p class="text-base leading-6 text-night-body">
+      <p class="max-w-sm text-[14px] leading-[22px] text-body">
         {t(locale, 'home.privacy')}
       </p>
     </div>
     <div
-      class="mt-10 flex flex-col gap-2 border-t border-night-line pt-6 sm:flex-row sm:items-center sm:justify-between"
+      class="mt-12 flex flex-col gap-2 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between"
     >
-      <p class="font-mono text-[14px] leading-[21px] text-night-mute">
+      <p class="font-mono text-[12px] leading-5 text-body-mid">
         {t(locale, 'footer.copyright', { year })}
       </p>
-      <p class="text-[14px] leading-[21px] text-night-mute">
+      <p class="text-[12px] leading-5 text-body-mid">
         {t(locale, 'home.privacy.local.title')}
       </p>
     </div>

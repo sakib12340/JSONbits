@@ -16,16 +16,16 @@ const toolsHref = `${home}#tools`;
 ---
 
 <header class="sticky top-0 z-40 border-b border-line bg-canvas">
-  <div class="mx-auto flex min-h-[72px] max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
-    <a href={home} class="flex min-h-11 items-center gap-2.5 rounded-[12px] text-ink">
+  <div class="mx-auto flex min-h-16 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-1.5 sm:px-6">
+    <a href={home} class="flex min-h-11 items-center gap-2.5 rounded-[8px] text-ink">
       <BrandMark class="size-7 text-primary" />
-      <span class="text-[18px] font-semibold tracking-[-0.01em]">{t(locale, 'site.name')}</span>
+      <span class="text-[17px] font-semibold tracking-[-0.015em]">{t(locale, 'site.name')}</span>
     </a>
 
     <nav class="flex items-center gap-1">
       <a
         href={toolsHref}
-        class="hidden h-11 items-center rounded-[12px] px-4 text-base text-ink hover:bg-cream sm:inline-flex"
+        class="hidden h-11 items-center rounded-[8px] px-3 text-[14px] font-medium text-ink hover:bg-cream sm:inline-flex"
       >
         {t(locale, 'header.tools')}
       </a>

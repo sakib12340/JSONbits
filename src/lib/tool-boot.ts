@@ -4,6 +4,11 @@ interface ToolModule {
 
 const loaders: Record<string, () => Promise<ToolModule>> = {
   'json-formatter': () => import('../tools/json-formatter/ui'),
+  'json-validator': () => import('../tools/json-validator/ui'),
+  'json-minifier': () => import('../tools/json-minifier/ui'),
+  'json-viewer': () => import('../tools/json-viewer/ui'),
+  'json-diff': () => import('../tools/json-diff/ui'),
+  'json-repair': () => import('../tools/json-repair/ui'),
 };
 
 function readStrings(shell: HTMLElement): Record<string, string> {

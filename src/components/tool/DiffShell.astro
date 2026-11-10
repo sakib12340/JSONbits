@@ -1,0 +1,345 @@
+---
+import ToolPage from './ToolPage.astro';
+import Toolbar from './Toolbar.astro';
+import EditorPane from './EditorPane.astro';
+import ErrorPanel from './ErrorPanel.astro';
+import FileDropzone from './FileDropzone.astro';
+import StatsBar from './StatsBar.astro';
+import ShortcutsDialog from './ShortcutsDialog.astro';
+import Icon from '../ui/Icon.astro';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import { t } from '../../i18n/t';
+import { commonToolStrings } from '../../i18n/tool-strings';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+const { locale, tool } = Astro.props;
+const stats = [
+  { key: 'changes', label: t(locale, 'tool.stats.changes') },
+  { key: 'size', label: t(locale, 'tool.stats.size') },
+  { key: 'time', label: t(locale, 'tool.stats.time') },
+];
+const filters = [
+  { key: 'all', label: t(locale, 'tool.diff.all') },
+  { key: 'added', label: t(locale, 'tool.diff.added') },
+  { key: 'removed', label: t(locale, 'tool.diff.removed') },
+  { key: 'changed', label: t(locale, 'tool.diff.changed') },
+];
+const strings = {
+  ...commonToolStrings(locale),
+  comparing: t(locale, 'tool.comparing'),
+  left: t(locale, 'tool.diff.left'),
+  right: t(locale, 'tool.diff.right'),
+  changes: t(locale, 'tool.diff.changes'),
+  ignoreArrayOrder: t(locale, 'tool.diff.ignoreArrayOrder'),
+  added: t(locale, 'tool.diff.added'),
+  removed: t(locale, 'tool.diff.removed'),
+  changed: t(locale, 'tool.diff.changed'),
+  all: t(locale, 'tool.diff.all'),
+  filter: t(locale, 'tool.diff.filter'),
+  same: t(locale, 'tool.diff.same'),
+  empty: t(locale, 'tool.diff.empty'),
+  none: t(locale, 'tool.diff.none'),
+  truncated: t(locale, 'tool.diff.truncated'),
+  copyPath: t(locale, 'tool.diff.copyPath'),
+  tooLarge: t(locale, 'tool.diff.tooLarge'),
+  leftPlaceholder: t(locale, 'tool.diff.leftPlaceholder'),
+  rightPlaceholder: t(locale, 'tool.diff.rightPlaceholder'),
+  leftLabel: t(locale, 'tool.diff.leftLabel'),
+  rightLabel: t(locale, 'tool.diff.rightLabel'),
+  found: t(locale, 'tool.diff.found'),
+  needBoth: t(locale, 'tool.diff.needBoth'),
+};
+---
+
+<ToolPage locale={locale} tool={tool} strings={strings}>
+  <div
+    class="mt-5 overflow-hidden rounded-[16px] border border-line bg-canvas sm:mt-7"
+    data-tool-frame
+  >
+    <Toolbar
+      locale={locale}
+      action="compare"
+      label={t(locale, 'tool.compare')}
+      showIndent={false}
+      showFind={false}
+      showCopy={false}
+      showDownload={false}
+    />
+
+    <div class="flex flex-wrap items-center gap-3 border-b border-line px-3 py-2 sm:px-4">
+      <label class="inline-flex min-h-[44px] items-center gap-2 text-[13px] leading-5 text-body">
+        <input
+          type="checkbox"
+          data-diff-ignore-order
+          class="size-4 rounded border-line accent-[var(--primary)]"
+        />
+        {t(locale, 'tool.diff.ignoreArrayOrder')}
+      </label>
+      <span class="ms-auto hidden text-[12px] leading-5 text-body-mid sm:inline">
+        {t(locale, 'tool.shortcutHint')}
+      </span>
+    </div>
+
+    <div
+      class="flex items-center gap-1 border-b border-line px-2 md:hidden"
+      role="tablist"
+      aria-label={`${t(locale, 'tool.diff.left')} / ${t(locale, 'tool.diff.right')} / ${t(locale, 'tool.diff.changes')}`}
+      data-mobile-tabs
+    >
+      <button
+        type="button"
+        id="tab-left"
+        data-tab="left"
+        role="tab"
+        aria-selected="true"
+        aria-controls="pane-left"
+        tabindex="0"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.diff.left')}
+      </button>
+      <button
+        type="button"
+        id="tab-right"
+        data-tab="right"
+        role="tab"
+        aria-selected="false"
+        aria-controls="pane-right"
+        tabindex="-1"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.diff.right')}
+      </button>
+      <button
+        type="button"
+        id="tab-changes"
+        data-tab="changes"
+        role="tab"
+        aria-selected="false"
+        aria-controls="pane-changes"
+        tabindex="-1"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.diff.changes')}
+      </button>
+    </div>
+
+    <div class="diff-panes md:grid md:grid-cols-2" data-mobile-view="left">
+      <section
+        class="diff-pane is-active min-w-0 flex-col"
+        data-pane="left"
+        id="pane-left"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.diff.left')}
+      >
+        <div class="flex min-h-[46px] flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2">
+          <div class="flex min-w-0 items-center gap-2">
+            <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+              {t(locale, 'tool.diff.left')}
+            </h2>
+            <span
+              data-file-chip="left"
+              hidden
+              class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
+            >
+              <span data-file-name class="truncate" />
+            </span>
+          </div>
+          <button
+            type="button"
+            data-open-side="left"
+            aria-label={t(locale, 'tool.diff.openLeft')}
+            title={t(locale, 'tool.diff.openLeft')}
+            class="inline-flex size-11 items-center justify-center rounded-[9px] text-body-mid hover:bg-cream hover:text-ink"
+          >
+            <Icon name="folder" class="size-[18px]" />
+          </button>
+        </div>
+
+        <EditorPane kind="left" locale={locale}>
+          <FileDropzone locale={locale} />
+        </EditorPane>
+      </section>
+
+      <section
+        class="diff-pane min-w-0 flex-col md:border-l md:border-line"
+        data-pane="right"
+        id="pane-right"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.diff.right')}
+      >
+        <div class="flex min-h-[46px] flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2">
+          <div class="flex min-w-0 items-center gap-2">
+            <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+              {t(locale, 'tool.diff.right')}
+            </h2>
+            <span
+              data-file-chip="right"
+              hidden
+              class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
+            >
+              <span data-file-name class="truncate" />
+            </span>
+          </div>
+          <button
+            type="button"
+            data-open-side="right"
+            aria-label={t(locale, 'tool.diff.openRight')}
+            title={t(locale, 'tool.diff.openRight')}
+            class="inline-flex size-11 items-center justify-center rounded-[9px] text-body-mid hover:bg-cream hover:text-ink"
+          >
+            <Icon name="folder" class="size-[18px]" />
+          </button>
+        </div>
+
+        <EditorPane kind="right" locale={locale}>
+          <FileDropzone locale={locale} />
+        </EditorPane>
+      </section>
+
+      <section
+        class="diff-pane diff-pane--changes min-w-0 flex-col"
+        data-pane="changes"
+        id="pane-changes"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.diff.changes')}
+      >
+        <div class="flex min-h-[46px] flex-wrap items-center gap-2 border-b border-line px-3 py-2 sm:px-4">
+          <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.diff.changes')}
+          </h2>
+
+          <div
+            class="flex flex-wrap items-center gap-0.5"
+            role="group"
+            aria-label={t(locale, 'tool.diff.filter')}
+          >
+            {
+              filters.map((filter) => (
+                <button
+                  type="button"
+                  data-filter={filter.key}
+                  aria-pressed={filter.key === 'all' ? 'true' : 'false'}
+                  class="diff-filter"
+                >
+                  {filter.label}
+                  <span data-filter-count class="diff-filter-count">0</span>
+                </button>
+              ))
+            }
+          </div>
+
+          <span class="ms-auto text-[12px] leading-5 text-body-mid" data-diff-summary></span>
+        </div>
+
+        <div
+          class="relative h-[clamp(220px,32vh,380px)] overflow-hidden"
+          data-diff-body
+        >
+          <div
+            data-diff-scroll
+            class="absolute inset-0 overflow-auto"
+            tabindex="0"
+            role="listbox"
+            aria-label={t(locale, 'tool.diff.changes')}
+          >
+            <div class="relative" data-diff-spacer style="height: 0px">
+              <div class="absolute inset-x-0 top-0" data-diff-rows></div>
+            </div>
+          </div>
+
+          <p
+            data-diff-empty
+            class="pointer-events-none absolute inset-0 grid place-items-center p-6 text-center text-[13px] leading-5 text-body-mid"
+          >
+            {t(locale, 'tool.diff.empty')}
+          </p>
+
+          <ErrorPanel locale={locale} />
+        </div>
+
+        <p
+          data-diff-truncated
+          hidden
+          class="border-t border-line px-3 py-2 text-[12px] leading-5 text-body-mid sm:px-4"
+        ></p>
+      </section>
+    </div>
+
+    <StatsBar locale={locale} stats={stats} />
+  </div>
+</ToolPage>
+
+<ShortcutsDialog locale={locale} runLabel={t(locale, 'tool.compare')} />
+
+<style>
+  .tool-tab {
+    position: relative;
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--body-mid);
+  }
+
+  .tool-tab[aria-selected='true'] {
+    color: var(--ink);
+    box-shadow: inset 0 -2px 0 var(--primary);
+  }
+
+  .diff-pane {
+    display: none;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .diff-pane.is-active {
+    display: flex;
+  }
+
+  @media (min-width: 768px) {
+    .diff-pane {
+      display: flex;
+    }
+
+    .diff-pane--changes {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--line);
+    }
+  }
+
+  .diff-filter {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    gap: 6px;
+    border-radius: 8px;
+    padding: 0 9px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--body-mid);
+  }
+
+  .diff-filter:hover {
+    background: var(--cream);
+  }
+
+  .diff-filter[aria-pressed='true'] {
+    background: var(--cream);
+    color: var(--ink);
+  }
+
+  .diff-filter-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--body-mid);
+  }
+</style>

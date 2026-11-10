@@ -4,21 +4,24 @@ import { t } from '../../i18n/t';
 
 interface Props {
   locale: Locale;
+  stats?: { key: string; label: string }[];
 }
 
-const { locale } = Astro.props;
-const stats = [
-  { key: 'size', label: t(locale, 'tool.stats.size') },
-  { key: 'lines', label: t(locale, 'tool.stats.lines') },
-  { key: 'depth', label: t(locale, 'tool.stats.depth') },
-  { key: 'time', label: t(locale, 'tool.stats.time') },
-];
+const { locale, stats } = Astro.props;
+const items =
+  stats ??
+  [
+    { key: 'size', label: t(locale, 'tool.stats.size') },
+    { key: 'lines', label: t(locale, 'tool.stats.lines') },
+    { key: 'depth', label: t(locale, 'tool.stats.depth') },
+    { key: 'time', label: t(locale, 'tool.stats.time') },
+  ];
 ---
 
 <div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line px-3 py-2.5 sm:px-4">
   <dl class="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[12px] leading-5">
     {
-      stats.map((stat) => (
+      items.map((stat) => (
         <div class="flex items-baseline gap-1.5">
           <dt class="font-sans text-[12px] text-body-mid">{stat.label}</dt>
           <dd class="text-ink" data-stat={stat.key}>—</dd>

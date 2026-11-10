@@ -5,11 +5,12 @@ import { t } from '../../i18n/t';
 
 interface Props {
   locale: Locale;
+  runLabel?: string;
 }
 
-const { locale } = Astro.props;
+const { locale, runLabel = t(locale, 'tool.shortcuts.run') } = Astro.props;
 const rows = [
-  { label: t(locale, 'tool.shortcuts.run'), keys: ['Ctrl / ⌘', 'Enter'] },
+  { label: runLabel, keys: ['Ctrl / ⌘', 'Enter'] },
   { label: t(locale, 'tool.shortcuts.find'), keys: ['Ctrl / ⌘', 'F'] },
   { label: t(locale, 'tool.shortcuts.undo'), keys: ['Ctrl / ⌘', 'Z'] },
   { label: t(locale, 'tool.shortcuts.redo'), keys: ['Ctrl / ⌘', 'Shift', 'Z'] },
@@ -30,7 +31,7 @@ const rows = [
     <button
       type="button"
       data-shortcuts-close
-      class="grid size-11 place-items-center rounded-[10px] text-ink hover:bg-cream"
+      class="grid size-11 place-items-center rounded-[8px] text-ink hover:bg-cream"
       aria-label={t(locale, 'tool.close')}
     >
       <Icon name="x" class="size-[18px]" />

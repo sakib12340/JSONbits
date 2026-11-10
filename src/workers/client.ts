@@ -1,15 +1,15 @@
 import type {
-  FormatOptions,
-  FormatResult,
   JsonError,
+  OpMap,
   ProgressUpdate,
+  WorkerOp,
   WorkerRequest,
   WorkerResponse,
 } from './protocol';
 
 export class WorkerCancelledError extends Error {
   constructor() {
-    super('Formatting cancelled.');
+    super('Operation cancelled.');
     this.name = 'WorkerCancelledError';
   }
 }
@@ -39,7 +39,7 @@ export class WorkerResponseError extends Error {
 }
 
 interface Pending {
-  resolve: (result: FormatResult) => void;
+  resolve: (result: unknown) => void;
   reject: (error: Error) => void;
   onProgress?: (progress: ProgressUpdate) => void;
 }
@@ -49,34 +49,37 @@ export class WorkerClient {
   private pending = new Map<number, Pending>();
   private nextId = 1;
 
-  run(
-    payload: WorkerRequest['payload'],
-    options: FormatOptions,
+  run<K extends WorkerOp>(
+    op: K,
+    payload: OpMap[K]['payload'],
+    options: OpMap[K]['options'],
     onProgress?: (progress: ProgressUpdate) => void,
-  ): Promise<FormatResult> {
+  ): Promise<OpMap[K]['result']> {
     const worker = this.ensureWorker();
     const id = this.nextId;
     this.nextId += 1;
 
-    return new Promise<FormatResult>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject, onProgress });
+    return new Promise<OpMap[K]['result']>((resolve, reject) => {
+      this.pending.set(id, {
+        resolve: resolve as (result: unknown) => void,
+        reject,
+        onProgress,
+      });
 
-      const request: WorkerRequest = { id, op: 'format', payload, options };
+      const request = { id, op, payload, options } as WorkerRequest;
+      const transfer =
+        'buffer' in payload ? [(payload as { buffer: ArrayBuffer }).buffer] : [];
 
       try {
-        if ('buffer' in payload) {
-          worker.postMessage(request, [payload.buffer]);
-        } else {
-          worker.postMessage(request);
-        }
+        worker.postMessage(request, transfer);
       } catch {
         this.pending.delete(id);
-        this.failAll(new WorkerRuntimeError('The formatter could not start.'));
+        this.failAll(new WorkerRuntimeError('The private engine could not start.'));
       }
     });
   }
 
-  /** Terminate and respawn on the next run. Used for stale requests and Cancel. */
+  /** Terminate and respawn on the next request. Used for stale requests and Cancel. */
   cancelAll(): void {
     if (this.pending.size === 0 && !this.worker) return;
 

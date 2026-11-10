@@ -1,7 +1,17 @@
 import { JsonFormatError } from './ops/errors';
 import { formatJson } from './ops/format';
+import { minifyJson } from './ops/minify';
+import { repairJson } from './ops/repair';
+import { validateJson } from './ops/validate';
+import { diffJson } from './ops/diff';
+import { JsonTree } from './ops/tree';
 import { failure } from './protocol';
-import type { ProgressUpdate, WorkerRequest, WorkerResponse } from './protocol';
+import type {
+  ProgressPhase,
+  TextPayload,
+  WorkerRequest,
+  WorkerResponse,
+} from './protocol';
 
 /** Beyond this size the worker returns a Blob instead of cloning a huge string. */
 const MAX_TEXT_OUTPUT = 4_000_000;
@@ -12,12 +22,13 @@ interface WorkerScope {
 }
 
 const scope = self as unknown as WorkerScope;
+let tree: JsonTree | null = null;
 
 function post(message: WorkerResponse): void {
   scope.postMessage(message);
 }
 
-function progress(id: number, phase: ProgressUpdate['phase']): void {
+function progress(id: number, phase: ProgressPhase): void {
   post({ id, type: 'progress', progress: { phase } });
 }
 
@@ -26,46 +37,164 @@ function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-async function handle(request: WorkerRequest): Promise<void> {
-  const { id } = request;
+async function readText(
+  id: number,
+  payload: TextPayload,
+  phase: ProgressPhase,
+): Promise<string | null> {
+  progress(id, 'reading');
+  await tick();
+
+  if (!('buffer' in payload)) {
+    progress(id, phase);
+    await tick();
+    return payload.text;
+  }
 
   try {
-    let text: string;
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(payload.buffer);
+    progress(id, phase);
+    await tick();
+    return text;
+  } catch {
+    post({
+      id,
+      ok: false,
+      error: failure(
+        'This file is not valid UTF-8 text.',
+        'Open the file in a text editor and save it as UTF-8, then try again.',
+        'encoding',
+      ),
+    });
+    return null;
+  }
+}
 
-    if ('buffer' in request.payload) {
-      progress(id, 'reading');
-      await tick();
+function withOutput<T extends { output: string | null; stats: unknown }>(
+  id: number,
+  result: T,
+): void {
+  if (result.output === null) {
+    post({ id, ok: true, result });
+    return;
+  }
 
-      try {
-        text = new TextDecoder('utf-8', { fatal: true }).decode(request.payload.buffer);
-      } catch {
+  if (result.output.length > MAX_TEXT_OUTPUT) {
+    const blob = new Blob([result.output], { type: 'application/json' });
+    post({
+      id,
+      ok: true,
+      result: { output: null, blob, stats: result.stats },
+    });
+    return;
+  }
+
+  post({
+    id,
+    ok: true,
+    result: { output: result.output, blob: null, stats: result.stats },
+  });
+}
+
+async function handle(request: WorkerRequest): Promise<void> {
+  const { id, op } = request;
+
+  try {
+    switch (op) {
+      case 'format': {
+        const text = await readText(id, request.payload, 'formatting');
+        if (text === null) return;
+        const result = formatJson(text, request.options);
+        withOutput(id, result);
+        return;
+      }
+
+      case 'minify': {
+        const text = await readText(id, request.payload, 'minifying');
+        if (text === null) return;
+        const result = minifyJson(text);
+        withOutput(id, result);
+        return;
+      }
+
+      case 'validate': {
+        const text = await readText(id, request.payload, 'validating');
+        if (text === null) return;
+        const result = validateJson(text);
+        post({ id, ok: true, result });
+        return;
+      }
+
+      case 'repair': {
+        const text = await readText(id, request.payload, 'repairing');
+        if (text === null) return;
+        const result = repairJson(text, request.options);
+        withOutput(id, result);
+        return;
+      }
+
+      case 'tree': {
+        const text = await readText(id, request.payload, 'indexing');
+        if (text === null) return;
+        tree = new JsonTree();
+        const result = tree.load(text);
+        post({ id, ok: true, result });
+        return;
+      }
+
+      case 'treeChildren': {
+        if (!tree) {
+          post({
+            id,
+            ok: false,
+            error: failure('No tree is loaded.', 'Load JSON again, then expand the tree.'),
+          });
+          return;
+        }
+        post({ id, ok: true, result: tree.children(request.payload.path, request.options.start, request.options.limit) });
+        return;
+      }
+
+      case 'treeSearch': {
+        if (!tree) {
+          post({
+            id,
+            ok: false,
+            error: failure('No tree is loaded.', 'Load JSON again, then search the tree.'),
+          });
+          return;
+        }
+        progress(id, 'searching');
+        await tick();
+        post({ id, ok: true, result: tree.search(request.payload.query, request.options.limit) });
+        return;
+      }
+
+      case 'treeValue': {
+        if (!tree) {
+          post({
+            id,
+            ok: false,
+            error: failure('No tree is loaded.', 'Load JSON again, then copy the value.'),
+          });
+          return;
+        }
         post({
           id,
-          ok: false,
-          error: failure(
-            'This file is not valid UTF-8 text.',
-            'Open the file in a text editor and save it as UTF-8, then try again.',
-            'encoding',
-          ),
+          ok: true,
+          result: tree.value(request.payload.path, request.options.limit),
         });
         return;
       }
-    } else {
-      text = request.payload.text;
+
+      case 'diff': {
+        progress(id, 'comparing');
+        await tick();
+        const result = diffJson(request.payload.left, request.payload.right, request.options);
+        post({ id, ok: true, result });
+        return;
+      }
     }
-
-    progress(id, 'formatting');
-    await tick();
-
-    const result = formatJson(text, request.options);
-
-    if (result.output.length > MAX_TEXT_OUTPUT) {
-      const blob = new Blob([result.output], { type: 'application/json' });
-      post({ id, ok: true, result: { output: null, blob, stats: result.stats } });
-      return;
-    }
-
-    post({ id, ok: true, result: { output: result.output, blob: null, stats: result.stats } });
   } catch (error) {
     if (error instanceof JsonFormatError) {
       post({ id, ok: false, error: error.toJsonError() });
@@ -85,11 +214,23 @@ async function handle(request: WorkerRequest): Promise<void> {
       return;
     }
 
+    const labels: Partial<Record<WorkerRequest['op'], string>> = {
+      format: 'formatter',
+      minify: 'minifier',
+      validate: 'validator',
+      repair: 'repair tool',
+      tree: 'tree viewer',
+      treeChildren: 'tree viewer',
+      treeSearch: 'tree search',
+      treeValue: 'tree viewer',
+      diff: 'comparison',
+    };
+
     post({
       id,
       ok: false,
       error: failure(
-        'The formatter stopped unexpectedly.',
+        `The ${labels[op] ?? 'tool'} stopped unexpectedly.`,
         'Reload the page and try again. Your data was never uploaded.',
       ),
     });

@@ -1,0 +1,417 @@
+---
+import ToolPage from './ToolPage.astro';
+import Toolbar from './Toolbar.astro';
+import EditorPane from './EditorPane.astro';
+import FileDropzone from './FileDropzone.astro';
+import StatsBar from './StatsBar.astro';
+import ShortcutsDialog from './ShortcutsDialog.astro';
+import Icon from '../ui/Icon.astro';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import { t } from '../../i18n/t';
+import { commonToolStrings } from '../../i18n/tool-strings';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+const { locale, tool } = Astro.props;
+const stats = [
+  { key: 'nodes', label: t(locale, 'tool.stats.nodes') },
+  { key: 'keys', label: t(locale, 'tool.stats.keys') },
+  { key: 'depth', label: t(locale, 'tool.stats.depth') },
+  { key: 'time', label: t(locale, 'tool.stats.time') },
+];
+const action = t(locale, 'tool.view');
+const strings = {
+  ...commonToolStrings(locale),
+  largeRun: t(locale, 'tool.largeRunAction', { action }),
+  largeLoaded: t(locale, 'tool.largeLoadedAction', { action }),
+  largeWarning: t(locale, 'tool.largeWarningAction', { action }),
+  viewing: t(locale, 'tool.viewing'),
+  indexing: t(locale, 'tool.indexing'),
+  searching: t(locale, 'tool.searching'),
+  treeDone: t(locale, 'tool.tree.done'),
+  treePressView: t(locale, 'tool.tree.pressView'),
+  treeLargeReady: t(locale, 'tool.tree.largeReady'),
+  treeEmpty: t(locale, 'tool.tree.empty'),
+  treeLoadMore: t(locale, 'tool.tree.loadMore'),
+  treePath: t(locale, 'tool.tree.path'),
+  treeCopyPath: t(locale, 'tool.tree.copyPath'),
+  treeCopyPathShort: t(locale, 'tool.tree.copyPathShort'),
+  treeNoResults: t(locale, 'tool.tree.noResults'),
+  treeMatches: t(locale, 'tool.tree.matches'),
+  treeTruncated: t(locale, 'tool.tree.truncated'),
+  treePlaceholder: t(locale, 'tool.tree.placeholder'),
+  treeHint: t(locale, 'tool.tree.hint'),
+  treeNodes: t(locale, 'tool.tree.nodes'),
+  treeSearch: t(locale, 'tool.tree.search'),
+  treeSearchLabel: t(locale, 'tool.tree.searchLabel'),
+  treeOptions: t(locale, 'tool.tree.options'),
+  treeCollapseAll: t(locale, 'tool.tree.collapseAll'),
+  treeExpandDepth: t(locale, 'tool.tree.expandDepth'),
+  treeDepth: t(locale, 'tool.tree.depth'),
+  treeExpanding: t(locale, 'tool.tree.expanding'),
+  treeExpanded: t(locale, 'tool.tree.expanded'),
+  treeExpandedPartial: t(locale, 'tool.tree.expandedPartial'),
+  treeCollapsed: t(locale, 'tool.tree.collapsed'),
+  treeCopyValue: t(locale, 'tool.tree.copyValue'),
+  treeCopyValueShort: t(locale, 'tool.tree.copyValueShort'),
+  treeValueTooLarge: t(locale, 'tool.tree.valueTooLarge'),
+  treeValueMissing: t(locale, 'tool.tree.valueMissing'),
+  fullscreen: t(locale, 'tool.fullscreen'),
+  exitFullscreen: t(locale, 'tool.exitFullscreen'),
+  fullscreenFailed: t(locale, 'tool.fullscreenFailed'),
+};
+---
+
+<ToolPage locale={locale} tool={tool} strings={strings}>
+  <div
+    class="mt-5 overflow-hidden rounded-[16px] border border-line bg-canvas sm:mt-7"
+    data-tool-frame
+  >
+    <Toolbar
+      locale={locale}
+      action="view"
+      label={t(locale, 'tool.view')}
+      showIndent={false}
+      showCopy={false}
+      showDownload={false}
+      showFind={false}
+      showFullscreen
+    />
+
+    <div
+      class="flex items-center gap-1 border-b border-line px-2 md:hidden"
+      role="tablist"
+      aria-label={`${t(locale, 'tool.input')} / ${t(locale, 'tool.tree.title')}`}
+      data-mobile-tabs
+    >
+      <button
+        type="button"
+        id="tab-input"
+        data-tab="input"
+        role="tab"
+        aria-selected="true"
+        aria-controls="pane-input"
+        tabindex="0"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.input')}
+      </button>
+      <button
+        type="button"
+        id="tab-tree"
+        data-tab="tree"
+        role="tab"
+        aria-selected="false"
+        aria-controls="pane-tree"
+        tabindex="-1"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.tree.title')}
+      </button>
+    </div>
+
+    <div class="tool-panes md:grid md:grid-cols-2" data-mobile-view="input">
+      <section
+        class="tool-pane is-active min-w-0 flex-col"
+        data-pane="input"
+        id="pane-input"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.input')}
+      >
+        <div class="flex min-h-[46px] flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2">
+          <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.input')}
+          </h2>
+          <span
+            data-file-chip
+            hidden
+            class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
+          >
+            <span data-file-name class="truncate" />
+          </span>
+        </div>
+
+        <EditorPane
+          kind="input"
+          locale={locale}
+          largeAction="view-large"
+          largeLabel={t(locale, 'tool.viewFile')}
+        >
+          <FileDropzone locale={locale} />
+        </EditorPane>
+      </section>
+
+      <section
+        class="tool-pane min-w-0 flex-col md:border-l md:border-line"
+        data-pane="tree"
+        id="pane-tree"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.tree.title')}
+      >
+        <div class="flex min-h-[46px] flex-wrap items-center gap-2 border-b border-line px-4 py-1.5">
+          <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.tree.title')}
+          </h2>
+          <span class="font-mono text-[11px] leading-4 text-body-mid" data-tree-count></span>
+
+          <label class="relative ms-auto flex min-w-0 items-center">
+            <span class="sr-only">{t(locale, 'tool.tree.searchLabel')}</span>
+            <Icon name="search" class="pointer-events-none absolute start-2 size-3.5 text-body-mid" />
+            <input
+              type="search"
+              data-tree-search
+              placeholder={t(locale, 'tool.tree.search')}
+              autocomplete="off"
+              class="h-8 w-40 min-w-0 rounded-[8px] border border-line bg-canvas ps-7 pe-2 font-sans text-[12px] text-ink placeholder:text-body-mid focus:border-ink focus:outline-none sm:w-52"
+            />
+          </label>
+
+          <details class="relative" data-tree-menu>
+            <summary
+              class="tree-menu-button"
+              aria-label={t(locale, 'tool.tree.options')}
+              title={t(locale, 'tool.tree.options')}
+            >
+              <Icon name="more" class="size-[18px]" />
+            </summary>
+            <div class="tree-menu-panel">
+              <button type="button" data-tree-collapse class="tree-menu-item">
+                {t(locale, 'tool.tree.collapseAll')}
+              </button>
+              <p class="tree-menu-heading">{t(locale, 'tool.tree.expandDepth')}</p>
+              {[2, 3, 4].map((depth) => (
+                <button type="button" data-tree-depth={depth} class="tree-menu-item">
+                  {t(locale, 'tool.tree.depth', { depth })}
+                </button>
+              ))}
+            </div>
+          </details>
+        </div>
+
+        <div class="relative h-[clamp(300px,44vh,520px)] overflow-hidden sm:h-[clamp(360px,50vh,520px)]">
+          <div
+            data-tree-scroll
+            class="tree-scroll absolute inset-0 overflow-auto"
+            tabindex="0"
+            role="tree"
+            aria-label={t(locale, 'tool.tree.title')}
+          >
+            <div class="relative" data-tree-spacer style="height: 0px">
+              <div class="absolute inset-x-0 top-0" data-tree-rows></div>
+            </div>
+          </div>
+
+          <div
+            data-tree-empty
+            class="pointer-events-none absolute inset-0 grid place-items-center p-6 text-center"
+          >
+            <p class="max-w-xs text-[13px] leading-5 text-body-mid">
+              {t(locale, 'tool.tree.placeholder')}
+            </p>
+          </div>
+
+          <div
+            data-tree-error
+            class="absolute inset-0 z-20 overflow-auto bg-canvas p-4 sm:p-5"
+            hidden
+          >
+            <div class="flex items-start gap-3">
+              <span
+                class="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border border-danger font-mono text-[14px] leading-none text-danger"
+                aria-hidden="true"
+              >
+                !
+              </span>
+              <div class="min-w-0 flex-1">
+                <h3 class="text-[15px] font-semibold leading-6 text-ink">
+                  {t(locale, 'tool.errorTitle')}
+                </h3>
+                <p
+                  class="mt-1 break-words font-mono text-[13px] leading-5 text-ink"
+                  data-error-message
+                ></p>
+                <p class="mt-2 text-[13px] leading-5 text-danger" data-error-location hidden></p>
+                <p class="mt-1 text-[14px] leading-6 text-body" data-error-hint></p>
+                <pre
+                  class="mt-3 hidden overflow-x-auto rounded-[8px] border border-line bg-cream p-3 font-mono text-[12px] leading-5 text-body"
+                  data-error-snippet
+                ><code></code></pre>
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <button type="button" data-error-goto class="error-primary">
+                    {t(locale, 'tool.errorGoto')}
+                  </button>
+                  <button type="button" data-error-dismiss class="error-secondary">
+                    {t(locale, 'tool.errorDismiss')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex min-h-[44px] flex-wrap items-center gap-2 border-t border-line px-3 py-1.5">
+          <span class="font-sans text-[11px] uppercase tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.tree.path')}
+          </span>
+          <code
+            data-tree-path
+            class="min-w-0 flex-1 truncate font-mono text-[12px] text-ink"
+            title=""
+          >—</code>
+          <button
+            type="button"
+            data-tree-copy
+            class="inline-flex h-8 items-center gap-1 rounded-[7px] px-2 text-[12px] font-semibold text-primary hover:bg-cream disabled:opacity-40"
+            aria-label={t(locale, 'tool.tree.copyPath')}
+            title={t(locale, 'tool.tree.copyPath')}
+            disabled
+          >
+            <Icon name="copy" class="size-3.5" />
+            <span data-tree-copy-label>{t(locale, 'tool.tree.copyPathShort')}</span>
+          </button>
+          <button
+            type="button"
+            data-tree-copy-value
+            class="inline-flex h-8 items-center gap-1 rounded-[7px] px-2 text-[12px] font-semibold text-primary hover:bg-cream disabled:opacity-40"
+            aria-label={t(locale, 'tool.tree.copyValue')}
+            title={t(locale, 'tool.tree.copyValue')}
+            disabled
+          >
+            <Icon name="copy" class="size-3.5" />
+            <span data-tree-copy-value-label>{t(locale, 'tool.tree.copyValueShort')}</span>
+          </button>
+          <span class="hidden text-[11px] leading-5 text-body-mid lg:inline">
+            {t(locale, 'tool.tree.hint')}
+          </span>
+        </div>
+      </section>
+    </div>
+
+    <StatsBar locale={locale} stats={stats} />
+  </div>
+</ToolPage>
+
+<ShortcutsDialog locale={locale} runLabel={t(locale, 'tool.view')} />
+
+<style>
+  .tree-menu-button {
+    display: inline-flex;
+    height: 32px;
+    width: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--ink);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .tree-menu-button::-webkit-details-marker {
+    display: none;
+  }
+
+  .tree-menu-button:hover {
+    background: var(--cream);
+  }
+
+  .tree-menu-panel {
+    position: absolute;
+    inset-inline-end: 0;
+    top: 100%;
+    z-index: 30;
+    margin-top: 4px;
+    width: 12rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--canvas);
+    padding: 4px;
+  }
+
+  .tree-menu-item {
+    display: flex;
+    width: 100%;
+    min-height: 34px;
+    align-items: center;
+    border-radius: 6px;
+    padding: 0 8px;
+    text-align: start;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--ink);
+  }
+
+  .tree-menu-item:hover {
+    background: var(--cream);
+  }
+
+  .tree-menu-heading {
+    padding: 6px 8px 2px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--body-mid);
+  }
+
+  @media (pointer: coarse) {
+    .tree-menu-item {
+      min-height: 44px;
+    }
+  }
+
+  .tool-tab {
+    position: relative;
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--body-mid);
+  }
+
+  .tool-tab[aria-selected="true"] {
+    color: var(--ink);
+    box-shadow: inset 0 -2px 0 var(--primary);
+  }
+
+  .error-primary {
+    display: inline-flex;
+    height: 40px;
+    align-items: center;
+    border-radius: 9px;
+    background: var(--ink);
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--canvas);
+  }
+
+  .error-secondary {
+    display: inline-flex;
+    height: 40px;
+    align-items: center;
+    border-radius: 9px;
+    padding: 0 12px;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .error-secondary:hover {
+    background: var(--cream);
+  }
+
+  @media (max-width: 767px) {
+    .tool-pane {
+      display: none;
+    }
+
+    .tool-pane.is-active {
+      display: flex;
+    }
+  }
+</style>

@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-05
-Status: Phase 3 complete. Worker engine and `json-formatter` verified end-to-end; Tier 1 tools remain.
+Last updated: 2026-11-09
+Status: Phase 4 complete. Design system re-tuned against the Supabase/Cal/Airtable combo; Tier 2 converters remain.
 
 ## Product identity
 
@@ -28,19 +28,22 @@ Status: Phase 3 complete. Worker engine and `json-formatter` verified end-to-end
 
 ## Visual direction
 
-The Phase 2 shell was re-skinned from `D:\DESIGN.md`, a Zapier-inspired warm-professional language.
+The Phase 2 shell was re-skinned from `D:\DESIGN.md`, a Zapier-inspired warm-professional language, then re-tuned against three DESIGN.md references: **supabase.com** (base system), **cal.com** (tool-page card layout), and **airtable.com** (long-form and signature-card sections). Source files: `Airtable DESIGN.md`, `Cal.com DESIGN.md`, `Supabase DESIGN.md` (opendesignmd.com, MIT).
 
 | Decision | Value |
 |---|---|
 | Canvas | Warm cream `#FFFEFB`; soft cream `#F8F4F0` for content bands. No pure white. |
 | Ink | Deep coffee `#1B1310`, body `#605D52`, secondary `#6B675C`. No pure black. |
-| Accent | Deep teal `#2E4B46` on light, `#82B7AB` on dark; on-accent `#FBFAF7` / `#12211F`. |
+| Accent | Deep teal `#2E4B46` on light, `#82B7AB` on dark; on-accent `#FBFAF7` / `#12211F`. One chromatic event per viewport. |
 | Dark mode | Teal-tinted near-black canvas `#0A0F0E`, soft `#121715`, ink `#EDEFEC`. |
-| Fixed-dark bands | Privacy “why” band and footer stay `#0A0F0E` / `#EDEFEC` in both themes. |
-| Shape | 12 px cards and buttons; 6 px inputs and menu rows; pill badges only. |
-| Type | Self-hosted Inter variable (latin subset, 48 KB). Degular Display is proprietary, so hero and display sizes use Inter 500, per the design file’s substitute guidance. No external font requests. |
-| Tool cards | Text only: tool name, description, and a text “Soon” badge. No icon glyphs, logos, or arrow icons on cards. |
-| Contrast | Light `body-mid` darkened from the reference `#939084` to `#6B675C` so 14–16 px text clears 4.5:1 on both canvas and cream. |
+| Signature band | The privacy block is a **full-bleed** band, not a rounded card, using the same `--code-surface` as the hero artifact: `#141A18` light, `#192120` dark. No new hue is introduced, so the page still has one accent and one dark neutral. Text `#FBFAF7` / `#C3CDC8`, numerals in `#9FD3C6`. The footer stays light canvas. |
+| Shape | 16 px tool frame; 12 px cards; 8 px buttons and menu triggers; 6 px inputs and menu rows; pill badges only. |
+| Type | Self-hosted Inter variable (latin subset, 48 KB). Display 500 with −0.03em tracking, body 400, UI 14–16 px. No external font requests. |
+| Section rhythm | 96 px vertical padding on desktop (`py-20 sm:py-24`); signature card 56–64 px internal padding. |
+| Elevation | Hairlines at 14 % ink; `--shadow-1` on cards and menu popovers, `--shadow-2` on the hero code artifact. No gradients, no glass. |
+| Code surface | Hero artifact and code blocks use `--code-surface` (`#141A18` light, `#121715` dark) with mint/amber/blue/lilac syntax tokens, all ≥8.7:1 on the surface. |
+| Tool cards | Text only: tool name, description, and a text “Soon” badge. No icon glyphs, logos, or arrow icons on cards. Hover raises a 1 px shadow. |
+| Contrast | Light `body-mid` darkened from the reference `#939084` to `#6B675C` so 14–16 px text clears 4.5:1 on both canvas and cream. Verified 16/16 token pairs AA in both themes. |
 
 ## Tool scope and priority
 

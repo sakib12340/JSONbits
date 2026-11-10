@@ -16,52 +16,81 @@ const siteName = t(locale, 'site.name');
 
 <section class="bg-canvas">
   <div
-    class="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16 lg:py-24"
+    class="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16"
   >
     <div class="min-w-0">
-      <p class="eyebrow text-ink">{t(locale, 'home.eyebrow')}</p>
+      <p class="eyebrow flex items-center gap-2.5 text-body-mid">
+        <span class="inline-block size-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true"></span>
+        {t(locale, 'home.eyebrow')}
+      </p>
       <h1
-        class="mt-5 max-w-[15ch] text-balance text-[40px] font-medium leading-[1.05] tracking-[-0.02em] text-ink sm:text-[56px] sm:leading-[56px]"
+        class="mt-5 max-w-[15ch] text-[42px] font-medium leading-[1.02] tracking-[-0.035em] text-ink sm:text-[60px] sm:leading-[0.98]"
       >
         {t(locale, 'home.title')}
       </h1>
-      <p class="mt-6 max-w-xl text-[20px] leading-[30px] text-body">
+      <p class="mt-6 max-w-xl text-[17px] leading-[27px] text-body sm:text-[18px] sm:leading-[29px]">
         {t(locale, 'home.intro')}
       </p>
       <div class="mt-8 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-6">
         <a
           href="#tools"
-          class="inline-flex min-h-[51px] shrink-0 items-center whitespace-nowrap rounded-[12px] bg-primary px-6 text-[18px] font-semibold leading-[27px] text-on-primary hover:bg-primary-hover"
+          class="inline-flex h-12 shrink-0 items-center whitespace-nowrap rounded-[8px] bg-primary px-5 text-[16px] font-semibold text-on-primary hover:bg-primary-hover"
         >
           {t(locale, 'home.browse')}
         </a>
-        <p class="flex max-w-sm items-start gap-2.5 text-base leading-6 text-body-mid">
-          <Icon name="lock" class="mt-0.5 size-[18px] shrink-0 text-primary" />
+        <p class="flex max-w-sm items-start gap-2.5 text-[14px] leading-[21px] text-body-mid">
+          <Icon name="lock" class="mt-0.5 size-[17px] shrink-0 text-primary" />
           <span>{t(locale, 'home.privacy')}</span>
         </p>
       </div>
     </div>
 
-    <div class="min-w-0 rounded-[12px] border border-line bg-cream p-6 sm:p-7">
-      <div class="flex items-center justify-between gap-4 border-b border-line pb-4">
-        <span class="font-mono text-[14px] uppercase tracking-[0.08em] text-body-mid">json</span>
-        <span
-          class="inline-flex items-center gap-2 rounded-full border border-line bg-canvas px-3 py-1 text-[14px] leading-[21px] text-ink"
+    <div class="min-w-0">
+      <div class="overflow-hidden rounded-[12px] bg-code-surface shadow-[var(--shadow-2)]">
+        <div
+          class="flex items-center justify-between gap-4 border-b border-code-line px-4 py-3 sm:px-5"
         >
-          <span class="size-1.5 rounded-full bg-primary" aria-hidden="true"></span>
-          {badge}
-        </span>
+          <span class="font-mono text-[12px] uppercase tracking-[0.12em] text-code-mute">json</span>
+          <span
+            class="inline-flex items-center gap-2 rounded-full border border-code-line px-2.5 py-1 font-mono text-[11px] leading-none text-code-text"
+          >
+            <span class="size-1.5 rounded-full bg-code-key" aria-hidden="true"></span>
+            {badge}
+          </span>
+        </div>
+        <pre
+          class="overflow-x-auto px-4 py-5 font-mono text-[13px] leading-[24px] text-code-text sm:px-5 sm:text-[14px] sm:leading-[26px]"><code><span class="tok-punct">&#123;</span>
+  <span class="tok-key">"name"</span><span class="tok-punct">:</span> <span class="tok-string">"{siteName}"</span><span class="tok-punct">,</span>
+  <span class="tok-key">"private"</span><span class="tok-punct">:</span> <span class="tok-literal">true</span><span class="tok-punct">,</span>
+  <span class="tok-key">"uploads"</span><span class="tok-punct">:</span> <span class="tok-number">0</span><span class="tok-punct">,</span>
+  <span class="tok-key">"tools"</span><span class="tok-punct">:</span> <span class="tok-number">{tools.length}</span>
+<span class="tok-punct">&#125;</span></code></pre>
+        <p class="border-t border-code-line px-4 py-3 text-[12px] leading-[18px] text-code-mute sm:px-5">
+          {note}
+        </p>
       </div>
-      <pre
-        class="mt-5 overflow-x-auto font-mono text-[13px] leading-[26px] text-ink sm:text-[14px]"><code><span class="text-body-mid">&#123;</span>
-  <span class="text-primary">"name"</span><span class="text-body-mid">:</span> <span class="text-ink">"{siteName}"</span><span class="text-body-mid">,</span>
-  <span class="text-primary">"private"</span><span class="text-body-mid">:</span> <span class="text-primary">true</span><span class="text-body-mid">,</span>
-  <span class="text-primary">"uploads"</span><span class="text-body-mid">:</span> <span class="text-primary">0</span><span class="text-body-mid">,</span>
-  <span class="text-primary">"tools"</span><span class="text-body-mid">:</span> <span class="text-primary">{tools.length}</span>
-<span class="text-body-mid">&#125;</span></code></pre>
-      <p class="mt-5 border-t border-line pt-4 text-[14px] leading-[21px] text-body-mid">
-        {note}
-      </p>
     </div>
   </div>
 </section>
+
+<style>
+  .tok-key {
+    color: var(--code-key);
+  }
+
+  .tok-string {
+    color: var(--code-string);
+  }
+
+  .tok-number {
+    color: var(--code-number);
+  }
+
+  .tok-literal {
+    color: var(--code-literal);
+  }
+
+  .tok-punct {
+    color: var(--code-mute);
+  }
+</style>

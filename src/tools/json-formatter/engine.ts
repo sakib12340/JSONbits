@@ -10,7 +10,7 @@ import type {
   FormatOptions,
   FormatResult,
   ProgressUpdate,
-  WorkerRequest,
+  TextPayload,
 } from '../../workers/protocol';
 import { JsonFormatError } from '../../workers/ops/errors';
 import { FALLBACK_LIMIT } from '../limits';
@@ -24,7 +24,7 @@ function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-function decode(payload: WorkerRequest['payload']): string {
+function decode(payload: TextPayload): string {
   if ('text' in payload) return payload.text;
 
   try {
@@ -48,12 +48,12 @@ export class JsonFormatterEngine {
   private client = new WorkerClient();
 
   async format(
-    payload: WorkerRequest['payload'],
+    payload: TextPayload,
     options: FormatOptions,
     onProgress?: (progress: ProgressUpdate) => void,
   ): Promise<EngineResult> {
     try {
-      const result = await this.client.run(payload, options, onProgress);
+      const result = await this.client.run('format', payload, options, onProgress);
       return { result, usedFallback: false };
     } catch (error) {
       if (error instanceof WorkerCancelledError) throw error;

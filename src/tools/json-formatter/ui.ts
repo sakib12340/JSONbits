@@ -1,13 +1,10 @@
 import type { EditorHandle } from '../../lib/editor';
+import { setupDropzone } from '../../lib/dropzone';
 import { FormatterSession } from './session';
 import { setupShortcuts } from './shortcuts';
 import { readToolStrings } from './strings';
 import { setupTabs } from './tabs';
 import { ToolView } from './view';
-
-function hasFiles(event: DragEvent): boolean {
-  return Array.from(event.dataTransfer?.types ?? []).includes('Files');
-}
 
 export async function mount(shell: HTMLElement): Promise<void> {
   const strings = readToolStrings(shell);
@@ -78,47 +75,4 @@ export async function mount(shell: HTMLElement): Promise<void> {
     },
     { once: true },
   );
-}
-
-function setupDropzone(shell: HTMLElement, onFile: (file: File) => void): void {
-  const wrap = shell.querySelector<HTMLElement>('[data-editor-wrap="input"]');
-  const overlay = shell.querySelector<HTMLElement>('[data-drop-overlay]');
-  let depth = 0;
-
-  if (wrap && overlay) {
-    wrap.addEventListener('dragenter', (event) => {
-      if (!hasFiles(event)) return;
-      event.preventDefault();
-      depth += 1;
-      overlay.hidden = false;
-    });
-
-    wrap.addEventListener('dragover', (event) => {
-      if (!hasFiles(event)) return;
-      event.preventDefault();
-      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
-    });
-
-    wrap.addEventListener('dragleave', () => {
-      if (depth === 0) return;
-      depth -= 1;
-      if (depth === 0) overlay.hidden = true;
-    });
-
-    wrap.addEventListener('drop', (event) => {
-      event.preventDefault();
-      depth = 0;
-      overlay.hidden = true;
-      const file = event.dataTransfer?.files?.[0];
-      if (file) onFile(file);
-    });
-  }
-
-  document.addEventListener('dragover', (event) => {
-    if (hasFiles(event)) event.preventDefault();
-  });
-
-  document.addEventListener('drop', (event) => {
-    if (hasFiles(event)) event.preventDefault();
-  });
 }
