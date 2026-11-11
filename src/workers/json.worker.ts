@@ -1,4 +1,7 @@
 import { JsonFormatError } from './ops/errors';
+import { csvToJson, jsonToCsv } from './ops/convert/csv';
+import { jsonToXml, xmlToJson } from './ops/convert/xml';
+import { jsonToYaml, yamlToJson } from './ops/convert/yaml';
 import { formatJson } from './ops/format';
 import { minifyJson } from './ops/minify';
 import { repairJson } from './ops/repair';
@@ -73,6 +76,7 @@ async function readText(
 function withOutput<T extends { output: string | null; stats: unknown }>(
   id: number,
   result: T,
+  mime = 'application/json',
 ): void {
   if (result.output === null) {
     post({ id, ok: true, result });
@@ -80,7 +84,7 @@ function withOutput<T extends { output: string | null; stats: unknown }>(
   }
 
   if (result.output.length > MAX_TEXT_OUTPUT) {
-    const blob = new Blob([result.output], { type: 'application/json' });
+    const blob = new Blob([result.output], { type: mime });
     post({
       id,
       ok: true,
@@ -194,6 +198,48 @@ async function handle(request: WorkerRequest): Promise<void> {
         post({ id, ok: true, result });
         return;
       }
+
+      case 'jsonToCsv': {
+        const text = await readText(id, request.payload, 'converting');
+        if (text === null) return;
+        withOutput(id, jsonToCsv(text, request.options), 'text/csv');
+        return;
+      }
+
+      case 'csvToJson': {
+        const text = await readText(id, request.payload, 'converting');
+        if (text === null) return;
+        withOutput(id, await csvToJson(text, request.options));
+        return;
+      }
+
+      case 'jsonToYaml': {
+        const text = await readText(id, request.payload, 'converting');
+        if (text === null) return;
+        withOutput(id, await jsonToYaml(text, request.options), 'application/yaml');
+        return;
+      }
+
+      case 'yamlToJson': {
+        const text = await readText(id, request.payload, 'converting');
+        if (text === null) return;
+        withOutput(id, await yamlToJson(text, request.options));
+        return;
+      }
+
+      case 'jsonToXml': {
+        const text = await readText(id, request.payload, 'converting');
+        if (text === null) return;
+        withOutput(id, await jsonToXml(text, request.options), 'application/xml');
+        return;
+      }
+
+      case 'xmlToJson': {
+        const text = await readText(id, request.payload, 'converting');
+        if (text === null) return;
+        withOutput(id, await xmlToJson(text, request.options));
+        return;
+      }
     }
   } catch (error) {
     if (error instanceof JsonFormatError) {
@@ -224,6 +270,12 @@ async function handle(request: WorkerRequest): Promise<void> {
       treeSearch: 'tree search',
       treeValue: 'tree viewer',
       diff: 'comparison',
+      jsonToCsv: 'CSV converter',
+      csvToJson: 'CSV converter',
+      jsonToYaml: 'YAML converter',
+      yamlToJson: 'YAML converter',
+      jsonToXml: 'XML converter',
+      xmlToJson: 'XML converter',
     };
 
     post({

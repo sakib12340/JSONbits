@@ -1,0 +1,172 @@
+---
+import OptionSelect from './OptionSelect.astro';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+const { locale, tool } = Astro.props;
+const op = tool.workerOp;
+const field = 'flex flex-col gap-1.5';
+const caption = 'text-[12px] font-medium leading-4 text-body-mid';
+const check =
+  'inline-flex min-h-11 cursor-pointer items-center gap-2 text-[14px] leading-5 text-ink';
+const box = 'size-4 rounded-[3px] accent-[var(--primary)]';
+
+const delimiterOptions = [
+  ...(op === 'csvToJson' ? [{ value: '', label: t(locale, 'tool.option.auto') }] : []),
+  { value: ',', label: t(locale, 'tool.option.comma') },
+  { value: ';', label: t(locale, 'tool.option.semicolon') },
+  { value: '\t', label: t(locale, 'tool.option.tab') },
+  { value: '|', label: t(locale, 'tool.option.pipe') },
+];
+
+const arrayOptions = [
+  { value: 'join', label: t(locale, 'tool.option.arraysJoin') },
+  { value: 'json', label: t(locale, 'tool.option.arraysJson') },
+];
+
+const indentOptions = [
+  { value: '2', label: t(locale, 'tool.indent.2') },
+  { value: '4', label: t(locale, 'tool.indent.4') },
+  { value: 'tab', label: t(locale, 'tool.indent.tab') },
+];
+const shortIndentOptions = indentOptions.slice(0, 2);
+---
+
+<div
+  class="flex flex-wrap items-end gap-x-5 gap-y-3 border-b border-line px-3 py-3 sm:px-4"
+  role="group"
+  aria-label={t(locale, 'tool.options')}
+  data-options
+>
+  {(op === 'jsonToCsv' || op === 'csvToJson') && (
+    <div class={field}>
+      <span id="converter-delimiter-label" class={caption}>
+        {t(locale, 'tool.option.delimiter')}
+      </span>
+      <OptionSelect
+        id="converter-delimiter"
+        name="delimiter"
+        labelledBy="converter-delimiter-label"
+        value={op === 'csvToJson' ? '' : ','}
+        options={delimiterOptions}
+      />
+    </div>
+  )}
+
+  {op === 'jsonToCsv' && (
+    <>
+      <div class={field}>
+        <span id="converter-arrays-label" class={caption}>
+          {t(locale, 'tool.option.arrays')}
+        </span>
+        <OptionSelect
+          id="converter-arrays"
+          name="arrays"
+          labelledBy="converter-arrays-label"
+          value="join"
+          options={arrayOptions}
+        />
+      </div>
+      <label class={check}>
+        <input type="checkbox" class={box} data-option="flatten" checked />
+        <span>{t(locale, 'tool.option.flatten')}</span>
+      </label>
+      <label class={check}>
+        <input type="checkbox" class={box} data-option="header" checked />
+        <span>{t(locale, 'tool.option.header')}</span>
+      </label>
+      <label class={check}>
+        <input type="checkbox" class={box} data-option="guard" />
+        <span>{t(locale, 'tool.option.guard')}</span>
+      </label>
+    </>
+  )}
+
+  {op === 'csvToJson' && (
+    <>
+      <label class={check}>
+        <input type="checkbox" class={box} data-option="header" checked />
+        <span>{t(locale, 'tool.option.firstRowHeader')}</span>
+      </label>
+      <label class={check}>
+        <input type="checkbox" class={box} data-option="infer" />
+        <span>{t(locale, 'tool.option.infer')}</span>
+      </label>
+    </>
+  )}
+
+  {op === 'jsonToYaml' && (
+    <div class={field}>
+      <span id="converter-indent-label" class={caption}>
+        {t(locale, 'tool.option.indent')}
+      </span>
+      <OptionSelect
+        id="converter-indent"
+        name="indent"
+        labelledBy="converter-indent-label"
+        value="2"
+        options={shortIndentOptions}
+      />
+    </div>
+  )}
+
+  {(op === 'yamlToJson' || op === 'xmlToJson') && (
+    <div class={field}>
+      <span id="converter-indent-label" class={caption}>
+        {t(locale, 'tool.option.indent')}
+      </span>
+      <OptionSelect
+        id="converter-indent"
+        name="indent"
+        labelledBy="converter-indent-label"
+        value="2"
+        options={indentOptions}
+      />
+    </div>
+  )}
+
+  {op === 'jsonToXml' && (
+    <>
+      <label class={field}>
+        <span class={caption}>{t(locale, 'tool.option.root')}</span>
+        <input
+          type="text"
+          value="root"
+          data-option="root"
+          class="h-11 w-40 rounded-[8px] border border-line bg-canvas px-3 font-mono text-[14px] text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          spellcheck="false"
+          autocomplete="off"
+        />
+      </label>
+      <div class={field}>
+        <span id="converter-indent-label" class={caption}>
+          {t(locale, 'tool.option.indent')}
+        </span>
+        <OptionSelect
+          id="converter-indent"
+          name="indent"
+          labelledBy="converter-indent-label"
+          value="2"
+          options={shortIndentOptions}
+        />
+      </div>
+      <label class={check}>
+        <input type="checkbox" class={box} data-option="attributes" checked />
+        <span>{t(locale, 'tool.option.readAttributes')}</span>
+      </label>
+    </>
+  )}
+
+  {op === 'xmlToJson' && (
+    <label class={check}>
+      <input type="checkbox" class={box} data-option="attributes" checked />
+      <span>{t(locale, 'tool.option.attributes')}</span>
+    </label>
+  )}
+</div>

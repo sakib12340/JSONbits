@@ -1,0 +1,201 @@
+---
+import ToolPage from './ToolPage.astro';
+import Toolbar from './Toolbar.astro';
+import ConverterOptions from './ConverterOptions.astro';
+import EditorPane from './EditorPane.astro';
+import ErrorPanel from './ErrorPanel.astro';
+import FileDropzone from './FileDropzone.astro';
+import StatsBar from './StatsBar.astro';
+import ShortcutsDialog from './ShortcutsDialog.astro';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import { t, type TranslationKey } from '../../i18n/t';
+import { commonToolStrings } from '../../i18n/tool-strings';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+type FormatKey = 'json' | 'csv' | 'yaml' | 'xml';
+
+const { locale, tool } = Astro.props;
+const [from, to] = tool.workerOp.split('To');
+const source = from as FormatKey;
+const target = to.toLowerCase() as FormatKey;
+const accepts: Record<FormatKey, string> = {
+  json: '.json,.txt,.geojson,application/json,text/plain',
+  csv: '.csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain',
+  yaml: '.yaml,.yml,.txt,application/yaml,text/yaml,text/plain',
+  xml: '.xml,.txt,application/xml,text/xml,text/plain',
+};
+const stats =
+  source === 'csv' || target === 'csv'
+    ? [
+        { key: 'size', label: t(locale, 'tool.stats.size') },
+        { key: 'rows', label: t(locale, 'tool.stats.rows') },
+        { key: 'output', label: t(locale, 'tool.stats.output') },
+        { key: 'time', label: t(locale, 'tool.stats.time') },
+      ]
+    : [
+        { key: 'size', label: t(locale, 'tool.stats.size') },
+        { key: 'output', label: t(locale, 'tool.stats.output') },
+        { key: 'lines', label: t(locale, 'tool.stats.lines') },
+        { key: 'time', label: t(locale, 'tool.stats.time') },
+      ];
+const label = t(locale, 'tool.convert');
+const strings = {
+  ...commonToolStrings(locale),
+  largeRun: t(locale, 'tool.largeRunAction', { action: label }),
+  largeLoaded: t(locale, 'tool.largeLoadedAction', { action: label }),
+  largeWarning: t(locale, 'tool.largeWarningAction', { action: label }),
+  converting: t(locale, 'tool.converting'),
+  convertedDone: t(locale, 'tool.convertedDone'),
+  rowsColumns: t(locale, 'tool.rowsColumns'),
+  linesCount: t(locale, 'tool.linesCount'),
+  inputLabel: t(locale, 'tool.inputLabel.generic'),
+  outputLabel: t(locale, 'tool.outputLabel.generic'),
+  placeholder: t(locale, `tool.placeholder.${source}` as TranslationKey),
+  outputPlaceholder: t(locale, `tool.outputPlaceholder.${target}` as TranslationKey),
+};
+---
+
+<ToolPage locale={locale} tool={tool} strings={strings}>
+  <div
+    class="mt-5 overflow-hidden rounded-[16px] border border-line bg-canvas sm:mt-7"
+    data-tool-frame
+  >
+    <Toolbar
+      locale={locale}
+      action="convert"
+      label={label}
+      showIndent={false}
+      showFind={true}
+      accept={accepts[source]}
+    />
+
+    <ConverterOptions locale={locale} tool={tool} />
+
+    <div
+      class="flex items-center gap-1 border-b border-line px-2 md:hidden"
+      role="tablist"
+      aria-label={`${t(locale, 'tool.input')} / ${t(locale, 'tool.output')}`}
+      data-mobile-tabs
+    >
+      <button
+        type="button"
+        id="tab-input"
+        data-tab="input"
+        role="tab"
+        aria-selected="true"
+        aria-controls="pane-input"
+        tabindex="0"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.input')}
+      </button>
+      <button
+        type="button"
+        id="tab-output"
+        data-tab="output"
+        role="tab"
+        aria-selected="false"
+        aria-controls="pane-output"
+        tabindex="-1"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.output')}
+        <span class="ml-1 inline-block size-1.5 rounded-full bg-primary align-middle" data-output-dot hidden></span>
+      </button>
+    </div>
+
+    <div class="tool-panes md:grid md:grid-cols-2" data-mobile-view="input">
+      <section
+        class="tool-pane is-active min-w-0 flex-col"
+        data-pane="input"
+        id="pane-input"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.input')}
+      >
+        <div class="flex min-h-[46px] flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2">
+          <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.input')}
+          </h2>
+          <span
+            data-file-chip
+            hidden
+            class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
+          >
+            <span data-file-name class="truncate" />
+          </span>
+        </div>
+
+        <EditorPane
+          kind="input"
+          locale={locale}
+          largeAction="convert-large"
+          largeLabel={t(locale, 'tool.convertFile')}
+        >
+          <FileDropzone
+            locale={locale}
+            label={t(locale, `tool.drop.${source}` as TranslationKey)}
+          />
+        </EditorPane>
+      </section>
+
+      <section
+        class="tool-pane min-w-0 flex-col md:border-l md:border-line"
+        data-pane="output"
+        id="pane-output"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.output')}
+      >
+        <div class="flex min-h-[46px] items-center justify-between gap-2 border-b border-line px-4 py-2">
+          <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.output')}
+          </h2>
+          <span
+            class="max-w-[70%] truncate font-mono text-[11px] leading-4 text-body-mid"
+            data-output-meta
+          ></span>
+        </div>
+
+        <EditorPane kind="output" locale={locale}>
+          <ErrorPanel locale={locale} />
+        </EditorPane>
+      </section>
+    </div>
+
+    <StatsBar locale={locale} stats={stats} />
+  </div>
+</ToolPage>
+
+<ShortcutsDialog locale={locale} runLabel={label} />
+
+<style>
+  .tool-tab {
+    position: relative;
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--body-mid);
+  }
+
+  .tool-tab[aria-selected="true"] {
+    color: var(--ink);
+    box-shadow: inset 0 -2px 0 var(--primary);
+  }
+
+  @media (max-width: 767px) {
+    .tool-pane {
+      display: none;
+    }
+
+    .tool-pane.is-active {
+      display: flex;
+    }
+  }
+</style>

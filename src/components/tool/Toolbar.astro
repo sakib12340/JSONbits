@@ -1,5 +1,6 @@
 ---
 import Icon from '../ui/Icon.astro';
+import OptionSelect from './OptionSelect.astro';
 import type { Locale } from '../../i18n/config';
 import { t } from '../../i18n/t';
 
@@ -67,43 +68,13 @@ const labels = {
 
     {
       showIndent && (
-        <div class="relative h-11 rounded-[8px] border border-line" data-select>
-          <button
-            type="button"
-            data-select-trigger
-            aria-haspopup="listbox"
-            aria-expanded="false"
-            class="flex h-full items-center gap-2 rounded-[8px] px-3 text-[14px] text-ink"
-          >
-            <span id="tool-indent-label" class="sr-only text-[13px] text-body-mid sm:not-sr-only">
-              {t(locale, 'tool.indent')}
-            </span>
-            <span data-select-value>{indentOptions[0].label}</span>
-            <Icon name="chevron-down" class="size-3.5 shrink-0 text-body-mid" />
-          </button>
-
-          <ul
-            id="tool-indent-list"
-            data-select-list
-            role="listbox"
-            tabindex="-1"
-            aria-labelledby="tool-indent-label"
-            hidden
-            class="absolute left-0 top-full z-50 mt-2 w-44 rounded-[10px] border border-line bg-canvas p-1 shadow-[var(--shadow-1)]"
-          >
-            {indentOptions.map((option) => (
-              <li
-                role="option"
-                data-value={option.value}
-                aria-selected={option.value === '2' ? 'true' : 'false'}
-                class="indent-option"
-              >
-                <span data-select-label>{option.label}</span>
-                <span class="indent-check"><Icon name="check" class="size-4 text-primary" /></span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <OptionSelect
+          id="tool-indent"
+          label={t(locale, 'tool.indent')}
+          value="2"
+          options={indentOptions}
+          inlineLabel
+        />
       )
     }
   </div>
@@ -189,41 +160,6 @@ const labels = {
 </div>
 
 <style>
-  .indent-option {
-    display: flex;
-    min-height: 44px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    border-radius: 6px;
-    padding: 0 10px;
-    font-size: 14px;
-    color: var(--body);
-    cursor: pointer;
-  }
-
-  .indent-option[data-active='true'] {
-    background: var(--cream);
-  }
-
-  .indent-option:hover {
-    background: var(--cream);
-  }
-
-  .indent-option[aria-selected='true'] {
-    color: var(--ink);
-  }
-
-  .indent-check {
-    display: flex;
-    flex: none;
-    opacity: 0;
-  }
-
-  .indent-option[aria-selected='true'] .indent-check {
-    opacity: 1;
-  }
-
   .ghost-button {
     display: inline-flex;
     height: 44px;

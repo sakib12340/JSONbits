@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-09
-Status: Phase 4 complete. Design system re-tuned against the Supabase/Cal/Airtable combo; Tier 2 converters remain.
+Last updated: 2026-11-10
+Status: Phase 5 complete. Tier 2 converters ship; Tier 3 and the SEO/content layer remain.
 
 ## Product identity
 
@@ -145,6 +145,20 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - No further light-palette darkening was applied: with the monitor corrected the current 20% hairline reads correctly, so the identity stays as designed.
 - Deliberately deferred: page canonical/hreflang + article content (Phase 6); splitting `json-formatter/session.ts` (551), `workers/ops/format.ts` (412) and `scanner.ts` (357) under the 250-line guidance (Phase 9).
 - Version control: `origin` is `git@github.com:sakib12340/JSONbits.git`; the local branch was grafted onto the existing backup commit rather than force-pushed. Commits use `sakib12340 <sadmansakib080212@gmail.com>`. `node_modules/`, `dist/`, and `.astro/` stay ignored.
+
+## Phase 5 converter verification
+
+- Six converter pages (`json-to-csv`, `csv-to-json`, `json-to-yaml`, `yaml-to-json`, `json-to-xml`, `xml-to-json`) share one `ConverterSession` + `ConverterShell`, with per-tool controls driven by `data-option`. Registry entries are now `ui: 'converter'`, `available: true`; total pages grew from 35 to 65.
+- All dropdowns now use the same shared `OptionSelect` listbox as the formatter’s indent menu (custom trigger, 44 px rows, token-drawn popup); no native OS `<select>` popups remain on tool pages.
+- Worker ops: `jsonToCsv`, `csvToJson`, `jsonToYaml`, `yamlToJson`, `jsonToXml`, `xmlToJson`. Each parser runs inside the worker only; `yaml`, `fast-xml-parser`, and `papaparse` stay behind dynamic `import()`.
+- CSV writing is hand-written: CRLF line endings, RFC 4180 quoting (quotes doubled, fields with delimiter/newline quoted), dot-path flattening, arrays joined or serialized, optional header, optional spreadsheet-formula guard (`= + - @ \t \r` prefixed with `'`). `papaparse` is used only for parsing CSV; delimiter auto-detection is available for CSV input.
+- JSON→XML maps `@key` entries to attributes only when “Read @ keys as attributes” is on, supports `#text`, validates element/attribute names, and wraps top-level arrays under `<item>`. XML→JSON keeps tag and attribute values as strings by design (e.g. `"12.50"`), because XML does not carry JSON types; attributes appear as `@name`. This is documented rather than inferred.
+- YAML output uses `lineWidth: 0` so long strings are not wrapped. YAML input parses one document at a time and caps alias expansion at 100 (`toJS({ maxAliasCount: 100 })`). Library messages are trimmed to their first line so the error panel does not duplicate the source/caret block.
+- Errors from JSON input reuse the tokenizer-based `parseJson` path, so line, column, hint, snippet, and Go-to-error work exactly as on Tier 1 pages. Converters report format-specific hints for YAML indentation/tabs/duplicate keys and for XML closing tags/attributes/entities.
+- Outputs download with the correct MIME type and extension (`text/csv`, `application/yaml`, `application/xml`, JSON as `application/json`). Outputs over 4 MB are returned as a Blob instead of a cloned string.
+- Verified in the browser: all six samples; semicolon delimiter with flatten/header off; XML root rename to `feed`; JSON trailing-comma error at line 1, column 10; XML mismatched closing tag at line 1, column 16; YAML tab/indentation error with cleaned message; drag-and-drop loading `people.json` and downloading `people.csv` with CRLF bytes; 390 px iframe with no horizontal overflow and stacked panes; light/dark layouts and 7.46:1 dark body contrast.
+- `pnpm astro check`: 0 errors, 0 warnings, 2 deprecation hints from `fast-xml-parser` v5 (`XMLBuilder`/`XMLValidator`); `pnpm build`: 65 pages. The hints are advisory: v5 points to a separate `fast-xml-validator` package and the builder API remains the documented conversion path.
+- Deliberately deferred: converter UI strings are English-only and fall back to English in other locales until Phase 7; the new i18n warning now reports per-locale missing-key counts instead of dumping every key.
 
 ## Theme independence (supersedes the Phase 2 three-state theme)
 

@@ -5,6 +5,7 @@ import EditorToolShell from '../components/tool/EditorToolShell.astro';
 import ValidatorShell from '../components/tool/ValidatorShell.astro';
 import ViewerShell from '../components/tool/ViewerShell.astro';
 import DiffShell from '../components/tool/DiffShell.astro';
+import ConverterShell from '../components/tool/ConverterShell.astro';
 import type { Locale } from '../i18n/config';
 import type { ToolDef } from '../tools/types';
 import { t } from '../i18n/t';
@@ -31,4 +32,5 @@ const description = t(locale, 'tool.metaDescription', { description: tool.descri
   {tool.ui === 'validator' && <ValidatorShell locale={locale} tool={tool} />}
   {tool.ui === 'viewer' && <ViewerShell locale={locale} tool={tool} />}
   {tool.ui === 'diff' && <DiffShell locale={locale} tool={tool} />}
+  {tool.ui === 'converter' && <ConverterShell locale={locale} tool={tool} />}
 </BaseLayout>

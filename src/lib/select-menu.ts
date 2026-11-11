@@ -47,6 +47,7 @@ export function createSelectMenu(root: HTMLElement): SelectMenu {
     const next = options.find((option) => option.value === value) ?? options[0];
     current = next.value;
     valueEl.textContent = labelOf(next);
+    root.dataset.value = current;
 
     for (const option of options) {
       option.el.setAttribute('aria-selected', String(option.value === current));
@@ -143,7 +144,7 @@ export function createSelectMenu(root: HTMLElement): SelectMenu {
     hide(true);
   });
 
-  valueEl.textContent = labelOf(options.find((option) => option.value === current) ?? options[0]);
+  select(current, false);
 
   return {
     root,

@@ -76,6 +76,57 @@ export interface RepairResult {
   stats: RepairStats;
 }
 
+export interface ConvertStats {
+  bytes: number;
+  outputBytes: number;
+  lines: number;
+  parseTimeMs: number;
+  rows?: number;
+  columns?: number;
+}
+
+export interface ConvertResult {
+  output: string | null;
+  blob: Blob | null;
+  stats: ConvertStats;
+}
+
+export type CsvDelimiter = ',' | ';' | '\t' | '|';
+export type CsvArrays = 'json' | 'join';
+
+export interface JsonToCsvOptions {
+  delimiter: CsvDelimiter;
+  flatten: boolean;
+  header: boolean;
+  guard: boolean;
+  arrays: CsvArrays;
+}
+
+export interface CsvToJsonOptions {
+  delimiter: CsvDelimiter | '';
+  header: boolean;
+  inferTypes: boolean;
+}
+
+export interface JsonToYamlOptions {
+  indent: 2 | 4;
+}
+
+export interface YamlToJsonOptions {
+  indent: FormatIndent;
+}
+
+export interface JsonToXmlOptions {
+  rootName: string;
+  indent: 2 | 4;
+  attributes: boolean;
+}
+
+export interface XmlToJsonOptions {
+  indent: FormatIndent;
+  attributes: boolean;
+}
+
 export type JsonType = 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
 
 export type JsonPath = (string | number)[];
@@ -200,6 +251,36 @@ export interface OpMap {
     options: DiffOptions;
     result: DiffResult;
   };
+  jsonToCsv: {
+    payload: TextPayload;
+    options: JsonToCsvOptions;
+    result: ConvertResult;
+  };
+  csvToJson: {
+    payload: TextPayload;
+    options: CsvToJsonOptions;
+    result: ConvertResult;
+  };
+  jsonToYaml: {
+    payload: TextPayload;
+    options: JsonToYamlOptions;
+    result: ConvertResult;
+  };
+  yamlToJson: {
+    payload: TextPayload;
+    options: YamlToJsonOptions;
+    result: ConvertResult;
+  };
+  jsonToXml: {
+    payload: TextPayload;
+    options: JsonToXmlOptions;
+    result: ConvertResult;
+  };
+  xmlToJson: {
+    payload: TextPayload;
+    options: XmlToJsonOptions;
+    result: ConvertResult;
+  };
 }
 
 export type WorkerOp = keyof OpMap;
@@ -221,6 +302,7 @@ export type ProgressPhase =
   | 'repairing'
   | 'indexing'
   | 'comparing'
+  | 'converting'
   | 'searching';
 
 export interface ProgressUpdate {

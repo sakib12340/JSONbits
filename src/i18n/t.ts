@@ -11,14 +11,19 @@ type Dictionary = Record<string, string>;
 
 const dictionaries: Record<Locale, Dictionary> = { en, es, fr, de, pt };
 
-const missingKeys = locales.flatMap((locale) =>
-  Object.keys(en)
-    .filter((key) => !(key in dictionaries[locale]))
-    .map((key) => `${locale}:${key}`),
-);
+const missing = locales
+  .map((locale) => ({
+    locale,
+    count: Object.keys(en).filter((key) => !(key in dictionaries[locale])).length,
+  }))
+  .filter((entry) => entry.count > 0);
 
-if (missingKeys.length > 0) {
-  console.warn(`[i18n] Missing translations: ${missingKeys.join(', ')}`);
+if (missing.length > 0) {
+  console.warn(
+    `[i18n] Falling back to English for: ${missing
+      .map((entry) => `${entry.locale} (${entry.count} keys)`)
+      .join(', ')}`,
+  );
 }
 
 export function t(

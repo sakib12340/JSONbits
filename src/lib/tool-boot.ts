@@ -9,6 +9,12 @@ const loaders: Record<string, () => Promise<ToolModule>> = {
   'json-viewer': () => import('../tools/json-viewer/ui'),
   'json-diff': () => import('../tools/json-diff/ui'),
   'json-repair': () => import('../tools/json-repair/ui'),
+  'json-to-csv': () => import('../tools/json-to-csv/ui'),
+  'csv-to-json': () => import('../tools/csv-to-json/ui'),
+  'json-to-yaml': () => import('../tools/json-to-yaml/ui'),
+  'yaml-to-json': () => import('../tools/yaml-to-json/ui'),
+  'json-to-xml': () => import('../tools/json-to-xml/ui'),
+  'xml-to-json': () => import('../tools/xml-to-json/ui'),
 };
 
 function readStrings(shell: HTMLElement): Record<string, string> {

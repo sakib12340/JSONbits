@@ -22,6 +22,7 @@ export type ToolUi =
   | 'validator'
   | 'viewer'
   | 'diff'
+  | 'converter'
   | 'pending';
 
 export interface ToolDef {

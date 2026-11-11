@@ -1,0 +1,121 @@
+---
+import Icon from '../ui/Icon.astro';
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface Props {
+  id: string;
+  options: SelectOption[];
+  value: string;
+  label?: string;
+  labelledBy?: string;
+  name?: string;
+  inlineLabel?: boolean;
+  class?: string;
+}
+
+const {
+  id,
+  options,
+  value,
+  label,
+  labelledBy,
+  name,
+  inlineLabel = false,
+  class: className = 'w-44',
+} = Astro.props;
+const selected = options.find((option) => option.value === value) ?? options[0];
+const labelId = labelledBy ?? (label ? `${id}-label` : undefined);
+---
+
+<div
+  class={`relative h-11 rounded-[8px] border border-line bg-canvas ${className}`}
+  data-select
+  data-option={name}
+  data-value={selected.value}
+>
+  <button
+    type="button"
+    data-select-trigger
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-labelledby={labelId}
+    class="flex h-full w-full min-w-0 items-center gap-2 rounded-[8px] px-3 text-[14px] text-ink"
+  >
+    {
+      label && (
+        <span
+          id={`${id}-label`}
+          class={inlineLabel ? 'sr-only text-[13px] text-body-mid sm:not-sr-only' : 'sr-only'}
+        >
+          {label}
+        </span>
+      )
+    }
+    <span data-select-value class="truncate">{selected.label}</span>
+    <Icon name="chevron-down" class="ms-auto size-3.5 shrink-0 text-body-mid" />
+  </button>
+
+  <ul
+    id={id}
+    data-select-list
+    role="listbox"
+    tabindex="-1"
+    aria-labelledby={labelId}
+    hidden
+    class="absolute left-0 top-full z-50 mt-2 w-full min-w-44 rounded-[10px] border border-line bg-canvas p-1 shadow-[var(--shadow-1)]"
+  >
+    {
+      options.map((option) => (
+        <li
+          role="option"
+          data-value={option.value}
+          aria-selected={option.value === selected.value ? 'true' : 'false'}
+          class="select-option"
+        >
+          <span data-select-label>{option.label}</span>
+          <span class="select-check">
+            <Icon name="check" class="size-4 text-primary" />
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .select-option {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 14px;
+    color: var(--body);
+    cursor: pointer;
+  }
+
+  .select-option[data-active='true'],
+  .select-option:hover {
+    background: var(--cream);
+  }
+
+  .select-option[aria-selected='true'] {
+    color: var(--ink);
+  }
+
+  .select-check {
+    display: flex;
+    flex: none;
+    opacity: 0;
+  }
+
+  .select-option[aria-selected='true'] .select-check {
+    opacity: 1;
+  }
+</style>
