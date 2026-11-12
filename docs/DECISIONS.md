@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-11
-Status: Phase 6 complete. The SEO layer and English long-form content ship; Phase 7 translation remains.
+Last updated: 2026-11-12
+Status: Phase 7 complete. UI strings and Tier 1 tool copy ship in all five locales; Tier 2 articles, guides, and hubs still fall back to English.
 
 ## Product identity
 
@@ -171,6 +171,16 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Hub and guide bodies share `.md-body` and `.faq-list` styles with tool articles instead of duplicating scoped CSS.
 - English content is served under every locale URL with correct `lang`, `dir`, canonical, and hreflang until Phase 7. Hub headings and meta titles are still English strings in `src/lib/categories.ts`.
 - `pnpm astro check`: 0 errors, 0 warnings, 2 pre-existing `fast-xml-parser` deprecation hints. `pnpm build`: 126 pages, sitemap created.
+
+## Phase 7 localization verification
+
+- UI dictionaries: 329 flat keys in each of `en`, `es`, `fr`, `de`, `pt`. Only 4–5 values per locale still equal English, and those are product names (JSON Bits, JSON Formatter). Two German tree strings used formal “Sie” among informal “du” copy and were rewritten (`tool.tree.valueTooLarge`, `tool.tree.valueMissing`).
+- Tier 1 tool content now exists for all six tools in all four non-English locales: 24 articles. Spanish and French already had five and gained `json-repair`; German and Portuguese gained all six. Tool titles stay as product names; summaries, steps, examples, mistakes, FAQs, and body prose are translated.
+- A temporary schema validator parsed every tool frontmatter with the project’s `yaml` dependency and checked the same limits as `src/content.config.ts`: description 140–155, summary ≥80, exactly 3 steps, 2–5 mistakes, 4–6 FAQs, plus ≥350 words of article text. All 36 tool articles (12 English + 24 localized) pass; the previously under-length `es/json-formatter` description is 151 characters.
+- `pnpm astro check`: 0 errors, 0 warnings, 2 pre-existing `fast-xml-parser` hints. `pnpm build`: 126 pages.
+- Built pages were checked directly, not assumed: all 30 Tier 1 tool pages (`6 tools × 5 locales`) emit the correct `<html lang>`, self-referencing canonical, five `hreflang` alternates plus `x-default`, the localized article body, and no text leaked from another locale. The sitemap still holds 125 URLs and now resolves localized `json-repair` pages.
+- Deliberate scope boundary: Tier 2 tool articles, the five `/learn` guides, the five category hubs, and the hub headings in `src/lib/categories.ts` remain English fallback. Phase 7 is defined as UI strings plus Tier 1 content, so this is documented rather than silently mixed in.
+- Translation quality: no native reviewer. Terminology follows the existing UI dictionaries (for example “Validieren”, “Minifizieren”, “Reparar”, “Réparer”, “Validar”); locale conventions are respected (Spanish informal “tú”, French formal “vous” and “Ctrl/Cmd+Entrée”, German informal “du”, Portuguese “você” imperatives).
 
 ## Theme independence (supersedes the Phase 2 three-state theme)
 
