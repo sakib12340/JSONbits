@@ -1,7 +1,9 @@
 ---
 import type { Locale } from '../../i18n/config';
 import type { ToolDef } from '../../tools/types';
-import { t, type TranslationKey } from '../../i18n/t';
+import { t } from '../../i18n/t';
+import { toolDescription } from '../../i18n/tool-text';
+import { hubByCategory } from '../../lib/categories';
 import { localePath } from '../../lib/paths';
 import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../../tools/limits';
 
@@ -13,7 +15,9 @@ interface Props {
 
 const { locale, tool, strings } = Astro.props;
 const home = localePath(locale, '/');
-const category = t(locale, `category.${tool.category}` as TranslationKey);
+const hub = hubByCategory(tool.category);
+const category = t(locale, hub.nameKey);
+const categoryHref = localePath(locale, `/${hub.slug}`);
 ---
 
 <section
@@ -34,7 +38,7 @@ const category = t(locale, `category.${tool.category}` as TranslationKey);
     >
       <a href={home} class="rounded-[6px] hover:text-ink">{t(locale, 'site.name')}</a>
       <span aria-hidden="true">/</span>
-      <a href={`${home}#tools`} class="rounded-[6px] hover:text-ink">{category}</a>
+      <a href={categoryHref} class="rounded-[6px] hover:text-ink">{category}</a>
       <span aria-hidden="true">/</span>
       <span class="text-ink" aria-current="page">{tool.name}</span>
     </nav>
@@ -48,7 +52,7 @@ const category = t(locale, `category.${tool.category}` as TranslationKey);
           {tool.name}
         </h1>
         <p class="mt-2 max-w-xl text-[15px] leading-6 text-body sm:text-[16px] sm:leading-[26px]">
-          {tool.description}
+          {toolDescription(locale, tool)}
         </p>
       </div>
       <p class="inline-flex flex-wrap items-center gap-1.5 text-[13px] leading-5 text-body-mid">

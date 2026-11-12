@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { defaultLocale } from '../i18n/config';
+import { tools } from '../tools/registry';
+import { localePath } from '../lib/paths';
+import { toolDescription } from '../i18n/tool-text';
+import { t } from '../i18n/t';
+
+const locale = defaultLocale;
+const suggested = ['json-formatter', 'json-validator', 'json-viewer', 'json-to-csv']
+  .map((id) => tools.find((tool) => tool.id === id && tool.available))
+  .filter((tool): tool is (typeof tools)[number] => Boolean(tool));
+---
+
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'notFound.metaTitle')}
+  description={t(locale, 'notFound.body')}
+  path="/404"
+  noindex
+  langPath="/"
+>
+  <div class="mx-auto max-w-3xl px-4 pb-20 pt-16 sm:px-6 sm:pt-24">
+    <p class="font-mono text-[13px] leading-5 tracking-[0.08em] text-body-mid">404</p>
+    <h1 class="mt-3 text-[32px] font-medium leading-[1.05] tracking-[-0.03em] text-ink sm:text-[44px]">
+      {t(locale, 'notFound.title')}
+    </h1>
+    <p class="mt-4 max-w-xl text-[16px] leading-[26px] text-body">{t(locale, 'notFound.body')}</p>
+
+    <section class="mt-10" aria-labelledby="not-found-tools">
+      <h2
+        id="not-found-tools"
+        class="text-[20px] font-semibold leading-[26px] tracking-[-0.015em] text-ink"
+      >
+        {t(locale, 'notFound.tools')}
+      </h2>
+      <ul class="mt-5 grid gap-3 sm:grid-cols-2">
+        {
+          suggested.map((tool) => (
+            <li>
+              <a
+                href={localePath(locale, `/${tool.slug}`)}
+                class="flex h-full flex-col rounded-[12px] border border-line bg-canvas p-5 hover:border-line-strong"
+              >
+                <span class="text-[15px] font-semibold leading-[22px] text-ink">{tool.name}</span>
+                <span class="mt-1 text-[13px] leading-[21px] text-body">{toolDescription(locale, tool)}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <p class="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[14px] font-medium text-ink">
+      <a href={localePath(locale, '/')} class="inline-flex min-h-11 items-center underline underline-offset-4">
+        {t(locale, 'header.tools')}
+      </a>
+      <a
+        href={localePath(locale, '/learn')}
+        class="inline-flex min-h-11 items-center underline underline-offset-4"
+      >
+        {t(locale, 'footer.learn')}
+      </a>
+    </p>
+  </div>
+</BaseLayout>

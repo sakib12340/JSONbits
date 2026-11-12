@@ -2,15 +2,19 @@
 import type { Locale } from '../../i18n/config';
 import type { ToolDef } from '../../tools/types';
 import { t } from '../../i18n/t';
+import { toolDescription } from '../../i18n/tool-text';
 
 interface Props {
   tool: ToolDef;
   locale: Locale;
   href: string;
+  /** Keep the card heading inside the page's heading outline. */
+  headingLevel?: 'h2' | 'h3' | 'h4';
 }
 
-const { tool, locale, href } = Astro.props;
+const { tool, locale, href, headingLevel = 'h4' } = Astro.props;
 const Tag = tool.available ? 'a' : 'div';
+const Heading = headingLevel;
 ---
 
 <Tag
@@ -22,7 +26,9 @@ const Tag = tool.available ? 'a' : 'div';
   ]}
 >
   <div class="flex flex-wrap items-start justify-between gap-2">
-    <h4 class="text-[16px] font-semibold leading-[22px] tracking-[-0.01em] text-ink">{tool.name}</h4>
+    <Heading class="text-[16px] font-semibold leading-[22px] tracking-[-0.01em] text-ink">
+      {tool.name}
+    </Heading>
     {
       !tool.available && (
         <span class="shrink-0 rounded-full bg-cream px-2.5 py-1 text-[11px] font-medium uppercase leading-none tracking-[0.08em] text-body-mid">
@@ -31,5 +37,5 @@ const Tag = tool.available ? 'a' : 'div';
       )
     }
   </div>
-  <p class="mt-2 text-[14px] leading-[22px] text-body">{tool.description}</p>
+  <p class="mt-2 text-[14px] leading-[22px] text-body">{toolDescription(locale, tool)}</p>
 </Tag>

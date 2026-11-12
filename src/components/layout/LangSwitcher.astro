@@ -6,15 +6,17 @@ import { t } from '../../i18n/t';
 
 interface Props {
   locale: Locale;
+  /** Override the path used to build language links, e.g. `/` on the 404 page. */
+  path?: string;
 }
 
-const { locale } = Astro.props;
+const { locale, path } = Astro.props;
 const current = localeMeta[locale];
 const options = locales.map((code) => ({
   code,
   label: localeMeta[code].label,
   lang: localeMeta[code].lang,
-  href: switchLocalePath(Astro.url.pathname, code),
+  href: switchLocalePath(path ?? Astro.url.pathname, code),
 }));
 ---
 

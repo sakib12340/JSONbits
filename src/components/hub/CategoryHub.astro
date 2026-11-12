@@ -1,0 +1,195 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import JsonLd from '../seo/JsonLd.astro';
+import ToolCard from '../home/ToolCard.astro';
+import { tools } from '../../tools/registry';
+import type { Locale } from '../../i18n/config';
+import { getHubCopy, listGuides } from '../../lib/content';
+import { categoryHubs, hubBySlug } from '../../lib/categories';
+import { localePath } from '../../lib/paths';
+import { localeUrl, SITE_NAME } from '../../lib/site';
+import { breadcrumbSchema, collectionPageSchema, faqSchema } from '../../lib/schema';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+  slug: string;
+}
+
+const { locale, slug } = Astro.props;
+const hub = hubBySlug(slug);
+
+if (!hub) throw new Error(`Unknown category hub "${slug}"`);
+
+const copy = await getHubCopy(locale, hub.category);
+const { Content } = await render(copy);
+
+const categoryTools = tools.filter((tool) => tool.available && tool.category === hub.category);
+const toolIds = new Set(categoryTools.map((tool) => tool.id));
+const guides = (await listGuides(locale)).filter((guide) =>
+  guide.data.toolIds.some((id) => toolIds.has(id)),
+);
+const otherHubs = categoryHubs.filter(
+  (entry) =>
+    entry.category !== hub.category &&
+    tools.some((tool) => tool.available && tool.category === entry.category),
+);
+
+const name = t(locale, hub.nameKey);
+const heading = t(locale, hub.headingKey);
+const metaTitle = t(locale, hub.metaTitleKey);
+const url = localeUrl(locale, `/${hub.slug}`);
+const structuredData = [
+  collectionPageSchema({
+    name: heading,
+    description: copy.data.description,
+    url,
+    locale,
+    items: categoryTools.map((tool) => ({
+      name: tool.name,
+      url: localeUrl(locale, `/${tool.slug}`),
+    })),
+  }),
+  faqSchema(copy.data.faq),
+  breadcrumbSchema([
+    { name: SITE_NAME, url: localeUrl(locale, '/') },
+    { name: heading, url },
+  ]),
+];
+---
+
+<BaseLayout
+  locale={locale}
+  title={metaTitle}
+  description={copy.data.description}
+  path={`/${hub.slug}`}
+>
+  <JsonLd slot="head" data={structuredData} />
+
+  <div class="mx-auto max-w-5xl px-4 pb-20 pt-5 sm:px-6 sm:pt-7">
+    <nav
+      class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-5 text-body-mid"
+      aria-label={t(locale, 'a11y.breadcrumb')}
+    >
+      <a href={localePath(locale, '/')} class="rounded-[6px] hover:text-ink">
+        {t(locale, 'site.name')}
+      </a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page" class="text-ink">{name}</span>
+    </nav>
+
+    <header class="mt-8">
+      <h1
+        id="hub-title"
+        class="text-[32px] font-medium leading-[1.05] tracking-[-0.03em] text-ink sm:text-[44px]"
+      >
+        {heading}
+      </h1>
+      <div class="md-body mt-5 max-w-3xl">
+        <Content />
+      </div>
+    </header>
+
+    <section class="mt-12" aria-labelledby="hub-tools">
+      <h2
+        id="hub-tools"
+        class="text-[20px] font-semibold leading-[26px] tracking-[-0.015em] text-ink"
+      >
+        {t(locale, 'hub.tools')}
+      </h2>
+      <ul class="mt-6 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+        {
+          categoryTools.map((tool) => (
+            <li class="min-w-0">
+              <ToolCard
+                tool={tool}
+                locale={locale}
+                href={localePath(locale, `/${tool.slug}`)}
+                headingLevel="h3"
+              />
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    {
+      guides.length > 0 && (
+        <section class="mt-14" aria-labelledby="hub-guides">
+          <h2
+            id="hub-guides"
+            class="text-[20px] font-semibold leading-[26px] tracking-[-0.015em] text-ink"
+          >
+            {t(locale, 'hub.guides')}
+          </h2>
+          <ul class="mt-6 grid gap-4 sm:grid-cols-2">
+            {guides.map((guide) => (
+              <li class="min-w-0">
+                <a
+                  href={localePath(locale, `/learn/${guide.data.slug}`)}
+                  class="flex h-full flex-col rounded-[12px] border border-line bg-canvas p-6 transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-[var(--shadow-1)]"
+                >
+                  <span class="text-[16px] font-semibold leading-[22px] tracking-[-0.01em] text-ink">
+                    {guide.data.title}
+                  </span>
+                  <span class="mt-2 text-[14px] leading-[22px] text-body">
+                    {guide.data.description}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <section class="mt-14" aria-labelledby="hub-faq">
+      <h2
+        id="hub-faq"
+        class="text-[20px] font-semibold leading-[26px] tracking-[-0.015em] text-ink"
+      >
+        {t(locale, 'article.faq')}
+      </h2>
+      <div class="faq-list">
+        {
+          copy.data.faq.map((entry) => (
+            <details class="faq-item">
+              <summary>{entry.q}</summary>
+              <p>{entry.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    {
+      otherHubs.length > 0 && (
+        <section class="mt-14" aria-labelledby="hub-other">
+          <h2
+            id="hub-other"
+            class="text-[20px] font-semibold leading-[26px] tracking-[-0.015em] text-ink"
+          >
+            {t(locale, 'hub.other')}
+          </h2>
+          <ul class="mt-5 flex flex-wrap gap-2">
+            {otherHubs.map((entry) => (
+              <li>
+                <a
+                  href={localePath(locale, `/${entry.slug}`)}
+                  class="inline-flex min-h-11 items-center rounded-[8px] border border-line bg-canvas px-4 text-[14px] font-medium text-ink hover:border-ink"
+                >
+                  {t(locale, entry.headingKey)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <p class="mt-12 border-t border-line pt-6 text-[13px] leading-[22px] text-body-mid">
+      {t(locale, 'article.privacy')}
+    </p>
+  </div>
+</BaseLayout>

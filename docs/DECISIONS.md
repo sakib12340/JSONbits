@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-10
-Status: Phase 5 complete. Tier 2 converters ship; Tier 3 and the SEO/content layer remain.
+Last updated: 2026-11-11
+Status: Phase 6 complete. The SEO layer and English long-form content ship; Phase 7 translation remains.
 
 ## Product identity
 
@@ -159,6 +159,18 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Verified in the browser: all six samples; semicolon delimiter with flatten/header off; XML root rename to `feed`; JSON trailing-comma error at line 1, column 10; XML mismatched closing tag at line 1, column 16; YAML tab/indentation error with cleaned message; drag-and-drop loading `people.json` and downloading `people.csv` with CRLF bytes; 390 px iframe with no horizontal overflow and stacked panes; light/dark layouts and 7.46:1 dark body contrast.
 - `pnpm astro check`: 0 errors, 0 warnings, 2 deprecation hints from `fast-xml-parser` v5 (`XMLBuilder`/`XMLValidator`); `pnpm build`: 65 pages. The hints are advisory: v5 points to a separate `fast-xml-validator` package and the builder API remains the documented conversion path.
 - Deliberately deferred: converter UI strings are English-only and fall back to English in other locales until Phase 7; the new i18n warning now reports per-locale missing-key counts instead of dumping every key.
+
+## Phase 6 SEO and content verification
+
+- Content collections: `tools` (12 articles), `guides` (5), and `hubs` (5), all English under `src/content/<collection>/en/`. Schemas enforce 140–155-character descriptions, exactly 3 steps, 4–6 FAQs, and a locale enum, so edited content cannot silently break the metadata range.
+- Page count is 126: 5 locale homes, 60 tool pages, 25 category hubs, 5 `/learn` indexes, 25 guide pages, 5 `/privacy` pages, and `404.html`. Hubs are generated only for categories with at least one available tool, so `/generators` is not built yet.
+- Every tool page has a unique article: 479–585 words of body, how-to steps, an input/output example, common mistakes, 4–6 FAQs, related tools, and a privacy note. Tool pages emit `WebApplication`, `FAQPage`, and `BreadcrumbList`; hubs emit `CollectionPage`, `FAQPage`, and `BreadcrumbList`; guides emit `TechArticle`, `BreadcrumbList`, and `FAQPage`.
+- Metadata audit on all 12 tool pages: titles 49–54 characters, descriptions 140–151 characters, one canonical, six `hreflang` links including `x-default`. Home, `/learn`, `/privacy`, and all hubs are inside the same ranges; the 404 page is `noindex, follow` and emits no hreflang alternates.
+- The sitemap contains 125 URLs (all pages except 404) with hreflang alternates. Home category headings now link to their hubs; the header links Tools and Guides; the footer links Tools, Guides, and Privacy; tool breadcrumbs link to the category hub, so no hub or guide is orphaned.
+- Scripts are scoped per page type: the home search module loads only on home pages, the tool boot module only on tool pages, and content pages load only the theme/language shell.
+- Hub and guide bodies share `.md-body` and `.faq-list` styles with tool articles instead of duplicating scoped CSS.
+- English content is served under every locale URL with correct `lang`, `dir`, canonical, and hreflang until Phase 7. Hub headings and meta titles are still English strings in `src/lib/categories.ts`.
+- `pnpm astro check`: 0 errors, 0 warnings, 2 pre-existing `fast-xml-parser` deprecation hints. `pnpm build`: 126 pages, sitemap created.
 
 ## Theme independence (supersedes the Phase 2 three-state theme)
 

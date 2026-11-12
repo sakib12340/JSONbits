@@ -1,0 +1,146 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import JsonLd from '../seo/JsonLd.astro';
+import ToolCard from '../home/ToolCard.astro';
+import type { Locale } from '../../i18n/config';
+import { getGuideCopy } from '../../lib/content';
+import { tools } from '../../tools/registry';
+import { localePath } from '../../lib/paths';
+import { localeUrl, SITE_NAME } from '../../lib/site';
+import { articleSchema, breadcrumbSchema, faqSchema } from '../../lib/schema';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+  slug: string;
+}
+
+const { locale, slug } = Astro.props;
+const copy = await getGuideCopy(locale, slug);
+const { Content } = await render(copy);
+
+const url = localeUrl(locale, `/learn/${slug}`);
+const title = `${copy.data.title} | JSON Bits`;
+const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+const guideTools = copy.data.toolIds
+  .map((id) => tools.find((tool) => tool.id === id && tool.available))
+  .filter((tool): tool is (typeof tools)[number] => Boolean(tool));
+const faq = copy.data.faq ?? [];
+
+const structuredData = [
+  articleSchema({
+    headline: copy.data.title,
+    description: copy.data.description,
+    url,
+    dateModified: copy.data.updated.toISOString(),
+    locale,
+  }),
+  breadcrumbSchema([
+    { name: SITE_NAME, url: localeUrl(locale, '/') },
+    { name: t(locale, 'learn.title'), url: localeUrl(locale, '/learn') },
+    { name: copy.data.title, url },
+  ]),
+  ...(faq.length > 0 ? [faqSchema(faq)] : []),
+];
+---
+
+<BaseLayout
+  locale={locale}
+  title={title}
+  description={copy.data.description}
+  path={`/learn/${slug}`}
+  type="article"
+>
+  <JsonLd slot="head" data={structuredData} />
+
+  <div class="mx-auto max-w-3xl px-4 pb-20 pt-5 sm:px-6 sm:pt-7">
+    <nav
+      class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-5 text-body-mid"
+      aria-label={t(locale, 'a11y.breadcrumb')}
+    >
+      <a href={localePath(locale, '/')} class="rounded-[6px] hover:text-ink">
+        {t(locale, 'site.name')}
+      </a>
+      <span aria-hidden="true">/</span>
+      <a href={localePath(locale, '/learn')} class="rounded-[6px] hover:text-ink">
+        {t(locale, 'learn.title')}
+      </a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page" class="text-ink">{copy.data.title}</span>
+    </nav>
+
+    <article class="mt-8">
+      <h1
+        id="guide-title"
+        class="text-[30px] font-medium leading-[1.1] tracking-[-0.03em] text-ink sm:text-[40px]"
+      >
+        {copy.data.title}
+      </h1>
+      <p class="mt-3 text-[13px] leading-5 text-body-mid">
+        <time datetime={copy.data.updated.toISOString()}>
+          {t(locale, 'guide.updated', { date: dateFormat.format(copy.data.updated) })}
+        </time>
+      </p>
+
+      <div class="md-body mt-6">
+        <Content />
+      </div>
+
+      {
+        guideTools.length > 0 && (
+          <section class="mt-12" aria-labelledby="guide-tools">
+            <h2
+              id="guide-tools"
+              class="text-[20px] font-semibold leading-[26px] tracking-[-0.015em] text-ink"
+            >
+              {t(locale, 'guide.tools')}
+            </h2>
+            <ul class="mt-5 grid gap-4 sm:grid-cols-2">
+              {guideTools.map((tool) => (
+                <li class="min-w-0">
+                  <ToolCard
+                    tool={tool}
+                    locale={locale}
+                    href={localePath(locale, `/${tool.slug}`)}
+                    headingLevel="h3"
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      {
+        faq.length > 0 && (
+          <section class="mt-12" aria-labelledby="guide-faq">
+            <h2
+              id="guide-faq"
+              class="text-[20px] font-semibold leading-[26px] tracking-[-0.015em] text-ink"
+            >
+              {t(locale, 'article.faq')}
+            </h2>
+            <div class="faq-list">
+              {faq.map((entry) => (
+                <details class="faq-item">
+                  <summary>{entry.q}</summary>
+                  <p>{entry.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      <p class="mt-12 border-t border-line pt-6">
+        <a
+          href={localePath(locale, '/learn')}
+          class="inline-flex min-h-11 items-center text-[14px] font-medium text-ink underline underline-offset-4"
+        >
+          ← {t(locale, 'guide.back')}
+        </a>
+      </p>
+    </article>
+  </div>
+</BaseLayout>

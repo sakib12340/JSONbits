@@ -1,0 +1,66 @@
+---
+import { defaultLocale, localeMeta, locales, type Locale } from '../../i18n/config';
+import { absoluteUrl, localeUrl, SITE_NAME } from '../../lib/site';
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+  /** Path inside the locale, no trailing slash: `/json-formatter`, `/learn`, `/`. */
+  path: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+}
+
+const { title, description, locale, path, type = 'website', noindex = false } = Astro.props;
+
+const canonical = localeUrl(locale, path);
+const image = absoluteUrl('/og-default.png');
+const alternates = locales.map((entry) => ({
+  lang: localeMeta[entry].lang,
+  href: localeUrl(entry, path),
+}));
+const xDefault = localeUrl(defaultLocale, path);
+
+const ogLocale: Record<Locale, string> = {
+  en: 'en_US',
+  es: 'es_ES',
+  fr: 'fr_FR',
+  de: 'de_DE',
+  pt: 'pt_PT',
+};
+const otherLocales = locales.filter((entry) => entry !== locale);
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{
+  !noindex &&
+    alternates.map((alternate) => (
+      <link rel="alternate" hreflang={alternate.lang} href={alternate.href} />
+    ))
+}
+{!noindex && <link rel="alternate" hreflang="x-default" href={xDefault} />}
+{noindex && <meta name="robots" content="noindex, follow" />}
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={image} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={`${SITE_NAME} — private JSON tools in your browser`} />
+<meta property="og:locale" content={ogLocale[locale]} />
+{
+  otherLocales.map((entry) => (
+    <meta property="og:locale:alternate" content={ogLocale[entry]} />
+  ))
+}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={image} />

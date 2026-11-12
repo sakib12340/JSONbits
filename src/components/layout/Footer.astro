@@ -27,9 +27,31 @@ const year = new Date().getFullYear();
           {t(locale, 'footer.tagline')}
         </p>
       </div>
-      <p class="max-w-sm text-[14px] leading-[22px] text-body">
-        {t(locale, 'home.privacy')}
-      </p>
+      <div class="flex flex-col gap-5 sm:items-end">
+        <nav aria-label={t(locale, 'footer.nav')} class="flex flex-wrap gap-x-5 gap-y-1 sm:justify-end">
+          <a
+            href={`${localePath(locale, '/')}#tools`}
+            class="inline-flex min-h-11 items-center text-[14px] font-medium text-ink hover:underline hover:underline-offset-4"
+          >
+            {t(locale, 'footer.tools')}
+          </a>
+          <a
+            href={localePath(locale, '/learn')}
+            class="inline-flex min-h-11 items-center text-[14px] font-medium text-ink hover:underline hover:underline-offset-4"
+          >
+            {t(locale, 'footer.learn')}
+          </a>
+          <a
+            href={localePath(locale, '/privacy')}
+            class="inline-flex min-h-11 items-center text-[14px] font-medium text-ink hover:underline hover:underline-offset-4"
+          >
+            {t(locale, 'footer.privacy')}
+          </a>
+        </nav>
+        <p class="max-w-sm text-[14px] leading-[22px] text-body">
+          {t(locale, 'home.privacy')}
+        </p>
+      </div>
     </div>
     <div
       class="mt-12 flex flex-col gap-2 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between"

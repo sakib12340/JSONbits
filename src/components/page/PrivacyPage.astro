@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const description =
+  'What JSON Bits stores, what it never sees, and why every tool works without sending your JSON anywhere. A plain summary of local processing.';
+---
+
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'privacy.metaTitle')}
+  description={description}
+  path="/privacy"
+>
+  <div class="mx-auto max-w-3xl px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
+    <h1 class="text-[32px] font-medium leading-[1.05] tracking-[-0.03em] text-ink sm:text-[44px]">
+      {t(locale, 'privacy.title')}
+    </h1>
+    <p class="mt-4 text-[16px] leading-[26px] text-body">{t(locale, 'privacy.description')}</p>
+
+    <div class="md-body mt-8">
+      <p>
+        JSON Bits is built so that your documents have nowhere to go. Every tool on this site runs
+        inside the browser tab you already have open. There is no upload step, no account, and no
+        server that receives the JSON you paste or open.
+      </p>
+
+      <h2>Your JSON stays in the tab</h2>
+      <p>
+        Formatting, validation, conversion, comparison, and repair all run in a Web Worker created
+        by the page. The worker is part of the same browser tab. Data you paste, drop, or open with
+        the file picker is read locally with the browser's File API and processed in memory.
+      </p>
+      <p>
+        The document is never written to storage, never included in a cookie, and never attached to
+        an analytics event. When you close or reload the tab, it is gone.
+      </p>
+
+      <h2>What is stored on your device</h2>
+      <p>Two preferences are kept in <code>localStorage</code> so the site remembers them:</p>
+      <ul>
+        <li>The theme you picked: light or dark.</li>
+        <li>The indent size you last chose for formatting.</li>
+      </ul>
+      <p>
+        Those values contain no document content. Clearing site data in your browser removes them,
+        and the site falls back to its defaults.
+      </p>
+
+      <h2>Network requests</h2>
+      <p>
+        The page loads only its own static files: HTML, CSS, JavaScript, the self-hosted Inter font,
+        and the favicon. There are no third-party scripts, no analytics, no advertising pixels, and
+        no external fonts or CDNs.
+      </p>
+      <p>
+        A Content Security Policy sent with every page sets <code>connect-src 'none'</code>, which
+        stops the page from making <code>fetch</code>, XHR, or WebSocket requests. That rule is a
+        technical guarantee, not only a promise.
+      </p>
+      <p>
+        Like any website, the host that delivers these files (Cloudflare Pages) receives standard
+        request metadata such as your IP address, browser version, and the page you requested. That
+        is ordinary web hosting. It does not include the content you paste into a tool.
+      </p>
+
+      <h2>Files and downloads</h2>
+      <p>
+        Opening a file reads it locally. Downloading a result creates a temporary
+        <code>Blob</code> URL inside the tab, which the browser revokes after the download starts.
+        No file is uploaded to create it.
+      </p>
+
+      <h2>Advertising</h2>
+      <p>
+        There are no ads on the site today. If non-intrusive ads are added later, they will be clearly
+        marked, will never sit above or inside a tool, and will not read the content of your
+        documents. This page will be updated before any advertising is enabled.
+      </p>
+
+      <h2>Changes to this page</h2>
+      <p>
+        If the way the site handles data changes, this page changes with it. The date below records
+        the last revision.
+      </p>
+      <p>
+        <time datetime="2026-11-11">Last updated 11 November 2026</time>
+      </p>
+    </div>
+  </div>
+</BaseLayout>

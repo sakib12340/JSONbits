@@ -8,11 +8,13 @@ import { t } from '../../i18n/t';
 
 interface Props {
   locale: Locale;
+  langPath?: string;
 }
 
-const { locale } = Astro.props;
+const { locale, langPath } = Astro.props;
 const home = localePath(locale, '/');
 const toolsHref = `${home}#tools`;
+const learnHref = localePath(locale, '/learn');
 ---
 
 <header class="sticky top-0 z-40 border-b border-line bg-canvas">
@@ -29,8 +31,14 @@ const toolsHref = `${home}#tools`;
       >
         {t(locale, 'header.tools')}
       </a>
+      <a
+        href={learnHref}
+        class="hidden h-11 items-center rounded-[8px] px-3 text-[14px] font-medium text-ink hover:bg-cream sm:inline-flex"
+      >
+        {t(locale, 'footer.learn')}
+      </a>
       <ThemeToggle locale={locale} />
-      <LangSwitcher locale={locale} />
+      <LangSwitcher locale={locale} path={langPath} />
     </nav>
   </div>
 </header>

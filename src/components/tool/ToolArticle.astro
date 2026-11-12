@@ -1,0 +1,193 @@
+---
+import { render } from 'astro:content';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import type { ToolCopy } from '../../lib/content';
+import { tools } from '../../tools/registry';
+import { localePath } from '../../lib/paths';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+  copy: ToolCopy;
+}
+
+const { locale, tool, copy } = Astro.props;
+const { Content } = await render(copy);
+
+const relatedIds = copy.data.related ?? tool.relatedIds;
+const related = relatedIds
+  .map((id) => tools.find((entry) => entry.id === id))
+  .filter((entry): entry is ToolDef => Boolean(entry?.available))
+  .slice(0, 4);
+
+const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related'): string =>
+  t(locale, `article.${key}` as const, { tool: tool.name });
+---
+
+<article class="border-t border-line bg-cream" aria-labelledby="article-heading">
+  <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
+    <h2
+      id="article-heading"
+      class="text-[24px] font-medium leading-[1.15] tracking-[-0.02em] text-ink sm:text-[30px]"
+    >
+      {heading('what')}
+    </h2>
+
+    <div class="md-body mt-5">
+      <Content />
+    </div>
+
+    <h2 class="article-heading">{heading('how')}</h2>
+    <ol class="article-steps">
+      {
+        copy.data.steps.map((step) => (
+          <li>
+            <span>{step}</span>
+          </li>
+        ))
+      }
+    </ol>
+
+    <h2 class="article-heading">{heading('example')}</h2>
+    <p class="article-lead">{copy.data.example.caption}</p>
+    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+      <figure class="min-w-0">
+        <figcaption class="article-caption">{t(locale, 'article.input')}</figcaption>
+        <pre class="article-code"><code>{copy.data.example.input}</code></pre>
+      </figure>
+      <figure class="min-w-0">
+        <figcaption class="article-caption">{t(locale, 'article.output')}</figcaption>
+        <pre class="article-code"><code>{copy.data.example.output}</code></pre>
+      </figure>
+    </div>
+
+    <h2 class="article-heading">{heading('mistakes')}</h2>
+    <ul class="article-list">
+      {
+        copy.data.mistakes.map((mistake) => (
+          <li>{mistake}</li>
+        ))
+      }
+    </ul>
+
+    <h2 class="article-heading">{heading('faq')}</h2>
+    <div class="faq-list">
+      {
+        copy.data.faq.map((entry) => (
+          <details class="faq-item">
+            <summary>{entry.q}</summary>
+            <p>{entry.a}</p>
+          </details>
+        ))
+      }
+    </div>
+
+    {
+      related.length > 0 && (
+        <>
+          <h2 class="article-heading">{heading('related')}</h2>
+          <p class="article-lead">{t(locale, 'article.relatedIntro')}</p>
+          <ul class="mt-4 grid gap-2 sm:grid-cols-2">
+            {related.map((entry) => (
+              <li>
+                <a
+                  href={localePath(locale, `/${entry.slug}`)}
+                  class="flex min-h-11 items-center justify-between gap-3 rounded-[8px] border border-line bg-canvas px-4 py-3 text-[15px] font-medium text-ink hover:border-ink"
+                >
+                  {entry.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    <p class="mt-10 border-t border-line pt-6 text-[13px] leading-[22px] text-body-mid">
+      {t(locale, 'article.privacy')}
+    </p>
+  </div>
+</article>
+
+<style>
+  .article-heading {
+    margin-top: 44px;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  .article-lead {
+    margin-top: 10px;
+    font-size: 15px;
+    line-height: 25px;
+    color: var(--body);
+  }
+
+  .article-steps {
+    margin-top: 18px;
+    display: grid;
+    gap: 14px;
+    counter-reset: step;
+  }
+
+  .article-steps li {
+    display: flex;
+    gap: 12px;
+    font-size: 15px;
+    line-height: 25px;
+    color: var(--body);
+  }
+
+  .article-steps li::before {
+    counter-increment: step;
+    content: counter(step);
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    margin-top: 0;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink);
+  }
+
+  .article-caption {
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--body-mid);
+  }
+
+  .article-code {
+    overflow-x: auto;
+    border-radius: 10px;
+    background: var(--code-surface);
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--code-text);
+    tab-size: 2;
+  }
+
+  .article-list {
+    margin-top: 16px;
+    display: grid;
+    gap: 10px;
+    padding-left: 20px;
+    list-style: disc;
+    font-size: 15px;
+    line-height: 25px;
+    color: var(--body);
+  }
+</style>

@@ -5,6 +5,8 @@ import { tools } from '../../tools/registry';
 import { toolCategories, type ToolCategory } from '../../tools/types';
 import type { Locale } from '../../i18n/config';
 import { localePath } from '../../lib/paths';
+import { hubByCategory } from '../../lib/categories';
+import { toolDescription } from '../../i18n/tool-text';
 import { t, type TranslationKey } from '../../i18n/t';
 
 interface Props {
@@ -31,6 +33,9 @@ const groups = toolCategories
 
 const total = tools.length;
 const resultsTemplate = t(locale, 'home.search.results');
+const availableCategories = new Set(
+  tools.filter((tool) => tool.available).map((tool) => tool.category),
+);
 ---
 
 <section
@@ -95,6 +100,9 @@ const resultsTemplate = t(locale, 'home.search.results');
       {
         groups.map(({ category, items }) => {
           const keys = categoryKeys[category];
+          const hub = hubByCategory(category);
+          const hubHref = localePath(locale, `/${hub.slug}`);
+          const hasHub = availableCategories.has(category);
 
           return (
             <section data-tool-section aria-labelledby={`category-${category}`}>
@@ -103,7 +111,17 @@ const resultsTemplate = t(locale, 'home.search.results');
                   id={`category-${category}`}
                   class="text-[20px] font-semibold leading-[26px] tracking-[-0.015em] text-ink"
                 >
-                  {t(locale, keys.name)}
+                  {hasHub ? (
+                    <a
+                      href={hubHref}
+                      class="inline-flex items-center gap-1.5 rounded-[4px] underline-offset-4 hover:underline"
+                    >
+                      {t(locale, keys.name)}
+                      <span aria-hidden="true">→</span>
+                    </a>
+                  ) : (
+                    t(locale, keys.name)
+                  )}
                 </h3>
                 <p class="text-[14px] leading-[22px] text-body-mid">{t(locale, keys.description)}</p>
               </div>
@@ -112,7 +130,7 @@ const resultsTemplate = t(locale, 'home.search.results');
                   <li
                     class="min-w-0"
                     data-tool-card
-                    data-search={`${tool.name} ${tool.description} ${tool.keywords.join(' ')}`.toLowerCase()}
+                    data-search={`${tool.name} ${toolDescription(locale, tool)} ${tool.keywords.join(' ')}`.toLowerCase()}
                   >
                     <ToolCard
                       tool={tool}

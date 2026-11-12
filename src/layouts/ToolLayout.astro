@@ -6,9 +6,15 @@ import ValidatorShell from '../components/tool/ValidatorShell.astro';
 import ViewerShell from '../components/tool/ViewerShell.astro';
 import DiffShell from '../components/tool/DiffShell.astro';
 import ConverterShell from '../components/tool/ConverterShell.astro';
+import ToolArticle from '../components/tool/ToolArticle.astro';
+import JsonLd from '../components/seo/JsonLd.astro';
 import type { Locale } from '../i18n/config';
 import type { ToolDef } from '../tools/types';
 import { t } from '../i18n/t';
+import { getToolCopy } from '../lib/content';
+import { hubByCategory } from '../lib/categories';
+import { breadcrumbSchema, faqSchema, webApplicationSchema } from '../lib/schema';
+import { localeUrl, SITE_NAME } from '../lib/site';
 
 interface Props {
   locale: Locale;
@@ -16,11 +22,38 @@ interface Props {
 }
 
 const { locale, tool } = Astro.props;
+const copy = await getToolCopy(locale, tool.id);
+const hub = hubByCategory(tool.category);
+
 const title = t(locale, 'tool.metaTitle', { tool: tool.name });
-const description = t(locale, 'tool.metaDescription', { description: tool.description });
+const description = copy.data.description;
+const url = localeUrl(locale, `/${tool.slug}`);
+
+const structuredData = [
+  webApplicationSchema({
+    name: tool.name,
+    description,
+    url,
+    features: tool.keywords,
+  }),
+  faqSchema(copy.data.faq),
+  breadcrumbSchema([
+    { name: SITE_NAME, url: localeUrl(locale, '/') },
+    { name: t(locale, hub.headingKey), url: localeUrl(locale, `/${hub.slug}`) },
+    { name: tool.name, url },
+  ]),
+];
 ---
 
-<BaseLayout locale={locale} title={title} description={description}>
+<BaseLayout
+  locale={locale}
+  title={title}
+  description={description}
+  path={`/${tool.slug}`}
+  type="website"
+>
+  <JsonLd slot="head" data={structuredData} />
+
   {tool.ui === 'formatter' && <ToolShell locale={locale} tool={tool} />}
   {(tool.ui === 'minifier' || tool.ui === 'repair') && (
     <EditorToolShell
@@ -33,4 +66,6 @@ const description = t(locale, 'tool.metaDescription', { description: tool.descri
   {tool.ui === 'viewer' && <ViewerShell locale={locale} tool={tool} />}
   {tool.ui === 'diff' && <DiffShell locale={locale} tool={tool} />}
   {tool.ui === 'converter' && <ConverterShell locale={locale} tool={tool} />}
+
+  <ToolArticle locale={locale} tool={tool} copy={copy} />
 </BaseLayout>

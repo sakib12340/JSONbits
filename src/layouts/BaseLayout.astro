@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Footer from '../components/layout/Footer.astro';
 import Header from '../components/layout/Header.astro';
+import SEOHead from '../components/seo/SEOHead.astro';
 import { localeMeta, type Locale } from '../i18n/config';
 import { t } from '../i18n/t';
 
@@ -9,9 +10,15 @@ interface Props {
   title: string;
   description: string;
   locale: Locale;
+  /** Path inside the locale, no trailing slash. */
+  path: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  /** Override the path used by the language switcher. */
+  langPath?: string;
 }
 
-const { title, description, locale } = Astro.props;
+const { title, description, locale, path, type, noindex, langPath } = Astro.props;
 const meta = localeMeta[locale];
 ---
 
@@ -45,10 +52,10 @@ const meta = localeMeta[locale];
         if (color) color.setAttribute('content', theme === 'dark' ? '#0a0f0e' : '#fffefb');
       })();
     </script>
-    <title>{title}</title>
-    <meta name="description" content={description} />
+    <SEOHead title={title} description={description} locale={locale} path={path} type={type} noindex={noindex} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <slot name="head" />
   </head>
   <body class="flex min-h-dvh flex-col bg-canvas text-body antialiased">
     <a
@@ -57,7 +64,7 @@ const meta = localeMeta[locale];
     >
       {t(locale, 'a11y.skipToContent')}
     </a>
-    <Header locale={locale} />
+    <Header locale={locale} langPath={langPath} />
     <main id="main-content" tabindex="-1" class="flex-1 focus:outline-none">
       <slot />
     </main>

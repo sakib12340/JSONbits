@@ -1,21 +1,54 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolLayout from '../layouts/ToolLayout.astro';
+import CategoryHub from '../components/hub/CategoryHub.astro';
+import LearnIndex from '../components/learn/LearnIndex.astro';
+import GuideArticle from '../components/learn/GuideArticle.astro';
+import PrivacyPage from '../components/page/PrivacyPage.astro';
 import HomeHero from '../components/home/HomeHero.astro';
 import PrivacyStrip from '../components/home/PrivacyStrip.astro';
 import ToolGrid from '../components/home/ToolGrid.astro';
 import { defaultLocale, locales, type Locale } from '../i18n/config';
 import { tools } from '../tools/registry';
+import { categoryHubs } from '../lib/categories';
 import { t } from '../i18n/t';
 
-export function getStaticPaths() {
+type PageKind = 'home' | 'tool' | 'hub' | 'learn' | 'guide' | 'privacy';
+
+export async function getStaticPaths() {
+  const availableCategories = new Set(
+    tools.filter((tool) => tool.available).map((tool) => tool.category),
+  );
+  const guideSlugs = (await getCollection('guides', (entry) => entry.data.locale === defaultLocale))
+    .map((entry) => entry.data.slug)
+    .sort();
+
+  const localized = (locale: Locale, path: string): string =>
+    locale === defaultLocale ? path : `${locale}/${path}`;
+
   const homes = [
-    { params: { slug: undefined }, props: { locale: defaultLocale, toolId: null } },
+    {
+      params: { slug: undefined },
+      props: {
+        locale: defaultLocale,
+        page: 'home' as PageKind,
+        toolId: null,
+        hubSlug: null,
+        guideSlug: null,
+      },
+    },
     ...locales
       .filter((locale) => locale !== defaultLocale)
       .map((locale) => ({
         params: { slug: locale },
-        props: { locale, toolId: null },
+        props: {
+          locale,
+          page: 'home' as PageKind,
+          toolId: null,
+          hubSlug: null,
+          guideSlug: null,
+        },
       })),
   ];
 
@@ -23,40 +56,105 @@ export function getStaticPaths() {
     tools
       .filter((tool) => tool.available)
       .map((tool) => ({
-        params: {
-          slug: locale === defaultLocale ? tool.slug : `${locale}/${tool.slug}`,
+        params: { slug: localized(locale, tool.slug) },
+        props: {
+          locale,
+          page: 'tool' as PageKind,
+          toolId: tool.id,
+          hubSlug: null,
+          guideSlug: null,
         },
-        props: { locale, toolId: tool.id },
       })),
   );
 
-  return [...homes, ...toolPages];
+  const hubPages = locales.flatMap((locale) =>
+    categoryHubs
+      .filter((hub) => availableCategories.has(hub.category))
+      .map((hub) => ({
+        params: { slug: localized(locale, hub.slug) },
+        props: {
+          locale,
+          page: 'hub' as PageKind,
+          toolId: null,
+          hubSlug: hub.slug,
+          guideSlug: null,
+        },
+      })),
+  );
+
+  const learnPages = locales.map((locale) => ({
+    params: { slug: localized(locale, 'learn') },
+    props: {
+      locale,
+      page: 'learn' as PageKind,
+      toolId: null,
+      hubSlug: null,
+      guideSlug: null,
+    },
+  }));
+
+  const guidePages = locales.flatMap((locale) =>
+    guideSlugs.map((slug) => ({
+      params: { slug: localized(locale, `learn/${slug}`) },
+      props: {
+        locale,
+        page: 'guide' as PageKind,
+        toolId: null,
+        hubSlug: null,
+        guideSlug: slug,
+      },
+    })),
+  );
+
+  const privacyPages = locales.map((locale) => ({
+    params: { slug: localized(locale, 'privacy') },
+    props: {
+      locale,
+      page: 'privacy' as PageKind,
+      toolId: null,
+      hubSlug: null,
+      guideSlug: null,
+    },
+  }));
+
+  return [
+    ...homes,
+    ...toolPages,
+    ...hubPages,
+    ...learnPages,
+    ...guidePages,
+    ...privacyPages,
+  ];
 }
 
 interface Props {
   locale: Locale;
+  page: PageKind;
   toolId: string | null;
+  hubSlug: string | null;
+  guideSlug: string | null;
 }
 
-const { locale, toolId } = Astro.props;
-const tool = toolId ? tools.find((item) => item.id === toolId) : undefined;
-const title = t(locale, 'home.metaTitle');
-const description = t(locale, 'site.description');
+const { locale, page, toolId, hubSlug, guideSlug } = Astro.props;
+const tool = toolId ? tools.find((entry) => entry.id === toolId) : undefined;
+const homeTitle = t(locale, 'home.metaTitle');
+const homeDescription = t(locale, 'home.metaDescription');
 ---
 
 {
-  tool ? (
-    <ToolLayout locale={locale} tool={tool} />
-  ) : (
-    <BaseLayout locale={locale} title={title} description={description}>
+  page === 'home' && (
+    <BaseLayout locale={locale} title={homeTitle} description={homeDescription} path="/">
       <HomeHero locale={locale} />
       <ToolGrid locale={locale} />
       <PrivacyStrip locale={locale} />
     </BaseLayout>
   )
 }
+{page === 'tool' && tool && <ToolLayout locale={locale} tool={tool} />}
+{page === 'hub' && hubSlug && <CategoryHub locale={locale} slug={hubSlug} />}
+{page === 'learn' && <LearnIndex locale={locale} />}
+{page === 'guide' && guideSlug && <GuideArticle locale={locale} slug={guideSlug} />}
+{page === 'privacy' && <PrivacyPage locale={locale} />}
 
-<script>
-  import '../lib/home-search';
-  import '../lib/tool-boot';
-</script>
+{page === 'home' && <script>import '../lib/home-search';</script>}
+{page === 'tool' && <script>import '../lib/tool-boot';</script>}

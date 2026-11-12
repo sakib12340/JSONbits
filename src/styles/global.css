@@ -512,3 +512,110 @@
 }
 
 
+
+/* Long-form content: tool articles, category hubs, and guides. */
+.md-body > p {
+  margin-top: 14px;
+  font-size: 15px;
+  line-height: 26px;
+  color: var(--body);
+}
+
+.md-body > h2 {
+  margin-top: 40px;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.md-body > h3 {
+  margin-top: 28px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--ink);
+}
+
+.md-body > ul,
+.md-body > ol {
+  margin-top: 14px;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 25px;
+  color: var(--body);
+}
+
+.md-body > ul { list-style: disc; }
+.md-body > ol { list-style: decimal; }
+
+.md-body > pre {
+  margin-top: 14px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: var(--code-surface);
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--code-text);
+}
+
+.md-body code {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--canvas);
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.md-body > pre code {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+.md-body a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.md-body strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.faq-list {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.faq-list .faq-item + .faq-item {
+  border-top: 1px solid var(--line);
+}
+
+.faq-item > summary {
+  display: flex;
+  min-height: 48px;
+  cursor: pointer;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 22px;
+  color: var(--ink);
+}
+
+.faq-item > p {
+  padding: 0 0 16px;
+  font-size: 15px;
+  line-height: 25px;
+  color: var(--body);
+}
