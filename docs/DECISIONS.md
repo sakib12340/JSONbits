@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-12
-Status: Phase 7 complete. UI strings and Tier 1 tool copy ship in all five locales; Tier 2 articles, guides, and hubs still fall back to English.
+Last updated: 2026-11-13
+Status: Phase 8 complete. Accessibility, performance, and large-file audits pass with zero known violations; Tier 2 articles, guides, and hubs still fall back to English.
 
 ## Product identity
 
@@ -144,7 +144,7 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Root cause of the "Fedora light mode looks washed out" report: **monitor saturation set to 100 on the MSI MP251 OSD**, not the site, the browser, or Fedora. Lowering it restored the design. Ruled out along the way: `devicePixelRatio` 1, GNOME scale 1.0, no HDR/P3, `forced-colors` inactive, Night Light off, colord ICC profile present but **device `Enabled: No`** so it was never applied, `prefers-color-scheme: dark` while the site correctly stayed light. The user's own screenshots proved the hairline was one pixel of `#E8E7E3` on `#FFFEFB` in the framebuffer (1.22:1), i.e. genuinely faint before the token fix rather than altered by the display pipeline.
 - No further light-palette darkening was applied: with the monitor corrected the current 20% hairline reads correctly, so the identity stays as designed.
 - Deliberately deferred: page canonical/hreflang + article content (Phase 6); splitting `json-formatter/session.ts` (551), `workers/ops/format.ts` (412) and `scanner.ts` (357) under the 250-line guidance (Phase 9).
-- Version control: `origin` is `git@github.com:sakib12340/JSONbits.git`; the local branch was grafted onto the existing backup commit rather than force-pushed. Commits use `sakib12340 <sadmansakib080212@gmail.com>`. `node_modules/`, `dist/`, and `.astro/` stay ignored.
+- Version control: `origin` is `https://github.com/sakib12340/JSONbits.git` (the earlier SSH remote could not authenticate on this machine, so the HTTPS remote plus `gh auth setup-git` is used); the local branch was grafted onto the existing backup commit rather than force-pushed. Commits use `sakib12340 <sadmansakib080212@gmail.com>`. `node_modules/`, `dist/`, and `.astro/` stay ignored.
 
 ## Phase 5 converter verification
 
@@ -181,6 +181,18 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Built pages were checked directly, not assumed: all 30 Tier 1 tool pages (`6 tools × 5 locales`) emit the correct `<html lang>`, self-referencing canonical, five `hreflang` alternates plus `x-default`, the localized article body, and no text leaked from another locale. The sitemap still holds 125 URLs and now resolves localized `json-repair` pages.
 - Deliberate scope boundary: Tier 2 tool articles, the five `/learn` guides, the five category hubs, and the hub headings in `src/lib/categories.ts` remain English fallback. Phase 7 is defined as UI strings plus Tier 1 content, so this is documented rather than silently mixed in.
 - Translation quality: no native reviewer. Terminology follows the existing UI dictionaries (for example “Validieren”, “Minifizieren”, “Reparar”, “Réparer”, “Validar”); locale conventions are respected (Spanish informal “tú”, French formal “vous” and “Ctrl/Cmd+Entrée”, German informal “du”, Portuguese “você” imperatives).
+
+## Phase 8 audit verification
+
+- Lighthouse 13 (Chromium 156, locally served production build) on `/json-formatter`: mobile 100 performance / 100 accessibility / 100 best-practices / 100 SEO (FCP 0.9 s, LCP 0.9 s, TBT 70 ms, CLS 0, 192 KiB transfer); desktop preset also 100 across all four (LCP 0.3 s, TBT 0 ms). `/json-viewer` mobile: 100 accessibility / best-practices / SEO.
+- axe-core 4.10.3 with `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`, and `best-practice` tags: zero violations in light **and** dark on home, `/json-formatter`, `/json-viewer`, `/json-diff`, `/json-to-csv`, `/converters`, `/learn`, `/learn/json-vs-yaml`, and `/privacy`.
+- Fixed finding: `scrollable-region-focusable` on horizontally scrollable code (`.article-code`, markdown `pre`, hero artifact, error snippets). Every scrollable code surface now has `tabindex="0"`, error snippets included; `.md-body > pre` additionally wraps (`white-space: pre-wrap`, `overflow-wrap: anywhere`) so guides never need horizontal scroll.
+- Touch and motion: `touch-action: manipulation` on buttons/links/summaries/role=button (verified computed as `manipulation`), diff filter buttons and tree rows measured at 44 px, `prefers-reduced-motion` block retained, shortcuts dialog gets `overscroll-behavior: contain`.
+- Accessible names/announcements: indent listbox trigger exposes “Indent 2 spaces” (state plus label); diff and tree search counts announced via the polite status region; diff row copy buttons removed from tab order and AT tree, with Enter / `Ctrl+Shift+C` as the announced path.
+- Keyboard verification (real key events where the harness delivered them, synthetic `KeyboardEvent` otherwise): skip link is the first stop, focus ring visible at every stop, `?` opens the shortcuts dialog with focus inside and Esc restores the trigger, listbox Up/Down/Home/End/Enter/Escape/Tab all move selection and persist `jsonbits:indent`, tree `aria-activedescendant` navigation covers Right/Down/End/Home/Enter/Left, diff list Down/End/Home keeps one selected row.
+- Large-file stress test (synthetic JSON, files dropped through the real drop handler): 10 MB format 474 ms and 52.4 MB → 75.4 MB output in 2,201 ms; 10 MB tree 534 ms and 50 MB tree 2,193 ms with a 143 MB JS heap. No app-attributable long tasks in the format runs (max frame gap 19–25 ms); the tree keeps 23 rendered rows for 45k+ children. The over-50 MB warning renders before running.
+- Known harness limits rather than app defects: the single 821 ms main-thread task after a 50 MB drop comes from `DataTransfer`/File construction in the test harness, not the app; Chrome's synthetic key delivery was unreliable, so interaction checks also used dispatched events.
+- `pnpm astro check`: 0 errors, 0 warnings, 2 pre-existing `fast-xml-parser` hints. `pnpm build`: 126 pages. No third-party runtime requests; only the local axe script was added temporarily to `dist/` for testing and removed afterwards.
 
 ## Theme independence (supersedes the Phase 2 three-state theme)
 

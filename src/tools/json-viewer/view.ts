@@ -3,7 +3,7 @@ import { fill } from '../shared/strings';
 import { formatPath, type TreeLine, type TreeStore } from './store';
 import type { ViewerStrings } from './strings';
 
-const ROW_HEIGHT = 30;
+const ROW_HEIGHT = window.matchMedia('(pointer: coarse)').matches ? 44 : 30;
 const OVERSCAN = 8;
 
 interface Options {
@@ -566,9 +566,9 @@ export class TreeView {
       await this.store.search(query);
       if (seq !== this.searchSeq) return;
       this.selected = 0;
-      this.onStatus(
-        fill(this.strings.treeMatches, { count: this.store.searchTotal }),
-      );
+      const status = fill(this.strings.treeMatches, { count: this.store.searchTotal });
+      this.onStatus(status);
+      this.onAnnounce(status);
       this.refresh();
     } catch (error) {
       if (seq !== this.searchSeq) return;

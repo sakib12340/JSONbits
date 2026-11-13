@@ -248,6 +248,8 @@ export class DiffList {
     copy.type = 'button';
     copy.className = 'diff-copy';
     copy.dataset.copyPath = entry.path;
+    copy.tabIndex = -1;
+    copy.setAttribute('aria-hidden', 'true');
     copy.setAttribute('aria-label', this.strings.copyPath);
     copy.title = this.strings.copyPath;
     copy.textContent = '⧉';

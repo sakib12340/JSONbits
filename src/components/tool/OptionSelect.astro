@@ -13,7 +13,6 @@ interface Props {
   label?: string;
   labelledBy?: string;
   name?: string;
-  inlineLabel?: boolean;
   class?: string;
 }
 
@@ -24,11 +23,13 @@ const {
   label,
   labelledBy,
   name,
-  inlineLabel = false,
   class: className = 'w-44',
 } = Astro.props;
 const selected = options.find((option) => option.value === value) ?? options[0];
-const labelId = labelledBy ?? (label ? `${id}-label` : undefined);
+const valueId = `${id}-value`;
+const triggerLabelledBy = labelledBy ? `${labelledBy} ${valueId}` : undefined;
+const triggerLabel = !labelledBy && label ? `${label} ${selected.label}` : undefined;
+const valueText = !labelledBy && label ? `${label} ${selected.label}` : selected.label;
 ---
 
 <div
@@ -40,22 +41,14 @@ const labelId = labelledBy ?? (label ? `${id}-label` : undefined);
   <button
     type="button"
     data-select-trigger
+    data-label={label}
     aria-haspopup="listbox"
     aria-expanded="false"
-    aria-labelledby={labelId}
+    aria-labelledby={triggerLabelledBy}
+    aria-label={triggerLabel}
     class="flex h-full w-full min-w-0 items-center gap-2 rounded-[8px] px-3 text-[14px] text-ink"
   >
-    {
-      label && (
-        <span
-          id={`${id}-label`}
-          class={inlineLabel ? 'sr-only text-[13px] text-body-mid sm:not-sr-only' : 'sr-only'}
-        >
-          {label}
-        </span>
-      )
-    }
-    <span data-select-value class="truncate">{selected.label}</span>
+    <span id={valueId} data-select-value class="truncate">{valueText}</span>
     <Icon name="chevron-down" class="ms-auto size-3.5 shrink-0 text-body-mid" />
   </button>
 
@@ -64,7 +57,8 @@ const labelId = labelledBy ?? (label ? `${id}-label` : undefined);
     data-select-list
     role="listbox"
     tabindex="-1"
-    aria-labelledby={labelId}
+    aria-labelledby={labelledBy}
+    aria-label={!labelledBy ? label : undefined}
     hidden
     class="absolute left-0 top-full z-50 mt-2 w-full min-w-44 rounded-[10px] border border-line bg-canvas p-1 shadow-[var(--shadow-1)]"
   >

@@ -55,11 +55,11 @@ const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related
     <div class="mt-4 grid gap-3 sm:grid-cols-2">
       <figure class="min-w-0">
         <figcaption class="article-caption">{t(locale, 'article.input')}</figcaption>
-        <pre class="article-code"><code>{copy.data.example.input}</code></pre>
+        <pre class="article-code" tabindex="0"><code>{copy.data.example.input}</code></pre>
       </figure>
       <figure class="min-w-0">
         <figcaption class="article-caption">{t(locale, 'article.output')}</figcaption>
-        <pre class="article-code"><code>{copy.data.example.output}</code></pre>
+        <pre class="article-code" tabindex="0"><code>{copy.data.example.output}</code></pre>
       </figure>
     </div>
 

@@ -167,6 +167,10 @@
     outline-offset: 2px;
   }
 
+  :where(button, a, summary, [role="button"]) {
+    touch-action: manipulation;
+  }
+
   ::selection {
     background: var(--primary);
     color: var(--on-primary);
@@ -337,6 +341,13 @@
 .tree-scroll:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
+}
+
+@media (pointer: coarse) {
+  .tree-row {
+    height: 44px;
+    line-height: 44px;
+  }
 }
 
 /* Tool frame: a soft lift over the canvas instead of a heavy border. */
@@ -555,6 +566,8 @@
 .md-body > pre {
   margin-top: 14px;
   overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   border-radius: 10px;
   background: var(--code-surface);
   padding: 14px 16px;

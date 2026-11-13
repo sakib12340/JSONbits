@@ -40,14 +40,21 @@ export function createSelectMenu(root: HTMLElement): SelectMenu {
   let active = 0;
   let open = false;
 
+  const labelText = trigger.dataset.label ?? '';
   const labelOf = (option: SelectOption): string =>
     option.el.querySelector('[data-select-label]')?.textContent?.trim() ?? option.value;
+
+  function displayText(option: SelectOption): string {
+    const optionLabel = labelOf(option);
+    return labelText ? `${labelText} ${optionLabel}` : optionLabel;
+  }
 
   function select(value: string, emit: boolean): void {
     const next = options.find((option) => option.value === value) ?? options[0];
     current = next.value;
-    valueEl.textContent = labelOf(next);
+    valueEl.textContent = displayText(next);
     root.dataset.value = current;
+    if (labelText) trigger.setAttribute('aria-label', displayText(next));
 
     for (const option of options) {
       option.el.setAttribute('aria-selected', String(option.value === current));
