@@ -1,5 +1,4 @@
 import type {
-  ConvertResult,
   CsvDelimiter,
   CsvToJsonOptions,
   FormatIndent,
@@ -112,39 +111,5 @@ export function readConverterOptions(
         indent: indent(text(shell, 'indent', '2')),
         attributes: checked(shell, 'attributes', true),
       };
-  }
-}
-
-/** Main-thread fallback when workers are blocked; libs stay lazy in each branch. */
-export async function fallbackConvert(
-  op: ConverterOp,
-  text: string,
-  options: ConverterOptions,
-): Promise<ConvertResult> {
-  switch (op) {
-    case 'jsonToCsv': {
-      const { jsonToCsv } = await import('../../workers/ops/convert/csv');
-      return jsonToCsv(text, options as JsonToCsvOptions);
-    }
-    case 'csvToJson': {
-      const { csvToJson } = await import('../../workers/ops/convert/csv');
-      return csvToJson(text, options as CsvToJsonOptions);
-    }
-    case 'jsonToYaml': {
-      const { jsonToYaml } = await import('../../workers/ops/convert/yaml');
-      return jsonToYaml(text, options as JsonToYamlOptions);
-    }
-    case 'yamlToJson': {
-      const { yamlToJson } = await import('../../workers/ops/convert/yaml');
-      return yamlToJson(text, options as YamlToJsonOptions);
-    }
-    case 'jsonToXml': {
-      const { jsonToXml } = await import('../../workers/ops/convert/xml');
-      return jsonToXml(text, options as JsonToXmlOptions);
-    }
-    case 'xmlToJson': {
-      const { xmlToJson } = await import('../../workers/ops/convert/xml');
-      return xmlToJson(text, options as XmlToJsonOptions);
-    }
   }
 }

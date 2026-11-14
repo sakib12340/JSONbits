@@ -3,12 +3,6 @@ import { downloadBlob, downloadText, formattedName } from '../../lib/download';
 import { formatBytes, formatMilliseconds } from '../../lib/format-bytes';
 import { readIndent, writeIndent } from '../../lib/storage';
 import type { EditorHandle } from '../../lib/editor';
-import {
-  WorkerCancelledError,
-  WorkerResponseError,
-  WorkerRuntimeError,
-  WorkerUnavailableError,
-} from '../../workers/client';
 import { failure } from '../../workers/protocol';
 import type {
   FormatIndent,
@@ -16,7 +10,8 @@ import type {
   JsonError,
   ProgressUpdate,
 } from '../../workers/protocol';
-import { JsonFormatterEngine } from './engine';
+import { RunController } from '../../workers/run-controller';
+import { failureText } from '../shared/failure';
 import { InvalidFileError, readTextFile } from './files';
 import { SAMPLE_JSON } from './sample';
 import { fill, type ToolStrings } from './strings';
@@ -41,7 +36,7 @@ export class FormatterSession {
   private readonly locale: string;
   private readonly input: EditorHandle;
   private readonly showView: (view: ViewKind) => void;
-  private readonly engine = new JsonFormatterEngine();
+  private readonly runs = new RunController();
 
   private indent: FormatIndent = readIndent();
   private file: File | null = null;
@@ -52,9 +47,7 @@ export class FormatterSession {
   private running = false;
   private applying = false;
   private disposed = false;
-  private runId = 0;
   private loadId = 0;
-  private liveTimer = 0;
   private lastError: JsonError | null = null;
 
   constructor(options: Options) {
@@ -243,28 +236,28 @@ export class FormatterSession {
     }
 
     this.stopDebounce();
-    const id = ++this.runId;
-    this.engine.cancel();
+    this.cancelActive();
     this.setRunning(true);
     this.view.hideError();
 
-    try {
-      const { result, usedFallback } = await this.engine.format(
-        { text },
-        { indent: this.indent },
-        (progress) => this.onProgress(id, progress),
-      );
+    const outcome = await this.runs.run(
+      'format',
+      { text },
+      { indent: this.indent },
+      { onProgress: (progress) => this.onProgress(progress) },
+    );
 
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyResult(result, mode);
-      if (usedFallback) this.view.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
+      return;
     }
+
+    this.applyResult(outcome.result, mode);
+    if (outcome.usedFallback) this.view.showEngineNote(this.strings.workerFallback);
   }
 
   cancel(): void {
@@ -303,48 +296,30 @@ export class FormatterSession {
     const file = this.file;
     if (!file) return;
 
-    if (file.size > MAX_FILE) {
-      this.showFailure(this.fileTooBig(), mode);
-      return;
-    }
-
     this.stopDebounce();
-    const id = ++this.runId;
-    this.engine.cancel();
+    this.cancelActive();
     this.setRunning(true);
     this.view.hideError();
     this.view.setStatus(this.strings.reading);
 
-    let buffer: ArrayBuffer;
+    const outcome = await this.runs.runFile(
+      'format',
+      file,
+      { indent: this.indent },
+      { onProgress: (progress) => this.onProgress(progress) },
+    );
 
-    try {
-      buffer = await file.arrayBuffer();
-    } catch {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.showFailure(failure(this.strings.readFailed, this.strings.tryAgain, 'runtime'), mode);
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
       return;
     }
 
-    if (id !== this.runId || this.disposed) return;
-
-    try {
-      const { result, usedFallback } = await this.engine.format(
-        { buffer },
-        { indent: this.indent },
-        (progress) => this.onProgress(id, progress),
-      );
-
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyResult(result, mode);
-      if (usedFallback) this.view.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
-    }
+    this.applyResult(outcome.result, mode);
+    if (outcome.usedFallback) this.view.showEngineNote(this.strings.workerFallback);
   }
 
   private applyResult(result: FormatResult, mode: RunMode): void {
@@ -384,36 +359,6 @@ export class FormatterSession {
     );
 
     if (mode === 'explicit' && this.view.maxWidthQuery) this.showView('output');
-  }
-
-  private normalize(error: unknown): JsonError {
-    if (error instanceof WorkerResponseError) {
-      const info = error.info;
-
-      if (info.code === 'oom') {
-        return { ...info, message: this.strings.oom, hint: this.strings.oomHint };
-      }
-
-      if (info.code === 'encoding') {
-        return { ...info, message: this.strings.invalidFile, hint: this.strings.encodingHint };
-      }
-
-      if (info.code === 'runtime') {
-        return { ...info, message: this.strings.workerFailed, hint: this.strings.workerFailedHint };
-      }
-
-      return info;
-    }
-
-    if (error instanceof InvalidFileError) {
-      return failure(this.strings.invalidFile, this.strings.encodingHint, 'encoding');
-    }
-
-    if (error instanceof WorkerUnavailableError || error instanceof WorkerRuntimeError) {
-      return failure(this.strings.workerFailed, this.strings.workerFailedHint, 'runtime');
-    }
-
-    return failure(this.strings.workerFailed, this.strings.workerFailedHint, 'runtime');
   }
 
   private fileTooBig(): JsonError {
@@ -517,28 +462,19 @@ export class FormatterSession {
   }
 
   private cancelActive(): void {
-    this.runId += 1;
-    this.engine.cancel();
+    this.runs.cancel();
     this.setRunning(false);
   }
 
   private stopDebounce(): void {
-    if (this.liveTimer !== 0) {
-      window.clearTimeout(this.liveTimer);
-      this.liveTimer = 0;
-    }
+    this.runs.cancelScheduled();
   }
 
   private scheduleLive(): void {
-    this.stopDebounce();
-    this.liveTimer = window.setTimeout(() => {
-      this.liveTimer = 0;
-      void this.run('live');
-    }, 250);
+    this.runs.schedule(() => void this.run('live'), 250);
   }
 
-  private onProgress(id: number, progress: ProgressUpdate): void {
-    if (id !== this.runId) return;
+  private onProgress(progress: ProgressUpdate): void {
     this.view.setStatus(
       progress.phase === 'reading' ? this.strings.reading : this.strings.formatting,
     );
@@ -546,7 +482,6 @@ export class FormatterSession {
 
   dispose(): void {
     this.disposed = true;
-    this.stopDebounce();
-    this.engine.dispose();
+    this.runs.dispose();
   }
 }

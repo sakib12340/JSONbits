@@ -1,23 +1,15 @@
-import {
-  WorkerCancelledError,
-  WorkerClient,
-  WorkerResponseError,
-  WorkerRuntimeError,
-  WorkerUnavailableError,
-} from '../../workers/client';
-import { failure } from '../../workers/protocol';
 import type {
   FormatStats,
   JsonPath,
+  OpMap,
   ProgressUpdate,
-  TextPayload,
-  TreeLoadResult,
   TreeRow,
   TreeSearchResult,
   TreeValueResult,
+  WorkerOp,
 } from '../../workers/protocol';
-import type { JsonTree } from '../../workers/ops/tree';
-import { FALLBACK_LIMIT, TREE_VALUE_LIMIT } from '../limits';
+import { RunController, type RunOutcome } from '../../workers/run-controller';
+import { TREE_VALUE_LIMIT } from '../limits';
 
 export interface TreeLine {
   kind: 'node' | 'more';
@@ -64,26 +56,6 @@ export function formatPath(path: JsonPath): string {
   return out;
 }
 
-function decodePayload(payload: TextPayload): string {
-  if ('text' in payload) return payload.text;
-
-  if (payload.buffer.byteLength === 0) {
-    throw new WorkerRuntimeError('The file buffer is no longer available.');
-  }
-
-  try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(payload.buffer);
-  } catch {
-    throw new WorkerResponseError(
-      failure(
-        'This file is not valid UTF-8 text.',
-        'Open the file in a text editor and save it as UTF-8, then try again.',
-        'encoding',
-      ),
-    );
-  }
-}
-
 /** Holds the worker-side tree state and only materializes expanded rows. */
 export class TreeStore {
   root: TreeRow | null = null;
@@ -93,56 +65,26 @@ export class TreeStore {
   searchTruncated = false;
   searchTimeMs = 0;
 
-  private readonly client = new WorkerClient();
+  private readonly runs = new RunController();
   private readonly children = new Map<string, NodeState>();
   private searchState: SearchState | null = null;
-  private local: JsonTree | null = null;
   private generation = 0;
   private searchToken = 0;
 
   async load(
-    payload: TextPayload,
+    payload: OpMap['tree']['payload'],
     onProgress?: (progress: ProgressUpdate) => void,
-  ): Promise<{ usedFallback: boolean }> {
+  ): Promise<RunOutcome<'tree'>> {
     const generation = ++this.generation;
-    this.client.cancelAll();
-    this.local = null;
+    return this.applyLoad(await this.runs.run('tree', payload, {}, { onProgress }), generation);
+  }
 
-    let result: TreeLoadResult;
-    let usedFallback = false;
-
-    try {
-      result = await this.client.run('tree', payload, {}, onProgress);
-    } catch (error) {
-      if (generation !== this.generation) throw new WorkerCancelledError();
-      if (error instanceof WorkerCancelledError) throw error;
-      if (!(error instanceof WorkerUnavailableError) && !(error instanceof WorkerRuntimeError)) {
-        throw error;
-      }
-
-      const text = decodePayload(payload);
-      if (text.length > FALLBACK_LIMIT) throw error;
-
-      const { JsonTree: LocalTree } = await import('../../workers/ops/tree');
-      const tree = new LocalTree();
-      result = tree.load(text);
-      this.local = tree;
-      usedFallback = true;
-    }
-
-    if (generation !== this.generation) throw new WorkerCancelledError();
-
-    this.root = result.row;
-    this.stats = result.stats;
-    this.nodeCount = result.nodes;
-    this.children.clear();
-    this.searchState = null;
-    this.searchTotal = 0;
-    this.searchTruncated = false;
-    this.searchTimeMs = 0;
-    this.searchToken += 1;
-
-    return { usedFallback };
+  async loadFile(
+    file: File,
+    onProgress?: (progress: ProgressUpdate) => void,
+  ): Promise<RunOutcome<'tree'>> {
+    const generation = ++this.generation;
+    return this.applyLoad(await this.runs.runFile('tree', file, {}, { onProgress }), generation);
   }
 
   async expand(path: JsonPath): Promise<void> {
@@ -229,8 +171,7 @@ export class TreeStore {
   }
 
   async value(path: JsonPath): Promise<TreeValueResult> {
-    if (this.local) return this.local.value(path, TREE_VALUE_LIMIT);
-    return this.client.run('treeValue', { path }, { limit: TREE_VALUE_LIMIT });
+    return this.op('treeValue', { path }, { limit: TREE_VALUE_LIMIT });
   }
 
   visible(): TreeLine[] {
@@ -282,18 +223,7 @@ export class TreeStore {
     const token = ++this.searchToken;
     const started = performance.now();
 
-    if (this.local) {
-      const result = this.local.search(query, SEARCH_LIMIT);
-      if (token !== this.searchToken) return;
-      this.applySearch(result, 0);
-      return;
-    }
-
-    const result = await this.client.run(
-      'treeSearch',
-      { query },
-      { limit: SEARCH_LIMIT },
-    );
+    const result = await this.op('treeSearch', { query }, { limit: SEARCH_LIMIT });
 
     if (token !== this.searchToken) return;
 
@@ -315,8 +245,7 @@ export class TreeStore {
   reset(): void {
     this.generation += 1;
     this.searchToken += 1;
-    this.client.cancelAll();
-    this.local = null;
+    this.runs.cancel();
     this.root = null;
     this.stats = null;
     this.nodeCount = 0;
@@ -329,14 +258,32 @@ export class TreeStore {
 
   cancel(): void {
     this.generation += 1;
-    this.client.cancelAll();
+    this.runs.cancel();
   }
 
   dispose(): void {
     this.searchToken += 1;
     this.generation += 1;
-    this.local = null;
-    this.client.dispose();
+    this.runs.dispose();
+  }
+
+  private applyLoad(
+    outcome: RunOutcome<'tree'>,
+    generation: number,
+  ): RunOutcome<'tree'> {
+    if (outcome.status !== 'ok' || generation !== this.generation) return outcome;
+
+    this.root = outcome.result.row;
+    this.stats = outcome.result.stats;
+    this.nodeCount = outcome.result.nodes;
+    this.children.clear();
+    this.searchState = null;
+    this.searchTotal = 0;
+    this.searchTruncated = false;
+    this.searchTimeMs = 0;
+    this.searchToken += 1;
+
+    return outcome;
   }
 
   private applySearch(result: TreeSearchResult, fallbackTimeMs: number): void {
@@ -344,6 +291,19 @@ export class TreeStore {
     this.searchTotal = result.total;
     this.searchTruncated = result.truncated;
     this.searchTimeMs = result.timeMs || fallbackTimeMs;
+  }
+
+  /** Unwrap an outcome for the UI, which reports failures through its own status line. */
+  private async op<K extends WorkerOp>(
+    op: K,
+    payload: OpMap[K]['payload'],
+    options: OpMap[K]['options'],
+  ): Promise<OpMap[K]['result']> {
+    const outcome = await this.runs.run(op, payload, options);
+
+    if (outcome.status === 'ok') return outcome.result;
+    if (outcome.status === 'stale') throw new Error('The run was cancelled.');
+    throw new Error(outcome.failure.info.message || 'The private engine failed.');
   }
 
   private async fetch(path: JsonPath, start: number): Promise<void> {
@@ -357,9 +317,7 @@ export class TreeStore {
     const generation = this.generation;
 
     try {
-      const result = this.local
-        ? this.local.children(path, start, PAGE)
-        : await this.client.run('treeChildren', { path }, { start, limit: PAGE });
+      const result = await this.op('treeChildren', { path }, { start, limit: PAGE });
 
       if (generation !== this.generation) return;
 

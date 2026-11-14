@@ -194,6 +194,18 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Known harness limits rather than app defects: the single 821 ms main-thread task after a 50 MB drop comes from `DataTransfer`/File construction in the test harness, not the app; Chrome's synthetic key delivery was unreliable, so interaction checks also used dispatched events.
 - `pnpm astro check`: 0 errors, 0 warnings, 2 pre-existing `fast-xml-parser` hints. `pnpm build`: 126 pages. No third-party runtime requests; only the local axe script was added temporarily to `dist/` for testing and removed afterwards.
 
+## Phase 9 architecture review
+
+- Reviewed the codebase against the brief and produced seven candidates; only candidate 1 was approved, so the other six remain proposals and were not applied.
+- `RunController` (`src/workers/run-controller.ts`) is now the single run lifecycle for every tool: worker call, main-thread fallback, request identity, debounce, cancellation, progress filtering, and typed failures. Sessions keep their public methods (`cancelActive`, `stopDebounce`, `scheduleLive`) as thin delegates, so UI code did not change.
+- `src/workers/local-ops.ts` is the one op-to-local-function table; the five hand-written fallback copies were deleted. `src/workers/text.ts` owns payload decoding and size, and `src/tools/shared/failure.ts` is the single failure-to-JsonError presenter.
+- Staleness is cancel-based: `run()`/`runFile()` share the current token and only `cancel()` advances it. Sessions call `cancelActive()` before starting a run, so "latest wins" holds while concurrent viewer fetches can coexist. Stale progress is filtered inside the controller.
+- Stateful tree rule: a new `tree` load clears local tree state and tries the worker first; once a local tree exists, `treeChildren`/`treeSearch`/`treeValue` answer from it so row paths stay consistent. Local fallback stays capped by `FALLBACK_LIMIT` and `MAX_FILE`.
+- Removed `json-formatter/engine.ts` and the duplicated `execute`/`decode`/`normalize`/`runId`/`liveTimer` code across formatter, validator, viewer, diff, minifier/repair, and converters; `fallbackConvert` is gone. Net change across sessions: -504 lines.
+- Added Vitest 5.1.0 (`pnpm test`) with 21 tests: controller fallback, size caps, error kinds, cancel/staleness, progress filtering, scheduling, file reads, local tree persistence, number-safe format/minify, validation positions, CSV/YAML/XML converters, and structural diff.
+- `pnpm test`: 2 files, 21 tests pass. `pnpm astro check`: 0 errors, 0 warnings, 2 pre-existing `fast-xml-parser` hints. `pnpm build`: 126 pages, sitemap created. Built pages for all five migrated Tier 1 tools plus `json-to-csv`/`csv-to-json` return 200 from a local static server.
+- No browser automation was available for this phase, so interaction claims are limited to the automated engine tests and built-page smoke checks; the Phase 8 browser evidence still covers the shipped UI.
+
 ## Theme independence (supersedes the Phase 2 three-state theme)
 
 The operating system and browser must not change how the site looks; the site owns its appearance.

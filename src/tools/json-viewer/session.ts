@@ -2,10 +2,10 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { buildSnippet } from '../../lib/snippet';
-import { WorkerCancelledError, WorkerResponseError } from '../../workers/client';
 import { failure } from '../../workers/protocol';
 import type { JsonError, ProgressUpdate } from '../../workers/protocol';
 import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
+import { failureText } from '../shared/failure';
 import { fill } from '../shared/strings';
 import { SAMPLE_VIEW } from './sample';
 import type { TreeStore } from './store';
@@ -29,15 +29,6 @@ function el<T extends Element>(root: ParentNode, selector: string): T {
   if (!found) throw new Error(`Missing viewer element: ${selector}`);
   return found;
 }
-
-function isFormatError(error: unknown): error is { toJsonError(): JsonError } {
-  return (
-    error instanceof Error &&
-    'toJsonError' in error &&
-    typeof (error as { toJsonError?: unknown }).toJsonError === 'function'
-  );
-}
-
 /** Loads JSON into the worker tree and keeps the virtualized view in sync. */
 export class ViewerSession {
   private readonly shell: HTMLElement;
@@ -53,7 +44,6 @@ export class ViewerSession {
   private running = false;
   private applying = false;
   private disposed = false;
-  private runId = 0;
   private loadId = 0;
   private statusToken = 0;
   private lastError: JsonError | null = null;
@@ -305,90 +295,60 @@ export class ViewerSession {
       return;
     }
 
-    const id = ++this.runId;
     this.store.cancel();
     this.setRunning(true);
     this.hideError();
     this.setStatus(this.strings.indexing);
 
-    try {
-      const { usedFallback } = await this.store.load({ text }, (progress) =>
-        this.onProgress(id, progress),
-      );
+    const outcome = await this.store.load({ text }, (progress) => this.onProgress(progress));
 
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.view.refresh();
-      this.updateStats();
-      const status = fill(this.strings.treeDone, {
-        time: formatMilliseconds(this.store.stats?.parseTimeMs ?? 0, this.locale),
-      });
-      this.setStatus(status);
-      this.announce(status);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-      this.refreshButtons();
-      this.showView('tree');
-      this.view.focus();
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
+      return;
     }
+
+    this.applyLoaded(outcome.usedFallback);
   }
 
   private async runFile(mode: RunMode): Promise<void> {
     const file = this.file;
     if (!file) return;
 
-    if (file.size > MAX_FILE) {
-      this.showFailure(this.fileTooBig(), mode);
-      return;
-    }
-
-    const id = ++this.runId;
     this.store.cancel();
     this.setRunning(true);
     this.hideError();
     this.setStatus(this.strings.reading);
 
-    let buffer: ArrayBuffer;
+    const outcome = await this.store.loadFile(file, (progress) => this.onProgress(progress));
 
-    try {
-      buffer = await file.arrayBuffer();
-    } catch {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.showFailure(failure(this.strings.readFailed, this.strings.tryAgain, 'runtime'), mode);
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
       return;
     }
 
-    if (id !== this.runId || this.disposed) return;
+    this.applyLoaded(outcome.usedFallback);
+  }
 
-    try {
-      const { usedFallback } = await this.store.load({ buffer }, (progress) =>
-        this.onProgress(id, progress),
-      );
-
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.view.refresh();
-      this.updateStats();
-      const status = fill(this.strings.treeDone, {
-        time: formatMilliseconds(this.store.stats?.parseTimeMs ?? 0, this.locale),
-      });
-      this.setStatus(status);
-      this.announce(status);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-      this.refreshButtons();
-      this.showView('tree');
-      this.view.focus();
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
-    }
+  private applyLoaded(usedFallback: boolean): void {
+    this.view.refresh();
+    this.updateStats();
+    const status = fill(this.strings.treeDone, {
+      time: formatMilliseconds(this.store.stats?.parseTimeMs ?? 0, this.locale),
+    });
+    this.setStatus(status);
+    this.announce(status);
+    if (usedFallback) this.showEngineNote(this.strings.workerFallback);
+    this.refreshButtons();
+    this.showView('tree');
+    this.view.focus();
   }
 
   private showFailure(info: JsonError, mode: RunMode): void {
@@ -423,30 +383,6 @@ export class ViewerSession {
     if (mode === 'explicit') this.showView('tree');
   }
 
-  private normalize(error: unknown): JsonError {
-    if (error instanceof WorkerResponseError) {
-      const info = error.info;
-
-      if (info.code === 'oom') return { ...info, message: this.strings.oom, hint: this.strings.oomHint };
-      if (info.code === 'encoding') {
-        return { ...info, message: this.strings.invalidFile, hint: this.strings.encodingHint };
-      }
-      if (info.code === 'runtime') {
-        return {
-          ...info,
-          message: this.strings.workerFailed,
-          hint: this.strings.workerFailedHint,
-        };
-      }
-
-      return info;
-    }
-
-    if (isFormatError(error)) return error.toJsonError();
-
-    return failure(this.strings.workerFailed, this.strings.workerFailedHint, 'runtime');
-  }
-
   private fileTooBig(): JsonError {
     return failure(this.strings.fileTooBig, this.strings.chooseSmaller, 'runtime');
   }
@@ -469,7 +405,6 @@ export class ViewerSession {
 
   private clear(): void {
     this.loadId += 1;
-    this.runId += 1;
     this.store.reset();
     this.file = null;
     this.largeMode = false;
@@ -497,7 +432,6 @@ export class ViewerSession {
   }
 
   private resetTree(): void {
-    this.runId += 1;
     this.store.reset();
     this.view.clear();
     this.resetStats();
@@ -606,15 +540,13 @@ export class ViewerSession {
 
   private cancel(): void {
     if (!this.running) return;
-    this.runId += 1;
     this.store.cancel();
     this.setRunning(false);
     this.setStatus(this.strings.cancelled);
     this.announce(this.strings.cancelled);
   }
 
-  private onProgress(id: number, progress: ProgressUpdate): void {
-    if (id !== this.runId) return;
+  private onProgress(progress: ProgressUpdate): void {
     this.setStatus(
       progress.phase === 'reading' ? this.strings.reading : this.strings.indexing,
     );

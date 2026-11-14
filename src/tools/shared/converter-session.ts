@@ -5,25 +5,18 @@ import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { createSelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
-import {
-  WorkerCancelledError,
-  WorkerClient,
-  WorkerResponseError,
-  WorkerRuntimeError,
-  WorkerUnavailableError,
-} from '../../workers/client';
 import { failure } from '../../workers/protocol';
 import type {
   ConvertResult,
   ConvertStats,
   JsonError,
   ProgressUpdate,
-  TextPayload,
 } from '../../workers/protocol';
-import { FALLBACK_LIMIT, LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
+import { RunController, type RunOutcome } from '../../workers/run-controller';
+import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
+import { failureText } from './failure';
 import {
   converterOutput,
-  fallbackConvert,
   readConverterOptions,
   type ConverterOp,
 } from './converter-config';
@@ -37,6 +30,7 @@ export interface ConverterStrings extends BaseStrings {
 }
 
 type RunMode = 'live' | 'explicit';
+type OpOutcome = RunOutcome<ConverterOp>;
 
 interface Options {
   shell: HTMLElement;
@@ -65,7 +59,7 @@ export class ConverterSession {
   private readonly output: EditorHandle;
   private readonly sample: string;
   private readonly showView: (view: 'input' | 'output') => void;
-  private readonly client = new WorkerClient();
+  private readonly runs = new RunController();
   private readonly statKeys = ['size', 'output', 'rows', 'lines', 'time'];
 
   private file: File | null = null;
@@ -76,9 +70,7 @@ export class ConverterSession {
   private running = false;
   private applying = false;
   private disposed = false;
-  private runId = 0;
   private loadId = 0;
-  private liveTimer = 0;
   private statusToken = 0;
   private lastError: JsonError | null = null;
 
@@ -312,115 +304,61 @@ export class ConverterSession {
     }
 
     this.stopDebounce();
-    const id = ++this.runId;
-    this.client.cancelAll();
+    this.cancelActive();
     this.setRunning(true);
     this.hideError();
 
-    try {
-      const { result, usedFallback } = await this.execute(
-        { text },
-        (progress) => this.onProgress(id, progress),
-      );
+    const outcome = await this.runOp(
+      { text },
+      (progress) => this.onProgress(progress),
+    );
 
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyResult(result, mode);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
-    }
+    this.applyOutcome(outcome, mode);
   }
 
   private async runFile(mode: RunMode): Promise<void> {
     const file = this.file;
     if (!file) return;
 
-    if (file.size > MAX_FILE) {
-      this.showFailure(this.fileTooBig(), mode);
-      return;
-    }
-
     this.stopDebounce();
-    const id = ++this.runId;
-    this.client.cancelAll();
+    this.cancelActive();
     this.setRunning(true);
     this.hideError();
     this.setStatus(this.strings.reading);
 
-    let buffer: ArrayBuffer;
+    const outcome = await this.runFileOp(file, (progress) => this.onProgress(progress));
 
-    try {
-      buffer = await file.arrayBuffer();
-    } catch {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.showFailure(failure(this.strings.readFailed, this.strings.tryAgain, 'runtime'), mode);
+    this.applyOutcome(outcome, mode);
+  }
+
+  private applyOutcome(outcome: OpOutcome, mode: RunMode): void {
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
       return;
     }
 
-    if (id !== this.runId || this.disposed) return;
-
-    try {
-      const { result, usedFallback } = await this.execute(
-        { buffer },
-        (progress) => this.onProgress(id, progress),
-      );
-
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyResult(result, mode);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
-    }
+    this.applyResult(outcome.result, mode);
+    if (outcome.usedFallback) this.showEngineNote(this.strings.workerFallback);
   }
 
-  private async execute(
-    payload: TextPayload,
+  private runOp(
+    payload: { text: string },
     onProgress: (progress: ProgressUpdate) => void,
-  ): Promise<{ result: ConvertResult; usedFallback: boolean }> {
-    const options = readConverterOptions(this.shell, this.op);
-
-    try {
-      const result = await this.client.run(
-        this.op,
-        payload,
-        options as never,
-        onProgress,
-      );
-      return { result, usedFallback: false };
-    } catch (error) {
-      if (!(error instanceof WorkerUnavailableError) && !(error instanceof WorkerRuntimeError)) {
-        throw error;
-      }
-
-      const text = this.decode(payload);
-      if (text.length > FALLBACK_LIMIT) throw error;
-
-      return {
-        result: await fallbackConvert(this.op, text, options),
-        usedFallback: true,
-      };
-    }
+  ): Promise<OpOutcome> {
+    const options = readConverterOptions(this.shell, this.op) as never;
+    return this.runs.run(this.op, payload, options, { onProgress });
   }
 
-  private decode(payload: TextPayload): string {
-    if ('text' in payload) return payload.text;
-
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(payload.buffer);
-    } catch {
-      throw new WorkerResponseError(
-        failure(this.strings.invalidFile, this.strings.encodingHint, 'encoding'),
-      );
-    }
+  private runFileOp(
+    file: File,
+    onProgress: (progress: ProgressUpdate) => void,
+  ): Promise<OpOutcome> {
+    const options = readConverterOptions(this.shell, this.op) as never;
+    return this.runs.runFile(this.op, file, options, { onProgress });
   }
 
   private applyResult(result: ConvertResult, mode: RunMode): void {
@@ -495,28 +433,6 @@ export class ConverterSession {
     );
 
     if (mode === 'explicit' && this.maxWidthQuery) this.showView('output');
-  }
-
-  private normalize(error: unknown): JsonError {
-    if (error instanceof WorkerResponseError) {
-      const info = error.info;
-
-      if (info.code === 'oom') return { ...info, message: this.strings.oom, hint: this.strings.oomHint };
-      if (info.code === 'encoding') {
-        return { ...info, message: this.strings.invalidFile, hint: this.strings.encodingHint };
-      }
-      if (info.code === 'runtime') {
-        return {
-          ...info,
-          message: this.strings.workerFailed,
-          hint: this.strings.workerFailedHint,
-        };
-      }
-
-      return info;
-    }
-
-    return failure(this.strings.workerFailed, this.strings.workerFailedHint, 'runtime');
   }
 
   private fileTooBig(): JsonError {
@@ -764,28 +680,19 @@ export class ConverterSession {
   }
 
   private cancelActive(): void {
-    this.runId += 1;
-    this.client.cancelAll();
+    this.runs.cancel();
     this.setRunning(false);
   }
 
   private stopDebounce(): void {
-    if (this.liveTimer !== 0) {
-      window.clearTimeout(this.liveTimer);
-      this.liveTimer = 0;
-    }
+    this.runs.cancelScheduled();
   }
 
   private scheduleLive(): void {
-    this.stopDebounce();
-    this.liveTimer = window.setTimeout(() => {
-      this.liveTimer = 0;
-      void this.run('live');
-    }, 250);
+    this.runs.schedule(() => void this.run('live'), 250);
   }
 
-  private onProgress(id: number, progress: ProgressUpdate): void {
-    if (id !== this.runId) return;
+  private onProgress(progress: ProgressUpdate): void {
     this.setStatus(
       progress.phase === 'reading' ? this.strings.reading : this.strings.converting,
     );
@@ -793,7 +700,6 @@ export class ConverterSession {
 
   dispose(): void {
     this.disposed = true;
-    this.stopDebounce();
-    this.client.dispose();
+    this.runs.dispose();
   }
 }

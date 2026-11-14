@@ -2,22 +2,16 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { buildSnippet } from '../../lib/snippet';
-import {
-  WorkerCancelledError,
-  WorkerClient,
-  WorkerResponseError,
-  WorkerRuntimeError,
-  WorkerUnavailableError,
-} from '../../workers/client';
 import { failure } from '../../workers/protocol';
 import type {
   FormatStats,
   JsonError,
   ProgressUpdate,
-  TextPayload,
   ValidateResult,
 } from '../../workers/protocol';
-import { FALLBACK_LIMIT, LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
+import { RunController } from '../../workers/run-controller';
+import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
+import { failureText } from '../shared/failure';
 import { fill } from '../shared/strings';
 import type { ValidatorStrings } from './strings';
 
@@ -36,32 +30,20 @@ function el<T extends Element>(root: ParentNode, selector: string): T {
   return found;
 }
 
-function decode(payload: TextPayload, strings: ValidatorStrings): string {
-  if ('text' in payload) return payload.text;
-
-  try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(payload.buffer);
-  } catch {
-    throw new WorkerResponseError(failure(strings.invalidFile, strings.encodingHint, 'encoding'));
-  }
-}
-
 /** Validates strict JSON on the worker and reports a verdict plus exact error context. */
 export class ValidatorSession {
   private readonly shell: HTMLElement;
   private readonly strings: ValidatorStrings;
   private readonly locale: string;
   private readonly input: EditorHandle;
-  private readonly client = new WorkerClient();
+  private readonly runs = new RunController();
 
   private file: File | null = null;
   private largeMode = false;
   private running = false;
   private applying = false;
   private disposed = false;
-  private runId = 0;
   private loadId = 0;
-  private liveTimer = 0;
   private statusToken = 0;
   private lastError: JsonError | null = null;
 
@@ -217,8 +199,7 @@ export class ValidatorSession {
 
   dispose(): void {
     this.disposed = true;
-    this.stopDebounce();
-    this.client.dispose();
+    this.runs.dispose();
   }
 
   private setInputText(text: string, explicit: boolean): void {
@@ -269,93 +250,57 @@ export class ValidatorSession {
     }
 
     this.stopDebounce();
-    const id = ++this.runId;
-    this.client.cancelAll();
+    this.cancelActive();
     this.setRunning(true);
     this.setStatus(this.strings.reading);
 
-    try {
-      const { result, usedFallback } = await this.execute(
-        { text },
-        (progress) => this.onProgress(id, progress),
-      );
+    const outcome = await this.runs.run(
+      'validate',
+      { text },
+      {},
+      { onProgress: (progress) => this.onProgress(progress) },
+    );
 
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyValid(result);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
+      return;
     }
+
+    this.applyValid(outcome.result);
+    if (outcome.usedFallback) this.showEngineNote(this.strings.workerFallback);
   }
 
   private async runFile(mode: RunMode): Promise<void> {
     const file = this.file;
     if (!file) return;
 
-    if (file.size > MAX_FILE) {
-      this.showFailure(this.fileTooBig(), mode);
-      return;
-    }
-
     this.stopDebounce();
-    const id = ++this.runId;
-    this.client.cancelAll();
+    this.cancelActive();
     this.setRunning(true);
     this.setStatus(this.strings.reading);
 
-    let buffer: ArrayBuffer;
+    const outcome = await this.runs.runFile(
+      'validate',
+      file,
+      {},
+      { onProgress: (progress) => this.onProgress(progress) },
+    );
 
-    try {
-      buffer = await file.arrayBuffer();
-    } catch {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.showFailure(failure(this.strings.readFailed, this.strings.tryAgain, 'runtime'), mode);
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
       return;
     }
 
-    if (id !== this.runId || this.disposed) return;
-
-    try {
-      const { result, usedFallback } = await this.execute(
-        { buffer },
-        (progress) => this.onProgress(id, progress),
-      );
-
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyValid(result);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
-    }
-  }
-
-  private async execute(
-    payload: TextPayload,
-    onProgress: (progress: ProgressUpdate) => void,
-  ): Promise<{ result: ValidateResult; usedFallback: boolean }> {
-    try {
-      const result = await this.client.run('validate', payload, {}, onProgress);
-      return { result, usedFallback: false };
-    } catch (error) {
-      if (!(error instanceof WorkerUnavailableError) && !(error instanceof WorkerRuntimeError)) {
-        throw error;
-      }
-
-      const text = decode(payload, this.strings);
-      if (text.length > FALLBACK_LIMIT) throw error;
-
-      const { validateJson } = await import('../../workers/ops/validate');
-      return { result: validateJson(text), usedFallback: true };
-    }
+    this.applyValid(outcome.result);
+    if (outcome.usedFallback) this.showEngineNote(this.strings.workerFallback);
   }
 
   private applyValid(result: ValidateResult): void {
@@ -419,28 +364,6 @@ export class ValidatorSession {
     if (mode === 'explicit' && window.matchMedia('(max-width: 767px)').matches) {
       invalid.scrollIntoView({ block: 'nearest' });
     }
-  }
-
-  private normalize(error: unknown): JsonError {
-    if (error instanceof WorkerResponseError) {
-      const info = error.info;
-
-      if (info.code === 'oom') return { ...info, message: this.strings.oom, hint: this.strings.oomHint };
-      if (info.code === 'encoding') {
-        return { ...info, message: this.strings.invalidFile, hint: this.strings.encodingHint };
-      }
-      if (info.code === 'runtime') {
-        return {
-          ...info,
-          message: this.strings.workerFailed,
-          hint: this.strings.workerFailedHint,
-        };
-      }
-
-      return info;
-    }
-
-    return failure(this.strings.workerFailed, this.strings.workerFailedHint, 'runtime');
   }
 
   private fileTooBig(): JsonError {
@@ -610,28 +533,19 @@ export class ValidatorSession {
   }
 
   private cancelActive(): void {
-    this.runId += 1;
-    this.client.cancelAll();
+    this.runs.cancel();
     this.setRunning(false);
   }
 
   private stopDebounce(): void {
-    if (this.liveTimer !== 0) {
-      window.clearTimeout(this.liveTimer);
-      this.liveTimer = 0;
-    }
+    this.runs.cancelScheduled();
   }
 
   private scheduleLive(): void {
-    this.stopDebounce();
-    this.liveTimer = window.setTimeout(() => {
-      this.liveTimer = 0;
-      void this.run('live');
-    }, 250);
+    this.runs.schedule(() => void this.run('live'), 250);
   }
 
-  private onProgress(id: number, progress: ProgressUpdate): void {
-    if (id !== this.runId) return;
+  private onProgress(progress: ProgressUpdate): void {
     this.setStatus(
       progress.phase === 'reading' ? this.strings.reading : this.strings.validating,
     );

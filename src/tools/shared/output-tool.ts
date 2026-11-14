@@ -6,13 +6,6 @@ import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format
 import { createSelectMenu, type SelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
 import { readIndent, writeIndent } from '../../lib/storage';
-import {
-  WorkerCancelledError,
-  WorkerClient,
-  WorkerResponseError,
-  WorkerRuntimeError,
-  WorkerUnavailableError,
-} from '../../workers/client';
 import { failure } from '../../workers/protocol';
 import type {
   FormatIndent,
@@ -22,14 +15,16 @@ import type {
   ProgressUpdate,
   RepairResult,
   RepairStats,
-  TextPayload,
 } from '../../workers/protocol';
-import { FALLBACK_LIMIT, LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
+import { RunController, type RunOutcome } from '../../workers/run-controller';
+import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
+import { failureText } from './failure';
 import { fill, type OutputToolStrings } from './strings';
 
 export type OutputToolKind = 'minify' | 'repair';
 type RunMode = 'live' | 'explicit';
 type Result = MinifyResult | RepairResult;
+type OpOutcome = RunOutcome<'minify'> | RunOutcome<'repair'>;
 
 interface Options {
   shell: HTMLElement;
@@ -48,18 +43,6 @@ function el<T extends Element>(root: ParentNode, selector: string): T {
   return found;
 }
 
-function decode(payload: TextPayload, strings: OutputToolStrings): string {
-  if ('text' in payload) return payload.text;
-
-  try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(payload.buffer);
-  } catch {
-    throw new WorkerResponseError(
-      failure(strings.invalidFile, strings.encodingHint, 'encoding'),
-    );
-  }
-}
-
 /** Shared session for tools that turn input text into formatted output text. */
 export class OutputToolSession {
   private readonly shell: HTMLElement;
@@ -70,7 +53,7 @@ export class OutputToolSession {
   private readonly output: EditorHandle;
   private readonly sample: string;
   private readonly showView: (view: 'input' | 'output') => void;
-  private readonly client = new WorkerClient();
+  private readonly runs = new RunController();
   private readonly statKeys = ['size', 'lines', 'depth', 'time', 'output', 'saved', 'fixes'];
   private readonly indentMenu: SelectMenu | null;
 
@@ -83,9 +66,7 @@ export class OutputToolSession {
   private running = false;
   private applying = false;
   private disposed = false;
-  private runId = 0;
   private loadId = 0;
-  private liveTimer = 0;
   private statusToken = 0;
   private lastError: JsonError | null = null;
 
@@ -316,109 +297,66 @@ export class OutputToolSession {
     }
 
     this.stopDebounce();
-    const id = ++this.runId;
-    this.client.cancelAll();
+    this.cancelActive();
     this.setRunning(true);
     this.hideError();
 
-    try {
-      const { result, usedFallback } = await this.execute(
-        { text },
-        (progress) => this.onProgress(id, progress),
-      );
+    const outcome = await this.runOp({ text }, (progress) => this.onProgress(progress));
 
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyResult(result, mode);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
+      return;
     }
+
+    this.applyResult(outcome.result, mode);
+    if (outcome.usedFallback) this.showEngineNote(this.strings.workerFallback);
   }
 
   private async runFile(mode: RunMode): Promise<void> {
     const file = this.file;
     if (!file) return;
 
-    if (file.size > MAX_FILE) {
-      this.showFailure(this.fileTooBig(), mode);
-      return;
-    }
-
     this.stopDebounce();
-    const id = ++this.runId;
-    this.client.cancelAll();
+    this.cancelActive();
     this.setRunning(true);
     this.hideError();
     this.setStatus(this.strings.reading);
 
-    let buffer: ArrayBuffer;
+    const outcome = await this.runFileOp(file, (progress) => this.onProgress(progress));
 
-    try {
-      buffer = await file.arrayBuffer();
-    } catch {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.showFailure(failure(this.strings.readFailed, this.strings.tryAgain, 'runtime'), mode);
+    if (outcome.status === 'stale' || this.disposed) return;
+
+    this.setRunning(false);
+
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
       return;
     }
 
-    if (id !== this.runId || this.disposed) return;
-
-    try {
-      const { result, usedFallback } = await this.execute(
-        { buffer },
-        (progress) => this.onProgress(id, progress),
-      );
-
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyResult(result, mode);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
-    }
+    this.applyResult(outcome.result, mode);
+    if (outcome.usedFallback) this.showEngineNote(this.strings.workerFallback);
   }
 
-  private async execute(
-    payload: TextPayload,
+  private runOp(
+    payload: { text: string },
     onProgress: (progress: ProgressUpdate) => void,
-  ): Promise<{ result: Result; usedFallback: boolean }> {
-    try {
-      if (this.kind === 'minify') {
-        const result = await this.client.run('minify', payload, {}, onProgress);
-        return { result, usedFallback: false };
-      }
+  ): Promise<OpOutcome> {
+    return this.kind === 'minify'
+      ? this.runs.run('minify', payload, {}, { onProgress })
+      : this.runs.run('repair', payload, { indent: this.indent }, { onProgress });
+  }
 
-      const result = await this.client.run(
-        'repair',
-        payload,
-        { indent: this.indent },
-        onProgress,
-      );
-      return { result, usedFallback: false };
-    } catch (error) {
-      if (!(error instanceof WorkerUnavailableError) && !(error instanceof WorkerRuntimeError)) {
-        throw error;
-      }
-
-      const text = decode(payload, this.strings);
-      if (text.length > FALLBACK_LIMIT) throw error;
-
-      if (this.kind === 'minify') {
-        const { minifyJson } = await import('../../workers/ops/minify');
-        return { result: minifyJson(text), usedFallback: true };
-      }
-
-      const { repairJson } = await import('../../workers/ops/repair');
-      return { result: repairJson(text, { indent: this.indent }), usedFallback: true };
-    }
+  private runFileOp(
+    file: File,
+    onProgress: (progress: ProgressUpdate) => void,
+  ): Promise<OpOutcome> {
+    return this.kind === 'minify'
+      ? this.runs.runFile('minify', file, {}, { onProgress })
+      : this.runs.runFile('repair', file, { indent: this.indent }, { onProgress });
   }
 
   private applyResult(result: Result, mode: RunMode): void {
@@ -503,28 +441,6 @@ export class OutputToolSession {
     );
 
     if (mode === 'explicit' && this.maxWidthQuery) this.showView('output');
-  }
-
-  private normalize(error: unknown): JsonError {
-    if (error instanceof WorkerResponseError) {
-      const info = error.info;
-
-      if (info.code === 'oom') return { ...info, message: this.strings.oom, hint: this.strings.oomHint };
-      if (info.code === 'encoding') {
-        return { ...info, message: this.strings.invalidFile, hint: this.strings.encodingHint };
-      }
-      if (info.code === 'runtime') {
-        return {
-          ...info,
-          message: this.strings.workerFailed,
-          hint: this.strings.workerFailedHint,
-        };
-      }
-
-      return info;
-    }
-
-    return failure(this.strings.workerFailed, this.strings.workerFailedHint, 'runtime');
   }
 
   private fileTooBig(): JsonError {
@@ -787,29 +703,19 @@ export class OutputToolSession {
   }
 
   private cancelActive(): void {
-    this.runId += 1;
-    this.client.cancelAll();
+    this.runs.cancel();
     this.setRunning(false);
   }
 
   private stopDebounce(): void {
-    if (this.liveTimer !== 0) {
-      window.clearTimeout(this.liveTimer);
-      this.liveTimer = 0;
-    }
+    this.runs.cancelScheduled();
   }
 
   private scheduleLive(): void {
-    this.stopDebounce();
-    this.liveTimer = window.setTimeout(() => {
-      this.liveTimer = 0;
-      void this.run('live');
-    }, 250);
+    this.runs.schedule(() => void this.run('live'), 250);
   }
 
-  private onProgress(id: number, progress: ProgressUpdate): void {
-    if (id !== this.runId) return;
-
+  private onProgress(progress: ProgressUpdate): void {
     if (progress.phase === 'reading') {
       this.setStatus(this.strings.reading);
       return;
@@ -820,7 +726,6 @@ export class OutputToolSession {
 
   dispose(): void {
     this.disposed = true;
-    this.stopDebounce();
-    this.client.dispose();
+    this.runs.dispose();
   }
 }

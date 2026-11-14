@@ -2,13 +2,6 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { buildSnippet } from '../../lib/snippet';
-import {
-  WorkerCancelledError,
-  WorkerClient,
-  WorkerResponseError,
-  WorkerRuntimeError,
-  WorkerUnavailableError,
-} from '../../workers/client';
 import { failure } from '../../workers/protocol';
 import type {
   DiffOptions,
@@ -17,8 +10,9 @@ import type {
   JsonError,
   ProgressUpdate,
 } from '../../workers/protocol';
-import { FALLBACK_LIMIT } from '../limits';
+import { RunController } from '../../workers/run-controller';
 import { fill } from '../shared/strings';
+import { failureText } from '../shared/failure';
 import type { DiffList } from './list';
 import { SAMPLE_DIFF_LEFT, SAMPLE_DIFF_RIGHT } from './sample';
 import type { DiffStrings } from './strings';
@@ -44,14 +38,6 @@ function el<T extends Element>(root: ParentNode, selector: string): T {
   return found;
 }
 
-function isFormatError(error: unknown): error is { toJsonError(): JsonError } {
-  return (
-    error instanceof Error &&
-    'toJsonError' in error &&
-    typeof (error as { toJsonError?: unknown }).toJsonError === 'function'
-  );
-}
-
 /** Compares two JSON documents on the worker and drives the change list. */
 export class DiffSession {
   private readonly shell: HTMLElement;
@@ -61,14 +47,13 @@ export class DiffSession {
   private readonly right: EditorHandle;
   private readonly list: DiffList;
   private readonly showView: (view: Side | 'changes') => void;
-  private readonly client = new WorkerClient();
+  private readonly runs = new RunController();
   private readonly ignoreOrder: HTMLInputElement;
 
   private activeSide: Side = 'left';
   private running = false;
   private applying = false;
   private disposed = false;
-  private runId = 0;
   private loadId = 0;
   private statusToken = 0;
   private hasResult = false;
@@ -203,7 +188,7 @@ export class DiffSession {
   dispose(): void {
     this.disposed = true;
     this.list.dispose();
-    this.client.dispose();
+    this.runs.dispose();
   }
 
   private loadSample(): void {
@@ -255,49 +240,30 @@ export class DiffSession {
       return;
     }
 
-    const id = ++this.runId;
-    this.client.cancelAll();
+    this.runs.cancel();
     this.setRunning(true);
     this.hideError();
     this.setStatus(this.strings.comparing);
 
-    try {
-      const { result, usedFallback } = await this.execute(left, right, (progress) =>
-        this.onProgress(id, progress),
-      );
-
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      this.applyResult(result);
-      if (usedFallback) this.showEngineNote(this.strings.workerFallback);
-    } catch (error) {
-      if (id !== this.runId || this.disposed) return;
-      this.setRunning(false);
-      if (error instanceof WorkerCancelledError) return;
-      this.showFailure(this.normalize(error), mode);
-    }
-  }
-
-  private async execute(
-    left: string,
-    right: string,
-    onProgress: (progress: ProgressUpdate) => void,
-  ): Promise<{ result: DiffResult; usedFallback: boolean }> {
     const options: DiffOptions = { ignoreArrayOrder: this.ignoreOrder.checked };
+    const outcome = await this.runs.run(
+      'diff',
+      { left, right },
+      options,
+      { onProgress: (progress) => this.onProgress(progress) },
+    );
 
-    try {
-      const result = await this.client.run('diff', { left, right }, options, onProgress);
-      return { result, usedFallback: false };
-    } catch (error) {
-      if (!(error instanceof WorkerUnavailableError) && !(error instanceof WorkerRuntimeError)) {
-        throw error;
-      }
+    if (outcome.status === 'stale' || this.disposed) return;
 
-      if (left.length + right.length > FALLBACK_LIMIT) throw error;
+    this.setRunning(false);
 
-      const { diffJson } = await import('../../workers/ops/diff');
-      return { result: diffJson(left, right, options), usedFallback: true };
+    if (outcome.status === 'failed') {
+      this.showFailure(failureText(this.strings, outcome.failure), mode);
+      return;
     }
+
+    this.applyResult(outcome.result);
+    if (outcome.usedFallback) this.showEngineNote(this.strings.workerFallback);
   }
 
   private applyResult(result: DiffResult): void {
@@ -354,30 +320,6 @@ export class DiffSession {
     if (mode === 'explicit') this.showView('changes');
   }
 
-  private normalize(error: unknown): JsonError {
-    if (error instanceof WorkerResponseError) {
-      const info = error.info;
-
-      if (info.code === 'oom') return { ...info, message: this.strings.oom, hint: this.strings.oomHint };
-      if (info.code === 'encoding') {
-        return { ...info, message: this.strings.invalidFile, hint: this.strings.encodingHint };
-      }
-      if (info.code === 'runtime') {
-        return {
-          ...info,
-          message: this.strings.workerFailed,
-          hint: this.strings.workerFailedHint,
-        };
-      }
-
-      return info;
-    }
-
-    if (isFormatError(error)) return error.toJsonError();
-
-    return failure(this.strings.workerFailed, this.strings.workerFailedHint, 'runtime');
-  }
-
   private async paste(): Promise<void> {
     try {
       if (!navigator.clipboard?.readText) throw new Error('Clipboard unavailable');
@@ -398,8 +340,7 @@ export class DiffSession {
 
   private clear(): void {
     this.loadId += 1;
-    this.runId += 1;
-    this.client.cancelAll();
+    this.runs.cancel();
     this.applying = true;
     this.left.setDoc('');
     this.right.setDoc('');
@@ -524,15 +465,13 @@ export class DiffSession {
 
   private cancel(): void {
     if (!this.running) return;
-    this.runId += 1;
-    this.client.cancelAll();
+    this.runs.cancel();
     this.setRunning(false);
     this.setStatus(this.strings.cancelled);
     this.announce(this.strings.cancelled);
   }
 
-  private onProgress(id: number, progress: ProgressUpdate): void {
-    if (id !== this.runId) return;
+  private onProgress(progress: ProgressUpdate): void {
     if (progress.phase === 'comparing') this.setStatus(this.strings.comparing);
   }
 }
