@@ -32,7 +32,4 @@ export interface ViewerStrings extends BaseStrings {
   treeCopyValueShort: string;
   treeValueTooLarge: string;
   treeValueMissing: string;
-  fullscreen: string;
-  exitFullscreen: string;
-  fullscreenFailed: string;
 }

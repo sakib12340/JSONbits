@@ -3,6 +3,7 @@ import { downloadBlob } from '../../lib/download';
 import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
+import { setupFullscreen } from '../../lib/fullscreen';
 import { createSelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
 import { failure } from '../../workers/protocol';
@@ -73,6 +74,7 @@ export class ConverterSession {
   private loadId = 0;
   private statusToken = 0;
   private lastError: JsonError | null = null;
+  private stopFullscreen: (() => void) | null = null;
 
   constructor(options: Options) {
     this.shell = options.shell;
@@ -89,6 +91,10 @@ export class ConverterSession {
     this.initSelects();
     this.setStatus(this.strings.waiting);
     this.refreshButtons();
+    this.stopFullscreen = setupFullscreen(this.shell, this.strings, (message) => {
+      this.flash(message);
+      this.announce(message);
+    });
 
     el<HTMLButtonElement>(this.shell, '[data-action="convert"]').addEventListener('click', () =>
       void this.run('explicit'),
@@ -700,6 +706,7 @@ export class ConverterSession {
 
   dispose(): void {
     this.disposed = true;
+    this.stopFullscreen?.();
     this.runs.dispose();
   }
 }

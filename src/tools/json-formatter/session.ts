@@ -1,6 +1,7 @@
 import { copyText } from '../../lib/clipboard';
 import { downloadBlob, downloadText, formattedName } from '../../lib/download';
 import { formatBytes, formatMilliseconds } from '../../lib/format-bytes';
+import { setupFullscreen } from '../../lib/fullscreen';
 import { readIndent, writeIndent } from '../../lib/storage';
 import type { EditorHandle } from '../../lib/editor';
 import { failure } from '../../workers/protocol';
@@ -23,6 +24,7 @@ import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
 type RunMode = 'live' | 'explicit';
 
 interface Options {
+  shell: HTMLElement;
   view: ToolView;
   strings: ToolStrings;
   locale: string;
@@ -31,6 +33,7 @@ interface Options {
 }
 
 export class FormatterSession {
+  private readonly shell: HTMLElement;
   private readonly view: ToolView;
   private readonly strings: ToolStrings;
   private readonly locale: string;
@@ -49,8 +52,10 @@ export class FormatterSession {
   private disposed = false;
   private loadId = 0;
   private lastError: JsonError | null = null;
+  private stopFullscreen: (() => void) | null = null;
 
   constructor(options: Options) {
+    this.shell = options.shell;
     this.view = options.view;
     this.strings = options.strings;
     this.locale = options.locale;
@@ -63,6 +68,10 @@ export class FormatterSession {
     this.view.syncIndent(String(this.indent));
     this.view.setStatus(this.strings.waiting);
     this.refreshButtons();
+    this.stopFullscreen = setupFullscreen(this.shell, this.strings, (message) => {
+      this.view.flash(message);
+      this.view.announce(message);
+    });
 
     ui.format.addEventListener('click', () => void this.run('explicit'));
     ui.formatLarge.addEventListener('click', () => void this.run('explicit'));
@@ -482,6 +491,7 @@ export class FormatterSession {
 
   dispose(): void {
     this.disposed = true;
+    this.stopFullscreen?.();
     this.runs.dispose();
   }
 }

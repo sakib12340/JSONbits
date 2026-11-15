@@ -379,7 +379,44 @@
 }
 
 [data-tool-frame]:fullscreen [data-editor-wrap],
-[data-tool-frame]:fullscreen [data-pane="tree"] > .relative {
+[data-tool-frame]:fullscreen [data-pane="tree"] > .relative,
+[data-tool-frame]:fullscreen [data-tool-main] [data-editor-wrap] {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+/* Single-editor tools (validator) keep their verdict below the input. */
+[data-tool-frame]:fullscreen [data-tool-main] {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+[data-tool-frame]:fullscreen [data-result] {
+  flex: 0 0 auto;
+  max-height: 40vh;
+  overflow: auto;
+}
+
+/* Diff splits the viewport between the two editors and the change list. */
+[data-tool-frame]:fullscreen .diff-panes {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+[data-tool-frame]:fullscreen .diff-pane {
+  min-height: 0;
+}
+
+[data-tool-frame]:fullscreen .diff-pane [data-editor-wrap] {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+[data-tool-frame]:fullscreen [data-diff-body] {
   flex: 1 1 auto;
   height: auto;
   min-height: 0;
@@ -393,15 +430,25 @@
   [data-tool-frame]:fullscreen .tool-panes {
     grid-template-rows: minmax(0, 1fr);
   }
+
+  [data-tool-frame]:fullscreen .diff-pane {
+    display: flex;
+  }
+
+  [data-tool-frame]:fullscreen .diff-panes {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 767px) {
-  [data-tool-frame]:fullscreen .tool-panes {
+  [data-tool-frame]:fullscreen .tool-panes,
+  [data-tool-frame]:fullscreen .diff-panes {
     display: flex;
     flex-direction: column;
   }
 
-  [data-tool-frame]:fullscreen .tool-pane.is-active {
+  [data-tool-frame]:fullscreen .tool-pane.is-active,
+  [data-tool-frame]:fullscreen .diff-pane.is-active {
     flex: 1 1 auto;
   }
 }

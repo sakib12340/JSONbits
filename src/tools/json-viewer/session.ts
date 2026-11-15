@@ -1,6 +1,7 @@
 import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
+import { setupFullscreen } from '../../lib/fullscreen';
 import { buildSnippet } from '../../lib/snippet';
 import { failure } from '../../workers/protocol';
 import type { JsonError, ProgressUpdate } from '../../workers/protocol';
@@ -47,24 +48,7 @@ export class ViewerSession {
   private loadId = 0;
   private statusToken = 0;
   private lastError: JsonError | null = null;
-  private frame: HTMLElement | null = null;
-  private fullscreenButton: HTMLButtonElement | null = null;
-
-  private readonly handleFullscreenChange = (): void => {
-    const button = this.fullscreenButton;
-    if (!button) return;
-
-    const active = document.fullscreenElement === this.frame;
-    const label = active ? this.strings.exitFullscreen : this.strings.fullscreen;
-    button.setAttribute('aria-label', label);
-    button.title = label;
-    button.setAttribute('aria-pressed', String(active));
-
-    const enter = button.querySelector<HTMLElement>('[data-fullscreen-enter]');
-    const exit = button.querySelector<HTMLElement>('[data-fullscreen-exit]');
-    if (enter) enter.hidden = active;
-    if (exit) exit.hidden = !active;
-  };
+  private stopFullscreen: (() => void) | null = null;
 
   constructor(options: Options) {
     this.shell = options.shell;
@@ -79,7 +63,10 @@ export class ViewerSession {
   start(): void {
     this.setStatus(this.strings.waiting);
     this.refreshButtons();
-    this.setupFullscreen();
+    this.stopFullscreen = setupFullscreen(this.shell, this.strings, (message) => {
+      this.flash(message);
+      this.announce(message);
+    });
 
     el<HTMLButtonElement>(this.shell, '[data-action="view"]').addEventListener('click', () =>
       this.runExplicit(),
@@ -209,43 +196,9 @@ export class ViewerSession {
     this.announce(text);
   }
 
-  private setupFullscreen(): void {
-    const frame = this.shell.querySelector<HTMLElement>('[data-tool-frame]');
-    const button = this.shell.querySelector<HTMLButtonElement>('[data-action="fullscreen"]');
-
-    if (!frame || !button) return;
-
-    if (!document.fullscreenEnabled || typeof frame.requestFullscreen !== 'function') {
-      button.hidden = true;
-      return;
-    }
-
-    this.frame = frame;
-    this.fullscreenButton = button;
-    button.addEventListener('click', () => void this.toggleFullscreen());
-    document.addEventListener('fullscreenchange', this.handleFullscreenChange);
-    this.handleFullscreenChange();
-  }
-
-  private async toggleFullscreen(): Promise<void> {
-    const frame = this.frame;
-    if (!frame) return;
-
-    try {
-      if (document.fullscreenElement === frame) {
-        await document.exitFullscreen();
-      } else {
-        await frame.requestFullscreen();
-      }
-    } catch {
-      this.flash(this.strings.fullscreenFailed);
-      this.announce(this.strings.fullscreenFailed);
-    }
-  }
-
   dispose(): void {
     this.disposed = true;
-    document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
+    this.stopFullscreen?.();
     this.view.dispose();
     this.store.dispose();
   }

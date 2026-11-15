@@ -35,6 +35,9 @@ export interface ToolStrings {
   placeholder: string;
   outputPlaceholder: string;
   loadFailed: string;
+  fullscreen: string;
+  exitFullscreen: string;
+  fullscreenFailed: string;
 }
 
 export function readToolStrings(shell: HTMLElement): ToolStrings {

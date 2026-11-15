@@ -38,6 +38,9 @@ export interface BaseStrings {
   placeholder: string;
   outputPlaceholder: string;
   loadFailed: string;
+  fullscreen: string;
+  exitFullscreen: string;
+  fullscreenFailed: string;
 }
 
 export interface OutputToolStrings extends BaseStrings {

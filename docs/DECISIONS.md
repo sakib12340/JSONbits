@@ -1,6 +1,6 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-13
+Last updated: 2026-11-15
 Status: Phase 8 complete. Accessibility, performance, and large-file audits pass with zero known violations; Tier 2 articles, guides, and hubs still fall back to English.
 
 ## Product identity
@@ -220,6 +220,16 @@ The operating system and browser must not change how the site looks; the site ow
 - `@media (forced-colors: active)` maps `--line`, `--line-strong`, and `--focus-ring` to system colors, so Windows High Contrast keeps borders and focus visible.
 - Verified with the host OS reporting `prefers-color-scheme: dark` while the site rendered light (`data-theme=light`, `color-scheme: light`, theme-color `#fffefb`, toggle labelled “Light”).
 - The inline bootstrap changed, so the CSP `sha256` in `public/_headers` was recomputed and matches `dist/_headers` (`sha256-CtQmZyoMJ13kQnOdERJ7npj7WO9CaNmDLCSuzqixowU=`).
+
+## Fullscreen on every tool page
+
+- The toolbar fullscreen control that shipped on JSON Viewer is now enabled on every implemented tool page: formatter, validator, minifier, repair, viewer, diff, and all six converters.
+- `src/lib/fullscreen.ts` owns request/exit, `fullscreenchange` state sync, `aria-pressed`, label and title swaps, enter/exit icon swaps, and the failure callback. Each session calls it once in `start()` and releases the listeners in `dispose()`; the viewer's private copy was deleted.
+- `fullscreen`, `exitFullscreen`, and `fullscreenFailed` moved into the shared client strings (`BaseStrings` / `commonToolStrings`) so every shell serializes them; all five locale strings already existed.
+- Fullscreen layout covers every shell family: two-pane tools and the viewer keep `.tool-panes`/`.tool-pane`, diff uses `.diff-panes`/`.diff-pane` with two equal grid rows and a flexible change list, and the validator's single editor fills the height while its verdict is capped at 40vh with internal scrolling.
+- `pnpm test`: 21/21. `pnpm astro check`: 0 errors, 0 warnings, 2 pre-existing `fast-xml-parser` hints. `pnpm build`: 126 pages.
+- Browser pass: all 12 implemented tool pages expose a visible toolbar fullscreen button with the enter icon and no console errors. A synthetic `fullscreenchange` swapped the label to “Exit fullscreen”, set `aria-pressed="true"`, and toggled the icons; a rejected request announced “Fullscreen is not available in this browser.” in both the status bar and the polite live region; Spanish, French, German, and Portuguese pages showed localized labels.
+- The automation window releases native fullscreen immediately after entry, so layout was verified by replaying the shipped `:fullscreen` rules under a test class: formatter/viewer frame 898 px tall with 788 px panes and 742 px editors, diff rows 364 px each with a 303 px editor and 302 px change list, validator editor 709 px with the 40vh result cap. Formatter, viewer, diff, validator, and converter sample runs still pass after the session refactor.
 
 ## Phase 2 design-system verification
 

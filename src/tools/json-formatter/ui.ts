@@ -49,6 +49,7 @@ export async function mount(shell: HTMLElement): Promise<void> {
 
   const view = new ToolView(shell, strings, locale, input, output);
   session = new FormatterSession({
+    shell,
     view,
     strings,
     locale,
