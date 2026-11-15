@@ -237,6 +237,22 @@ The operating system and browser must not change how the site looks; the site ow
 - Replaced the text decoration with a single 1 px `::after` bar that spans the link's full width, so name and arrow share one continuous line. It reveals on `hover` and `focus-visible` (scale-x from the inline start, 200 ms, disabled under `prefers-reduced-motion`) and the arrow nudges 2 px.
 - `pnpm test` 21/21, `pnpm astro check` 0 errors, `pnpm build` 126 pages. Verified in the browser on all five locales: the bar width equals the link width (arrow sits flush with the right edge), is hidden at rest, and both hover and focus-visible rules ship in `dist`.
 
+## Client-side feature audit and Batch 1
+
+Audited all 12 shipped tool pages against the jsonformatter.org feature list. Rejected load-from-URL, saved/share links, and last-document storage because they contradict the `connect-src 'none'` privacy claim; rejected print, 3-space indent, and table/graph views as bloat.
+
+Accepted four small fixes that close a real dead end without adding new UI surface:
+
+1. **Fix automatically** in the error panel. `src/tools/shared/in-place-repair.ts` runs the existing `repair` worker op on the current text, the panel button replaces the input with the repaired document, and the tool re-runs. Wired in the formatter, validator, minifier, and JSON-source converters (`jsonToCsv`, `jsonToYaml`, `jsonToXml`). `canRepair` is decided per shell: always for the formatter, `minify` for the minifier, `from === 'json'` for converters, never for JSON Repair, the viewer, or diff. "Go to error" becomes the secondary action when the fix button is present.
+2. **Error-line marker.** `EditorHandle.markError(line | null)` paints one `.cm-errorLine` line decoration (tinted fill plus a 2 px danger bar) from a `StateField`, using new `--editor-error` tokens for both themes. The dispatch is queued in a microtask because sessions call it from the editor's own update listener. The marker clears on a clean result, dismiss, clear, and the next edit.
+3. **Expand all** in the viewer's tree menu. Reuses the existing breadth-first `expandToDepth` with an `Infinity` depth and a 1200-node budget so a huge document stops early instead of freezing; two new status strings report full or partial expansion.
+4. **Converter indent is remembered.** `jsonToYaml`, `yamlToJson`, `jsonToXml`, and `xmlToJson` initialize their indent menu from `jsonbits:indent` and write back on change. A saved `tab` falls back to 2 spaces on the XML tool, whose menu only offers 2 and 4.
+
+- New strings: `tool.errorFix`, `tool.tree.expandAll`, `tool.tree.expandedAll`, `tool.tree.expandedAllPartial`, plus `repairing` / `repairDone` in the shared editor strings, in all five locales.
+- `pnpm test` 21/21, `pnpm astro check` 0 errors (2 pre-existing `fast-xml-parser` hints), `pnpm build` 126 pages.
+- Browser pass: formatter/validator/minifier/json-to-csv show a hidden-free “Fix automatically” with the error line painted, and one click repairs the document and produces output (`{ "a": 1, "b": [1, 2] }` from trailing-comma input, panel closes). An unrepairable `{{{{` keeps the panel open with the new error and the button re-enabled. Editing to valid JSON clears the marker; typing keeps it while the document stays invalid. Expand all took the sample tree from 1 to 21 rows with “Expanded the whole tree.”; picking 4-space indent on json-to-yaml wrote `jsonbits:indent=4` and json-to-xml restored 4 on the next page. No console errors in any of the runs.
+- Deferred to a possible Batch 2 (not built): “Send to…” handoff between tools, and diff swap-sides plus copy/download of the change list.
+
 ## Phase 2 design-system verification
 
 - Tokens for canvas, cream, ink, body, primary, night bands, borders, focus, danger, success, and warning; light and dark palettes share one deep-teal accent.

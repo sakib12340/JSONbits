@@ -5,9 +5,11 @@ import { t } from '../../i18n/t';
 
 interface Props {
   locale: Locale;
+  /** JSON input tools can repair the document in place; others cannot. */
+  canRepair?: boolean;
 }
 
-const { locale } = Astro.props;
+const { locale, canRepair = false } = Astro.props;
 ---
 
 <div
@@ -40,7 +42,15 @@ const { locale } = Astro.props;
         data-error-snippet
       ><code></code></pre>
       <div class="mt-4 flex flex-wrap gap-2">
-        <button type="button" data-error-goto class="error-primary">
+        {
+          canRepair && (
+            <button type="button" data-error-repair class="error-primary">
+              <Icon name="check" class="size-3.5" />
+              <span>{t(locale, 'tool.errorFix')}</span>
+            </button>
+          )
+        }
+        <button type="button" data-error-goto class={canRepair ? 'error-secondary' : 'error-primary'}>
           <Icon name="play" class="size-3.5" />
           <span data-error-goto-label>{t(locale, 'tool.errorGoto')}</span>
         </button>

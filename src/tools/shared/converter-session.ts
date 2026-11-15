@@ -4,18 +4,21 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
-import { createSelectMenu } from '../../lib/select-menu';
+import { createSelectMenu, type SelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
+import { readIndent, writeIndent } from '../../lib/storage';
 import { failure } from '../../workers/protocol';
 import type {
   ConvertResult,
   ConvertStats,
+  FormatIndent,
   JsonError,
   ProgressUpdate,
 } from '../../workers/protocol';
 import { RunController, type RunOutcome } from '../../workers/run-controller';
 import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
 import { failureText } from './failure';
+import { repairText } from './in-place-repair';
 import {
   converterOutput,
   readConverterOptions,
@@ -62,6 +65,10 @@ export class ConverterSession {
   private readonly showView: (view: 'input' | 'output') => void;
   private readonly runs = new RunController();
   private readonly statKeys = ['size', 'output', 'rows', 'lines', 'time'];
+  private readonly fromJson: boolean;
+
+  private indentMenu: SelectMenu | null = null;
+  private indent: FormatIndent = readIndent();
 
   private file: File | null = null;
   private largeMode = false;
@@ -85,10 +92,12 @@ export class ConverterSession {
     this.output = options.output;
     this.sample = options.sample;
     this.showView = options.showView;
+    this.fromJson = options.op.startsWith('jsonTo');
   }
 
   start(): void {
     this.initSelects();
+    this.restoreIndent();
     this.setStatus(this.strings.waiting);
     this.refreshButtons();
     this.stopFullscreen = setupFullscreen(this.shell, this.strings, (message) => {
@@ -137,6 +146,9 @@ export class ConverterSession {
     el<HTMLButtonElement>(this.shell, '[data-error-goto]').addEventListener('click', () =>
       this.gotoError(),
     );
+    this.shell
+      .querySelector<HTMLButtonElement>('[data-error-repair]')
+      ?.addEventListener('click', () => void this.fix());
 
     const fileInput = el<HTMLInputElement>(this.shell, '[data-file-input]');
     fileInput.addEventListener('change', () => {
@@ -148,17 +160,37 @@ export class ConverterSession {
     this.shell.querySelector('[data-options]')?.addEventListener('change', () =>
       this.onOptionsChanged(),
     );
+    this.indentMenu?.root.addEventListener('change', () => this.saveIndent());
   }
 
   private initSelects(): void {
     for (const root of this.shell.querySelectorAll<HTMLElement>('[data-options] [data-select]')) {
-      createSelectMenu(root);
+      const menu = createSelectMenu(root);
+      if (root.dataset.option === 'indent') this.indentMenu = menu;
     }
+  }
+
+  /** Applies the saved indent preference when this converter offers the option. */
+  private restoreIndent(): void {
+    const menu = this.indentMenu;
+    if (!menu) return;
+    const stored = String(this.indent);
+    const available = menu.root.querySelector(`[role="option"][data-value="${stored}"]`);
+    menu.value = available ? stored : '2';
+    this.indent = menu.value === 'tab' ? 'tab' : menu.value === '4' ? 4 : 2;
+  }
+
+  private saveIndent(): void {
+    if (!this.indentMenu) return;
+    const raw = this.indentMenu.value;
+    this.indent = raw === 'tab' ? 'tab' : raw === '4' ? 4 : 2;
+    writeIndent(this.indent);
   }
 
   inputChanged(length: number): void {
     if (this.applying) return;
 
+    this.input.markError(null);
     this.file = null;
     this.setFile(null);
     this.refreshButtons();
@@ -371,6 +403,7 @@ export class ConverterSession {
     this.outputText = result.output;
     this.outputBlob = result.blob;
     this.hasOutput = true;
+    this.input.markError(null);
 
     if (result.blob) {
       this.output.setDoc('');
@@ -430,6 +463,9 @@ export class ConverterSession {
     el<HTMLElement>(snippetEl, 'code').textContent = snippet ?? '';
     el<HTMLElement>(this.shell, '[data-error-goto]').hidden =
       info.line < 1 || this.input.getLength() === 0 || this.largeMode;
+    const repair = this.shell.querySelector<HTMLButtonElement>('[data-error-repair]');
+    if (repair) repair.hidden = !this.fromJson || this.largeMode || this.input.getLength() === 0;
+    this.input.markError(info.line > 0 && !this.largeMode ? info.line : null);
 
     this.setStatus(location ?? this.strings.error);
     this.announce(
@@ -504,6 +540,39 @@ export class ConverterSession {
     this.input.gotoLine(info.line, info.column);
   }
 
+  /** Repairs the input JSON in place, then converts the repaired text. */
+  private async fix(): Promise<void> {
+    if (!this.fromJson || this.largeMode || this.input.getLength() === 0) return;
+
+    const button = this.shell.querySelector<HTMLButtonElement>('[data-error-repair]');
+    if (button) {
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+    }
+    this.stopDebounce();
+    this.cancelActive();
+    this.setStatus(this.strings.repairing);
+
+    const attempt = await repairText(this.runs, this.input.getDoc(), this.indent);
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+    if (this.disposed) return;
+
+    if (attempt.status === 'failed') {
+      this.showFailure(attempt.info, 'explicit');
+      return;
+    }
+    if (attempt.status === 'skipped') return;
+
+    this.applying = true;
+    this.input.setDoc(attempt.text);
+    this.applying = false;
+    this.hideError();
+    void this.run('explicit');
+  }
+
   private resetIdle(): void {
     this.stopDebounce();
     this.cancelActive();
@@ -518,6 +587,7 @@ export class ConverterSession {
     this.outputBlob = null;
     this.hasOutput = false;
     this.output.setDoc('');
+    this.input.markError(null);
     el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
     el<HTMLElement>(this.shell, '[data-output-meta]').textContent = '';
@@ -585,6 +655,7 @@ export class ConverterSession {
 
   private hideError(): void {
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
+    this.input.markError(null);
   }
 
   private showEngineNote(text: string): void {

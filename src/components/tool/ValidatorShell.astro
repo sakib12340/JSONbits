@@ -121,7 +121,10 @@ const strings = {
             data-error-snippet
           ><code></code></pre>
           <div class="mt-4 flex flex-wrap gap-2">
-            <button type="button" data-error-goto class="error-primary">
+            <button type="button" data-error-repair class="error-primary">
+              {t(locale, 'tool.errorFix')}
+            </button>
+            <button type="button" data-error-goto class="error-secondary">
               {t(locale, 'tool.errorGoto')}
             </button>
             <button type="button" data-error-dismiss class="error-secondary">

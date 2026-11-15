@@ -41,6 +41,8 @@ export interface BaseStrings {
   fullscreen: string;
   exitFullscreen: string;
   fullscreenFailed: string;
+  repairing: string;
+  repairDone: string;
 }
 
 export interface OutputToolStrings extends BaseStrings {

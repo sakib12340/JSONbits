@@ -203,6 +203,14 @@ export class TreeView {
       },
     );
 
+    this.menu.querySelector<HTMLButtonElement>('[data-tree-expand-all]')?.addEventListener(
+      'click',
+      () => {
+        this.closeMenu();
+        void this.expandAll();
+      },
+    );
+
     this.menu.querySelectorAll<HTMLButtonElement>('[data-tree-depth]').forEach((button) => {
       button.addEventListener('click', () => {
         this.closeMenu();
@@ -239,6 +247,33 @@ export class TreeView {
     this.onStatus(this.strings.treeCollapsed);
     this.onAnnounce(this.strings.treeCollapsed);
     this.focus();
+  }
+
+  private async expandAll(): Promise<void> {
+    if (!this.store.root) {
+      this.onStatus(this.strings.treePressView);
+      return;
+    }
+
+    this.searchInput.value = '';
+    this.onStatus(this.strings.treeExpanding);
+
+    try {
+      const result = await this.store.expandToDepth(Number.POSITIVE_INFINITY, 1200);
+      this.selected = 0;
+      this.scroll.scrollTop = 0;
+      this.refresh();
+
+      const message = result.truncated
+        ? this.strings.treeExpandedAllPartial
+        : this.strings.treeExpandedAll;
+      this.onStatus(message);
+      this.onAnnounce(message);
+      this.focus();
+    } catch (error) {
+      this.onStatus(this.strings.error);
+      console.error(error);
+    }
   }
 
   private async expandToDepth(depth: number): Promise<void> {

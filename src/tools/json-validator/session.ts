@@ -2,9 +2,11 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
+import { readIndent } from '../../lib/storage';
 import { buildSnippet } from '../../lib/snippet';
 import { failure } from '../../workers/protocol';
 import type {
+  FormatIndent,
   FormatStats,
   JsonError,
   ProgressUpdate,
@@ -13,6 +15,7 @@ import type {
 import { RunController } from '../../workers/run-controller';
 import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
 import { failureText } from '../shared/failure';
+import { repairText } from '../shared/in-place-repair';
 import { fill } from '../shared/strings';
 import type { ValidatorStrings } from './strings';
 
@@ -47,6 +50,7 @@ export class ValidatorSession {
   private loadId = 0;
   private statusToken = 0;
   private lastError: JsonError | null = null;
+  private readonly indent: FormatIndent = readIndent();
   private stopFullscreen: (() => void) | null = null;
 
   constructor(options: Options) {
@@ -97,6 +101,9 @@ export class ValidatorSession {
     el<HTMLButtonElement>(this.shell, '[data-error-goto]').addEventListener('click', () =>
       this.gotoError(),
     );
+    el<HTMLButtonElement>(this.shell, '[data-error-repair]').addEventListener('click', () =>
+      void this.fix(),
+    );
 
     const fileInput = el<HTMLInputElement>(this.shell, '[data-file-input]');
     fileInput.addEventListener('change', () => {
@@ -109,6 +116,7 @@ export class ValidatorSession {
   inputChanged(length: number): void {
     if (this.applying) return;
 
+    this.input.markError(null);
     this.file = null;
     this.setFile(null);
     this.refreshButtons();
@@ -312,6 +320,7 @@ export class ValidatorSession {
 
   private applyValid(result: ValidateResult): void {
     const stats = result.stats;
+    this.input.markError(null);
     el<HTMLElement>(this.shell, '[data-result]').hidden = false;
     el<HTMLElement>(this.shell, '[data-result-valid]').hidden = false;
     el<HTMLElement>(this.shell, '[data-result-invalid]').hidden = true;
@@ -355,6 +364,9 @@ export class ValidatorSession {
     el<HTMLElement>(snippetEl, 'code').textContent = snippet ?? '';
     el<HTMLElement>(this.shell, '[data-error-goto]').hidden =
       info.line < 1 || this.input.getLength() === 0 || this.largeMode;
+    const repair = el<HTMLButtonElement>(this.shell, '[data-error-repair]');
+    repair.hidden = this.largeMode || this.input.getLength() === 0;
+    this.input.markError(info.line > 0 && !this.largeMode ? info.line : null);
 
     const status =
       info.line > 0
@@ -418,6 +430,36 @@ export class ValidatorSession {
     this.input.gotoLine(info.line, info.column);
   }
 
+  /** Repairs the current document in place, then validates it again. */
+  private async fix(): Promise<void> {
+    if (this.largeMode || this.input.getLength() === 0) return;
+
+    const button = el<HTMLButtonElement>(this.shell, '[data-error-repair]');
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    this.stopDebounce();
+    this.cancelActive();
+    this.setStatus(this.strings.repairing);
+
+    const attempt = await repairText(this.runs, this.input.getDoc(), this.indent);
+    button.disabled = false;
+    button.removeAttribute('aria-busy');
+    if (this.disposed) return;
+
+    if (attempt.status === 'failed') {
+      this.showFailure(attempt.info, 'explicit');
+      return;
+    }
+    if (attempt.status === 'skipped') return;
+
+    this.applying = true;
+    this.input.setDoc(attempt.text);
+    this.applying = false;
+    this.hideResult();
+    this.resetStats();
+    void this.run('explicit');
+  }
+
   private resetIdle(): void {
     this.stopDebounce();
     this.cancelActive();
@@ -431,6 +473,7 @@ export class ValidatorSession {
     el<HTMLElement>(this.shell, '[data-result]').hidden = true;
     el<HTMLElement>(this.shell, '[data-result-valid]').hidden = true;
     el<HTMLElement>(this.shell, '[data-result-invalid]').hidden = true;
+    this.input.markError(null);
   }
 
   private resetStats(): void {

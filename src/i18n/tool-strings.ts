@@ -43,5 +43,7 @@ export function commonToolStrings(locale: Locale): Record<string, string> {
     fullscreen: t(locale, 'tool.fullscreen'),
     exitFullscreen: t(locale, 'tool.exitFullscreen'),
     fullscreenFailed: t(locale, 'tool.fullscreenFailed'),
+    repairing: t(locale, 'tool.repairing'),
+    repairDone: t(locale, 'tool.repairDone'),
   };
 }

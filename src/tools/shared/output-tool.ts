@@ -20,6 +20,7 @@ import type {
 import { RunController, type RunOutcome } from '../../workers/run-controller';
 import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
 import { failureText } from './failure';
+import { repairText } from './in-place-repair';
 import { fill, type OutputToolStrings } from './strings';
 
 export type OutputToolKind = 'minify' | 'repair';
@@ -138,6 +139,9 @@ export class OutputToolSession {
     el<HTMLButtonElement>(this.shell, '[data-error-goto]').addEventListener('click', () =>
       this.gotoError(),
     );
+    this.shell
+      .querySelector<HTMLButtonElement>('[data-error-repair]')
+      ?.addEventListener('click', () => void this.fix());
 
     const fileInput = el<HTMLInputElement>(this.shell, '[data-file-input]');
     fileInput.addEventListener('change', () => {
@@ -152,6 +156,7 @@ export class OutputToolSession {
   inputChanged(length: number): void {
     if (this.applying) return;
 
+    this.input.markError(null);
     this.file = null;
     this.setFile(null);
     this.refreshButtons();
@@ -369,6 +374,7 @@ export class OutputToolSession {
     this.outputText = result.output;
     this.outputBlob = result.blob;
     this.hasOutput = true;
+    this.input.markError(null);
 
     if (result.blob) {
       this.output.setDoc('');
@@ -438,6 +444,9 @@ export class OutputToolSession {
     el<HTMLElement>(snippetEl, 'code').textContent = snippet ?? '';
     el<HTMLElement>(this.shell, '[data-error-goto]').hidden =
       info.line < 1 || this.input.getLength() === 0 || this.largeMode;
+    const repair = this.shell.querySelector<HTMLButtonElement>('[data-error-repair]');
+    if (repair) repair.hidden = this.largeMode || this.input.getLength() === 0;
+    this.input.markError(info.line > 0 && !this.largeMode ? info.line : null);
 
     this.setStatus(location ?? this.strings.error);
     this.announce(
@@ -517,6 +526,39 @@ export class OutputToolSession {
     this.input.gotoLine(info.line, info.column);
   }
 
+  /** Repairs the input in place, then runs the tool on the repaired text. */
+  private async fix(): Promise<void> {
+    if (this.largeMode || this.input.getLength() === 0) return;
+
+    const button = this.shell.querySelector<HTMLButtonElement>('[data-error-repair]');
+    if (button) {
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+    }
+    this.stopDebounce();
+    this.cancelActive();
+    this.setStatus(this.strings.repairing);
+
+    const attempt = await repairText(this.runs, this.input.getDoc(), this.indent);
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+    if (this.disposed) return;
+
+    if (attempt.status === 'failed') {
+      this.showFailure(attempt.info, 'explicit');
+      return;
+    }
+    if (attempt.status === 'skipped') return;
+
+    this.applying = true;
+    this.input.setDoc(attempt.text);
+    this.applying = false;
+    this.hideError();
+    void this.run('explicit');
+  }
+
   private resetIdle(): void {
     this.stopDebounce();
     this.cancelActive();
@@ -531,6 +573,7 @@ export class OutputToolSession {
     this.outputBlob = null;
     this.hasOutput = false;
     this.output.setDoc('');
+    this.input.markError(null);
     el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
     el<HTMLElement>(this.shell, '[data-output-meta]').textContent = '';
@@ -607,6 +650,7 @@ export class OutputToolSession {
 
   private hideError(): void {
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
+    this.input.markError(null);
   }
 
   private showEngineNote(text: string): void {

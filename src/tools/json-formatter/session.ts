@@ -13,6 +13,7 @@ import type {
 } from '../../workers/protocol';
 import { RunController } from '../../workers/run-controller';
 import { failureText } from '../shared/failure';
+import { repairText } from '../shared/in-place-repair';
 import { InvalidFileError, readTextFile } from './files';
 import { SAMPLE_JSON } from './sample';
 import { fill, type ToolStrings } from './strings';
@@ -95,11 +96,13 @@ export class FormatterSession {
       this.view.setStatus(this.input.getLength() > 0 ? this.strings.ready : this.strings.waiting);
     });
     ui.errorGoto.addEventListener('click', () => this.gotoError());
+    ui.errorRepair.addEventListener('click', () => void this.fix());
   }
 
   inputChanged(length: number): void {
     if (this.applying) return;
 
+    this.input.markError(null);
     this.file = null;
     this.view.setFile(null);
     this.refreshButtons();
@@ -436,6 +439,31 @@ export class FormatterSession {
     if (!info || info.line < 1) return;
     this.showView('input');
     this.input.gotoLine(info.line, info.column);
+  }
+
+  /** Repairs the input in place, then formats it through the normal path. */
+  private async fix(): Promise<void> {
+    if (this.largeMode || this.input.getLength() === 0) return;
+
+    this.stopDebounce();
+    this.cancelActive();
+    this.view.setRepairing(true);
+    this.view.setStatus(this.strings.repairing);
+
+    const attempt = await repairText(this.runs, this.input.getDoc(), this.indent);
+    this.view.setRepairing(false);
+    if (this.disposed) return;
+
+    if (attempt.status === 'failed') {
+      this.showFailure(attempt.info, 'explicit');
+      return;
+    }
+    if (attempt.status === 'skipped') return;
+
+    this.applying = true;
+    this.input.setDoc(attempt.text);
+    this.applying = false;
+    void this.run('explicit');
   }
 
   private resetIdle(): void {

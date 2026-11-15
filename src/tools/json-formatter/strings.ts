@@ -38,6 +38,8 @@ export interface ToolStrings {
   fullscreen: string;
   exitFullscreen: string;
   fullscreenFailed: string;
+  repairing: string;
+  repairDone: string;
 }
 
 export function readToolStrings(shell: HTMLElement): ToolStrings {

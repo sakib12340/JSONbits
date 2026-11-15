@@ -160,7 +160,7 @@ const strings = {
         </div>
 
         <EditorPane kind="output" locale={locale}>
-          <ErrorPanel locale={locale} />
+          <ErrorPanel locale={locale} canRepair={kind === 'minify'} />
         </EditorPane>
       </section>
     </div>

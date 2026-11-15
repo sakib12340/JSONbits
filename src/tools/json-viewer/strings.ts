@@ -22,6 +22,9 @@ export interface ViewerStrings extends BaseStrings {
   treeSearchLabel: string;
   treeOptions: string;
   treeCollapseAll: string;
+  treeExpandAll: string;
+  treeExpandedAll: string;
+  treeExpandedAllPartial: string;
   treeExpandDepth: string;
   treeDepth: string;
   treeExpanding: string;

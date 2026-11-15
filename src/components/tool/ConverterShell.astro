@@ -162,7 +162,7 @@ const strings = {
         </div>
 
         <EditorPane kind="output" locale={locale}>
-          <ErrorPanel locale={locale} />
+          <ErrorPanel locale={locale} canRepair={from === 'json'} />
         </EditorPane>
       </section>
     </div>

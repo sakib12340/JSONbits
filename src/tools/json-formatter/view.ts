@@ -20,6 +20,7 @@ interface Ui {
   errorSnippet: HTMLElement;
   errorSnippetCode: HTMLElement;
   errorGoto: HTMLButtonElement;
+  errorRepair: HTMLButtonElement;
   errorDismiss: HTMLButtonElement;
   largeInput: HTMLElement;
   largeName: HTMLElement;
@@ -92,6 +93,7 @@ export class ToolView {
       errorSnippet: snippet,
       errorSnippetCode: el(snippet, 'code'),
       errorGoto: el(shell, '[data-error-goto]'),
+      errorRepair: el(shell, '[data-error-repair]'),
       errorDismiss: el(shell, '[data-error-dismiss]'),
       largeInput: el(shell, '[data-large-input]'),
       largeName: el(shell, '[data-large-name]'),
@@ -189,6 +191,7 @@ export class ToolView {
   showResult(result: FormatResult): void {
     this.ui.errorPanel.hidden = true;
     this.ui.outputMeta.textContent = this.strings.ready;
+    this.input.markError(null);
 
     if (result.blob) {
       this.output.setDoc('');
@@ -206,6 +209,7 @@ export class ToolView {
     this.output.setDoc('');
     this.ui.largeOutput.hidden = true;
     this.ui.errorPanel.hidden = true;
+    this.input.markError(null);
     this.ui.outputMeta.textContent = '';
     this.ui.outputDot.hidden = true;
   }
@@ -221,10 +225,18 @@ export class ToolView {
     this.ui.errorSnippetCode.textContent = snippet ?? '';
     this.ui.errorGoto.hidden =
       info.line < 1 || this.input.getLength() === 0 || !this.ui.largeInput.hidden;
+    this.ui.errorRepair.hidden = !this.ui.largeInput.hidden;
+    this.input.markError(info.line > 0 && this.ui.largeInput.hidden ? info.line : null);
+  }
+
+  setRepairing(busy: boolean): void {
+    this.ui.errorRepair.disabled = busy;
+    this.ui.errorRepair.setAttribute('aria-busy', String(busy));
   }
 
   hideError(): void {
     this.ui.errorPanel.hidden = true;
+    this.input.markError(null);
   }
 
   setFile(name: string | null): void {

@@ -15,8 +15,9 @@ import {
   search,
   searchKeymap,
 } from '@codemirror/search';
-import { Compartment, EditorState } from '@codemirror/state';
+import { Compartment, EditorState, StateEffect, StateField } from '@codemirror/state';
 import {
+  Decoration,
   EditorView,
   drawSelection,
   dropCursor,
@@ -26,6 +27,7 @@ import {
   lineNumbers,
   placeholder as placeholderExtension,
 } from '@codemirror/view';
+import type { DecorationSet } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 
 export interface EditorHandle {
@@ -34,6 +36,7 @@ export interface EditorHandle {
   setDoc(text: string): void;
   setReadOnly(readOnly: boolean): void;
   gotoLine(line: number, column?: number): void;
+  markError(line: number | null): void;
   lineText(line: number): string | null;
   focus(): void;
   hasFocus(): boolean;
@@ -90,6 +93,10 @@ const theme = EditorView.theme({
   },
   '.cm-activeLine': {
     backgroundColor: 'var(--editor-active)',
+  },
+  '.cm-errorLine': {
+    backgroundColor: 'var(--editor-error)',
+    boxShadow: 'inset 2px 0 0 var(--danger)',
   },
   '.cm-activeLineGutter': {
     backgroundColor: 'var(--editor-active)',
@@ -227,8 +234,36 @@ function readOnlyExtension(readOnly: boolean) {
   return [EditorState.readOnly.of(readOnly), EditorView.editable.of(!readOnly)];
 }
 
+const setErrorLine = StateEffect.define<number | null>();
+const errorLineDecoration = Decoration.line({ class: 'cm-errorLine' });
+
+/** Keeps at most one line painted as the parse error. */
+const errorLineField = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update(decorations, transaction) {
+    let next = decorations.map(transaction.changes);
+
+    for (const effect of transaction.effects) {
+      if (!effect.is(setErrorLine)) continue;
+      if (effect.value === null) {
+        next = Decoration.none;
+        continue;
+      }
+      const total = transaction.state.doc.lines;
+      const line = Math.min(Math.max(1, Math.floor(effect.value)), total);
+      next = Decoration.set([errorLineDecoration.range(transaction.state.doc.line(line).from)]);
+    }
+
+    return next;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
+
 export function createEditor(options: EditorOptions): EditorHandle {
   const readOnlyCompartment = new Compartment();
+  let pendingError: number | null = null;
+  let errorQueued = false;
+  let destroyed = false;
   const view = new EditorView({
     parent: options.parent,
     state: EditorState.create({
@@ -237,6 +272,7 @@ export function createEditor(options: EditorOptions): EditorHandle {
         lineNumbers(),
         highlightActiveLineGutter(),
         highlightActiveLine(),
+        errorLineField,
         drawSelection(),
         dropCursor(),
         history(),
@@ -297,12 +333,27 @@ export function createEditor(options: EditorOptions): EditorHandle {
       if (line < 1 || line > total) return null;
       return view.state.doc.line(line).text;
     },
+    markError(line: number | null): void {
+      // Sessions call this from the editor's own update listener, so the
+      // decoration update is queued until the current transaction is done.
+      pendingError = line;
+      if (errorQueued) return;
+      errorQueued = true;
+      queueMicrotask(() => {
+        errorQueued = false;
+        if (destroyed) return;
+        view.dispatch({ effects: setErrorLine.of(pendingError) });
+      });
+    },
     focus: () => view.focus(),
     hasFocus: () => view.hasFocus,
     openFind: () => {
       openSearchPanel(view);
     },
     refresh: () => view.requestMeasure(),
-    destroy: () => view.destroy(),
+    destroy: () => {
+      destroyed = true;
+      view.destroy();
+    },
   };
 }

@@ -50,6 +50,9 @@ const strings = {
   treeSearchLabel: t(locale, 'tool.tree.searchLabel'),
   treeOptions: t(locale, 'tool.tree.options'),
   treeCollapseAll: t(locale, 'tool.tree.collapseAll'),
+  treeExpandAll: t(locale, 'tool.tree.expandAll'),
+  treeExpandedAll: t(locale, 'tool.tree.expandedAll'),
+  treeExpandedAllPartial: t(locale, 'tool.tree.expandedAllPartial'),
   treeExpandDepth: t(locale, 'tool.tree.expandDepth'),
   treeDepth: t(locale, 'tool.tree.depth'),
   treeExpanding: t(locale, 'tool.tree.expanding'),
@@ -178,6 +181,9 @@ const strings = {
             <div class="tree-menu-panel">
               <button type="button" data-tree-collapse class="tree-menu-item">
                 {t(locale, 'tool.tree.collapseAll')}
+              </button>
+              <button type="button" data-tree-expand-all class="tree-menu-item">
+                {t(locale, 'tool.tree.expandAll')}
               </button>
               <p class="tree-menu-heading">{t(locale, 'tool.tree.expandDepth')}</p>
               {[2, 3, 4].map((depth) => (
