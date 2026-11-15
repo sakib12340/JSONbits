@@ -231,6 +231,12 @@ The operating system and browser must not change how the site looks; the site ow
 - Browser pass: all 12 implemented tool pages expose a visible toolbar fullscreen button with the enter icon and no console errors. A synthetic `fullscreenchange` swapped the label to “Exit fullscreen”, set `aria-pressed="true"`, and toggled the icons; a rejected request announced “Fullscreen is not available in this browser.” in both the status bar and the polite live region; Spanish, French, German, and Portuguese pages showed localized labels.
 - The automation window releases native fullscreen immediately after entry, so layout was verified by replaying the shipped `:fullscreen` rules under a test class: formatter/viewer frame 898 px tall with 788 px panes and 742 px editors, diff rows 364 px each with a 303 px editor and 302 px change list, validator editor 709 px with the 40vh result cap. Formatter, viewer, diff, validator, and converter sample runs still pass after the session refactor.
 
+## Home category link underline
+
+- The category headings on the home page ("Format →", "Validate →", …) used `hover:underline` on an `inline-flex` with a gap, so the browser painted two separate underlines: one under the word, a short stub under the arrow. That stub read as a cut-off line.
+- Replaced the text decoration with a single 1 px `::after` bar that spans the link's full width, so name and arrow share one continuous line. It reveals on `hover` and `focus-visible` (scale-x from the inline start, 200 ms, disabled under `prefers-reduced-motion`) and the arrow nudges 2 px.
+- `pnpm test` 21/21, `pnpm astro check` 0 errors, `pnpm build` 126 pages. Verified in the browser on all five locales: the bar width equals the link width (arrow sits flush with the right edge), is hidden at rest, and both hover and focus-visible rules ship in `dist`.
+
 ## Phase 2 design-system verification
 
 - Tokens for canvas, cream, ink, body, primary, night bands, borders, focus, danger, success, and warning; light and dark palettes share one deep-teal accent.

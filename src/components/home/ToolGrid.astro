@@ -114,10 +114,15 @@ const availableCategories = new Set(
                   {hasHub ? (
                     <a
                       href={hubHref}
-                      class="inline-flex items-center gap-1.5 rounded-[4px] underline-offset-4 hover:underline"
+                      class="group relative inline-flex items-center gap-1.5 rounded-[4px] after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-ink after:transition-transform after:duration-200 hover:after:scale-x-100 focus-visible:after:scale-x-100"
                     >
                       {t(locale, keys.name)}
-                      <span aria-hidden="true">→</span>
+                      <span
+                        aria-hidden="true"
+                        class="transition-transform duration-200 group-hover:translate-x-0.5 group-focus-visible:translate-x-0.5"
+                      >
+                        →
+                      </span>
                     </a>
                   ) : (
                     t(locale, keys.name)
