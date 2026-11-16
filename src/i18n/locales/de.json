@@ -332,5 +332,12 @@
   "footer.tools": "Werkzeuge",
   "footer.learn": "Anleitungen",
   "footer.privacy": "Datenschutz",
-  "footer.nav": "Seitenlinks"
+  "footer.nav": "Seitenlinks",
+  "tool.send.label": "Senden an",
+  "tool.send.heading": "JSON senden an",
+  "tool.send.empty": "Es gibt noch kein JSON zum Senden.",
+  "tool.send.tooLarge": "Dieses JSON ist zu groß, um es an ein anderes Tool zu senden.",
+  "tool.diff.swap": "Seiten tauschen",
+  "tool.diff.copyList": "Liste kopieren",
+  "tool.diff.downloadList": "Herunterladen"
 }

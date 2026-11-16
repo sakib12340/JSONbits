@@ -1,46 +1,6 @@
-export interface ToolStrings {
-  loadingEditor: string;
-  loadingEngine: string;
-  formatting: string;
-  reading: string;
-  ready: string;
-  waiting: string;
-  done: string;
-  cancelled: string;
-  error: string;
-  errorAt: string;
-  largeRun: string;
-  largeLoaded: string;
-  largeWarning: string;
-  fileTooBig: string;
-  invalidFile: string;
-  readFailed: string;
-  copied: string;
-  copyFailed: string;
-  pasteUnavailable: string;
-  workerFallback: string;
-  workerFailed: string;
-  workerFailedHint: string;
-  oom: string;
-  oomHint: string;
-  emptyInput: string;
-  emptyInputHint: string;
-  chooseSmaller: string;
-  tryAgain: string;
-  encodingHint: string;
-  announceDone: string;
-  announceError: string;
-  inputLabel: string;
-  outputLabel: string;
-  placeholder: string;
-  outputPlaceholder: string;
-  loadFailed: string;
-  fullscreen: string;
-  exitFullscreen: string;
-  fullscreenFailed: string;
-  repairing: string;
-  repairDone: string;
-}
+import type { BaseStrings } from '../shared/strings';
+
+export interface ToolStrings extends BaseStrings {}
 
 export function readToolStrings(shell: HTMLElement): ToolStrings {
   try {

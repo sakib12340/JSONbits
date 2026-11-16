@@ -39,7 +39,8 @@ const description =
       </p>
       <p>
         The document is never written to storage, never included in a cookie, and never attached to
-        an analytics event. When you close or reload the tab, it is gone.
+        an analytics event. When you close or reload the tab, it is gone. The one exception is the
+        "Send to…" button, described below.
       </p>
 
       <h2>What is stored on your device</h2>
@@ -51,6 +52,19 @@ const description =
       <p>
         Those values contain no document content. Clearing site data in your browser removes them,
         and the site falls back to its defaults.
+      </p>
+
+      <h2>Sending a document to another tool</h2>
+      <p>
+        The "Send to…" button on a tool page hands your JSON to another tool on this same site, so
+        you do not have to copy and paste it again. The document is put into the browser tab's
+        <code>sessionStorage</code>, read once by the page you land on, and deleted right away. It
+        never leaves the tab, and closing the tab discards anything that is still there.
+      </p>
+      <p>
+        The handoff only works between pages of this site. Nothing is sent to another origin, and
+        the page still cannot make network requests at all, because the Content Security Policy below
+        forbids them.
       </p>
 
       <h2>Network requests</h2>
@@ -90,7 +104,7 @@ const description =
         the last revision.
       </p>
       <p>
-        <time datetime="2026-11-11">Last updated 11 November 2026</time>
+        <time datetime="2026-11-16">Last updated 16 November 2026</time>
       </p>
     </div>
   </div>

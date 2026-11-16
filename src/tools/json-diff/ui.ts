@@ -48,6 +48,7 @@ export async function mount(shell: HTMLElement): Promise<void> {
     shell,
     strings,
     onAnnounce: (text) => session?.announceStatus(text),
+    onChange: () => session?.refreshListButtons(),
   });
 
   const tabs = setupTabs<Side | 'changes'>(shell, {

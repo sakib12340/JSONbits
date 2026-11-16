@@ -253,6 +253,28 @@ Accepted four small fixes that close a real dead end without adding new UI surfa
 - Browser pass: formatter/validator/minifier/json-to-csv show a hidden-free “Fix automatically” with the error line painted, and one click repairs the document and produces output (`{ "a": 1, "b": [1, 2] }` from trailing-comma input, panel closes). An unrepairable `{{{{` keeps the panel open with the new error and the button re-enabled. Editing to valid JSON clears the marker; typing keeps it while the document stays invalid. Expand all took the sample tree from 1 to 21 rows with “Expanded the whole tree.”; picking 4-space indent on json-to-yaml wrote `jsonbits:indent=4` and json-to-xml restored 4 on the next page. No console errors in any of the runs.
 - Deferred to a possible Batch 2 (not built): “Send to…” handoff between tools, and diff swap-sides plus copy/download of the change list.
 
+## Batch 2: cross-tool handoff and diff actions
+
+The two gaps deferred from the audit are now built. Both stay inside the browser: the handoff uses the tab's `sessionStorage`, and the diff additions copy or download text that the page already had.
+
+**“Send to…”**
+
+- `src/lib/handoff.ts` owns the handoff. `writeHandoff` stores `{ slug, text }` under `jsonbits:handoff` in `sessionStorage` (capped at 1,000,000 characters, so a huge document reports “too large” instead of filling the quota). `takeHandoff` reads it once and deletes it, and only returns the text when the slug matches the tool that was asked for.
+- `src/components/tool/SendMenu.astro` renders the control: a quiet “Send to” button in the pane header that holds the JSON, opening a popover with the other tools. Targets come from the registry (`acceptsJsonInput`), so no tool list is hardcoded; the current tool is left out, and the three converters that read CSV, YAML, or XML are never targets.
+- The button sits next to the JSON it carries: input side for the formatter, validator, minifier, viewer, diff (left document) and the JSON-source converters; output side for JSON Repair and the three converters that produce JSON. An empty document reports “There is no JSON to send yet.”, and the handoff keeps the current locale in the target URL.
+- The menu closes on Escape and on an outside click, and the panel is the same shared `.menu-panel` / `.menu-item` styling the tree options menu uses, so there is only one menu style in the site.
+
+**Diff**
+
+- “Swap sides” exchanges the two documents (with their file names) and re-runs the comparison, so “added” and “removed” can be read the other way round.
+- “Copy list” copies the changes that are on screen as plain text (`+ path: value`, `- path: value`, `~ path: old → new`), and “Download” saves the same changes as `changes.json` with `path`, `type`, `old`, and `new`. Both follow the active filter and stay disabled while there is nothing to copy.
+
+- New strings: `tool.send.label`, `tool.send.heading`, `tool.send.empty`, `tool.send.tooLarge`, `tool.diff.swap`, `tool.diff.copyList`, `tool.diff.downloadList`, in all five locales.
+- The privacy page now says plainly that the handoff puts the document in `sessionStorage`, is read once, and is deleted immediately; the previous “never written to storage” sentence carried an exception.
+- `pnpm test` 21/21, `pnpm astro check` 0 errors (2 pre-existing `fast-xml-parser` hints), `pnpm build` 126 pages.
+- Browser pass: all 12 tool pages show one send menu (8 targets on the JSON-source tools, 9 on the three converters that produce JSON) with no console errors. Formatter → JSON Viewer carried `{"team":"jsonbits","tags":[1,2,3]}` into the tree (“Tree built in 0.8 ms”); viewer → formatter, JSON Repair → validator (repaired `{"a": 1}` validated as valid), and diff → formatter all landed with the document in place and the handoff cleared. The diff sample pair reported two changes; swapping the sides kept two changes with the values reversed; “Download” produced the expected JSON array and “Copy list” announced “Copied”. Escape and an outside click both close the menu. The menu panel paints above the editor (`elementFromPoint` returns the menu item) and the German page shows “Seiten tauschen” and “Liste kopieren”.
+- The SendMenu script ships as an external module, so the strict CSP still holds; the only inline script on a page is the theme bootstrap.
+
 ## Phase 2 design-system verification
 
 - Tokens for canvas, cream, ink, body, primary, night bands, borders, focus, danger, success, and warning; light and dark palettes share one deep-teal accent.

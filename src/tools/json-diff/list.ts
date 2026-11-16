@@ -12,6 +12,7 @@ interface Options {
   shell: HTMLElement;
   strings: DiffStrings;
   onAnnounce: (text: string) => void;
+  onChange?: () => void;
 }
 
 function el<T extends Element>(root: ParentNode, selector: string): T {
@@ -24,6 +25,7 @@ function el<T extends Element>(root: ParentNode, selector: string): T {
 export class DiffList {
   private readonly strings: DiffStrings;
   private readonly onAnnounce: (text: string) => void;
+  private readonly onChange: (() => void) | null;
   private readonly scroll: HTMLElement;
   private readonly spacer: HTMLElement;
   private readonly rows: HTMLElement;
@@ -41,6 +43,7 @@ export class DiffList {
   constructor(options: Options) {
     this.strings = options.strings;
     this.onAnnounce = options.onAnnounce;
+    this.onChange = options.onChange ?? null;
     this.scroll = el(options.shell, '[data-diff-scroll]');
     this.spacer = el(options.shell, '[data-diff-spacer]');
     this.rows = el(options.shell, '[data-diff-rows]');
@@ -106,6 +109,33 @@ export class DiffList {
     this.scroll.focus();
   }
 
+  /** Number of changes that match the active filter. */
+  get count(): number {
+    return this.filtered.length;
+  }
+
+  /** Plain-text list of the changes on screen. */
+  changesText(): string {
+    return this.filtered
+      .map((entry) => {
+        if (entry.type === 'added') return `+ ${entry.path}: ${entry.new ?? ''}`;
+        if (entry.type === 'removed') return `- ${entry.path}: ${entry.old ?? ''}`;
+        return `~ ${entry.path}: ${entry.old ?? ''} \u2192 ${entry.new ?? ''}`;
+      })
+      .join('\n');
+  }
+
+  /** Machine-readable list of the changes on screen. */
+  changesJson(): string {
+    const rows = this.filtered.map((entry) => ({
+      path: entry.path,
+      type: entry.type,
+      old: entry.old ?? null,
+      new: entry.new ?? null,
+    }));
+    return JSON.stringify(rows, null, 2);
+  }
+
   copySelectedPath(): boolean {
     const entry = this.filtered[this.selected];
     if (!entry) return false;
@@ -157,6 +187,7 @@ export class DiffList {
     this.rows.replaceChildren();
     this.updateEmpty();
     this.renderWindow();
+    this.onChange?.();
   }
 
   private updateEmpty(): void {

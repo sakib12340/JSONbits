@@ -2,6 +2,7 @@ import { copyText } from '../../lib/clipboard';
 import { downloadBlob, downloadText, formattedName } from '../../lib/download';
 import { formatBytes, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
+import { setupSend, takeHandoff } from '../../lib/handoff';
 import { readIndent, writeIndent } from '../../lib/storage';
 import type { EditorHandle } from '../../lib/editor';
 import { failure } from '../../workers/protocol';
@@ -97,6 +98,21 @@ export class FormatterSession {
     });
     ui.errorGoto.addEventListener('click', () => this.gotoError());
     ui.errorRepair.addEventListener('click', () => void this.fix());
+
+    setupSend({
+      shell: this.shell,
+      locale: this.locale,
+      getText: () => this.input.getDoc(),
+      onError: (message) => {
+        this.view.flash(message);
+        this.view.announce(message);
+      },
+      emptyMessage: this.strings.sendEmpty,
+      tooLargeMessage: this.strings.sendTooLarge,
+    });
+
+    const handoff = takeHandoff('json-formatter');
+    if (handoff) this.setInputText(handoff, true);
   }
 
   inputChanged(length: number): void {

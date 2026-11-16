@@ -1,0 +1,90 @@
+---
+import Icon from '../ui/Icon.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+import { acceptsJsonInput, tools } from '../../tools/registry';
+
+interface Props {
+  locale: Locale;
+  /** Slug of the tool the menu lives on; it is left out of the targets. */
+  slug: string;
+}
+
+const { locale, slug } = Astro.props;
+const targets = tools.filter(
+  (tool) => tool.available && tool.slug !== slug && acceptsJsonInput(tool),
+);
+---
+
+<details class="relative" data-send-menu>
+  <summary
+    class="inline-flex min-h-[32px] cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2 text-[12px] font-semibold leading-5 text-body-mid hover:bg-cream hover:text-ink"
+    aria-label={t(locale, 'tool.send.label')}
+    title={t(locale, 'tool.send.label')}
+  >
+    <Icon name="arrow-right" class="size-4" />
+    <span>{t(locale, 'tool.send.label')}</span>
+  </summary>
+
+  <div class="menu-panel">
+    <p class="menu-heading">{t(locale, 'tool.send.heading')}</p>
+    {
+      targets.map((tool) => (
+        <button type="button" class="menu-item" data-send-target={tool.slug}>
+          {tool.name}
+        </button>
+      ))
+    }
+  </div>
+</details>
+
+<style>
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  [data-send-menu] .menu-panel {
+    width: 13rem;
+  }
+
+  @media (pointer: coarse) {
+    summary {
+      min-height: 44px;
+    }
+  }
+</style>
+
+<script>
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('[data-send-menu]')) {
+    menu.addEventListener('click', (event) => {
+      const target = (event.target as HTMLElement).closest<HTMLElement>('[data-send-target]');
+      if (!target) return;
+
+      event.preventDefault();
+      menu.removeAttribute('open');
+
+      const frame = menu.closest<HTMLElement>('[data-tool-frame]');
+      frame?.dispatchEvent(
+        new CustomEvent('jsonbits:send', {
+          bubbles: true,
+          detail: { tool: target.dataset.sendTarget },
+        }),
+      );
+    });
+
+    menu.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !menu.open) return;
+      event.preventDefault();
+      menu.removeAttribute('open');
+      menu.querySelector('summary')?.focus();
+    });
+  }
+
+  document.addEventListener('pointerdown', (event) => {
+    for (const menu of document.querySelectorAll<HTMLDetailsElement>('[data-send-menu]')) {
+      if (!menu.open) continue;
+      if (event.target instanceof Node && menu.contains(event.target)) continue;
+      menu.removeAttribute('open');
+    }
+  });
+</script>

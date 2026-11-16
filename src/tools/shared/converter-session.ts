@@ -4,6 +4,7 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
+import { setupSend, takeHandoff } from '../../lib/handoff';
 import { createSelectMenu, type SelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
 import { readIndent, writeIndent } from '../../lib/storage';
@@ -17,6 +18,7 @@ import type {
 } from '../../workers/protocol';
 import { RunController, type RunOutcome } from '../../workers/run-controller';
 import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
+import { slugForOp } from '../registry';
 import { failureText } from './failure';
 import { repairText } from './in-place-repair';
 import {
@@ -149,6 +151,23 @@ export class ConverterSession {
     this.shell
       .querySelector<HTMLButtonElement>('[data-error-repair]')
       ?.addEventListener('click', () => void this.fix());
+
+    setupSend({
+      shell: this.shell,
+      locale: this.locale,
+      getText: () => (this.fromJson ? this.input.getDoc() : (this.outputText ?? '')),
+      onError: (message) => {
+        this.flash(message);
+        this.announce(message);
+      },
+      emptyMessage: this.strings.sendEmpty,
+      tooLargeMessage: this.strings.sendTooLarge,
+    });
+
+    if (this.fromJson) {
+      const handoff = takeHandoff(slugForOp(this.op) ?? '');
+      if (handoff) this.setInputText(handoff, true);
+    }
 
     const fileInput = el<HTMLInputElement>(this.shell, '[data-file-input]');
     fileInput.addEventListener('change', () => {

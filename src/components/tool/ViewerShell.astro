@@ -4,6 +4,7 @@ import Toolbar from './Toolbar.astro';
 import EditorPane from './EditorPane.astro';
 import FileDropzone from './FileDropzone.astro';
 import StatsBar from './StatsBar.astro';
+import SendMenu from './SendMenu.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
 import Icon from '../ui/Icon.astro';
 import type { Locale } from '../../i18n/config';
@@ -126,13 +127,16 @@ const strings = {
           <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
             {t(locale, 'tool.input')}
           </h2>
-          <span
-            data-file-chip
-            hidden
-            class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
-          >
-            <span data-file-name class="truncate" />
-          </span>
+          <div class="flex items-center gap-2">
+            <span
+              data-file-chip
+              hidden
+              class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
+            >
+              <span data-file-name class="truncate" />
+            </span>
+            <SendMenu locale={locale} slug={tool.slug} />
+          </div>
         </div>
 
         <EditorPane
@@ -178,16 +182,16 @@ const strings = {
             >
               <Icon name="more" class="size-[18px]" />
             </summary>
-            <div class="tree-menu-panel">
-              <button type="button" data-tree-collapse class="tree-menu-item">
+            <div class="menu-panel">
+              <button type="button" data-tree-collapse class="menu-item">
                 {t(locale, 'tool.tree.collapseAll')}
               </button>
-              <button type="button" data-tree-expand-all class="tree-menu-item">
+              <button type="button" data-tree-expand-all class="menu-item">
                 {t(locale, 'tool.tree.expandAll')}
               </button>
-              <p class="tree-menu-heading">{t(locale, 'tool.tree.expandDepth')}</p>
+              <p class="menu-heading">{t(locale, 'tool.tree.expandDepth')}</p>
               {[2, 3, 4].map((depth) => (
-                <button type="button" data-tree-depth={depth} class="tree-menu-item">
+                <button type="button" data-tree-depth={depth} class="menu-item">
                   {t(locale, 'tool.tree.depth', { depth })}
                 </button>
               ))}
@@ -322,45 +326,6 @@ const strings = {
     background: var(--cream);
   }
 
-  .tree-menu-panel {
-    position: absolute;
-    inset-inline-end: 0;
-    top: 100%;
-    z-index: 30;
-    margin-top: 4px;
-    width: 12rem;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--canvas);
-    padding: 4px;
-  }
-
-  .tree-menu-item {
-    display: flex;
-    width: 100%;
-    min-height: 34px;
-    align-items: center;
-    border-radius: 6px;
-    padding: 0 8px;
-    text-align: start;
-    font-size: 13px;
-    line-height: 20px;
-    color: var(--ink);
-  }
-
-  .tree-menu-item:hover {
-    background: var(--cream);
-  }
-
-  .tree-menu-heading {
-    padding: 6px 8px 2px;
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--body-mid);
-  }
-
   @media (pointer: coarse) {
     .tree-menu-button {
       height: 44px;
@@ -376,9 +341,6 @@ const strings = {
       height: 44px;
     }
 
-    .tree-menu-item {
-      min-height: 44px;
-    }
   }
 
   .tool-tab {

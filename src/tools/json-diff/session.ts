@@ -1,7 +1,10 @@
+import { copyText } from '../../lib/clipboard';
 import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
+import { downloadText } from '../../lib/download';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
+import { setupSend, takeHandoff } from '../../lib/handoff';
 import { buildSnippet } from '../../lib/snippet';
 import { failure } from '../../workers/protocol';
 import type {
@@ -127,6 +130,31 @@ export class DiffSession {
     this.ignoreOrder.addEventListener('change', () => {
       if (this.hasResult && this.bothFilled()) this.runExplicit();
     });
+
+    el<HTMLButtonElement>(this.shell, '[data-diff-swap]').addEventListener('click', () =>
+      this.swapSides(),
+    );
+    el<HTMLButtonElement>(this.shell, '[data-diff-copy]').addEventListener('click', () =>
+      void this.copyChanges(),
+    );
+    el<HTMLButtonElement>(this.shell, '[data-diff-download]').addEventListener('click', () =>
+      this.downloadChanges(),
+    );
+
+    setupSend({
+      shell: this.shell,
+      locale: this.locale,
+      getText: () => this.left.getDoc(),
+      onError: (message) => {
+        this.flash(message);
+        this.announce(message);
+      },
+      emptyMessage: this.strings.sendEmpty,
+      tooLargeMessage: this.strings.sendTooLarge,
+    });
+
+    const handoff = takeHandoff('json-diff');
+    if (handoff) this.setSideText('left', handoff);
   }
 
   setActiveSide(side: Side): void {
@@ -191,6 +219,11 @@ export class DiffSession {
     this.announce(text);
   }
 
+  /** Keeps the list actions in step with the active filter. */
+  refreshListButtons(): void {
+    this.refreshButtons();
+  }
+
   dispose(): void {
     this.disposed = true;
     this.stopFullscreen?.();
@@ -223,6 +256,48 @@ export class DiffSession {
     this.hideError();
     this.setStatus(this.bothFilled() ? this.strings.ready : this.strings.waiting);
     this.refreshButtons();
+  }
+
+  /** Exchanges the two documents so the comparison runs the other way round. */
+  private swapSides(): void {
+    const left = this.left.getDoc();
+    const right = this.right.getDoc();
+    const leftName = this.fileName('left');
+    const rightName = this.fileName('right');
+
+    this.applying = true;
+    this.left.setDoc(right);
+    this.right.setDoc(left);
+    this.applying = false;
+
+    this.setFile('left', rightName);
+    this.setFile('right', leftName);
+    this.hasResult = false;
+    this.list.clear(this.strings.empty);
+    this.resetStats();
+    this.hideError();
+
+    if (this.bothFilled()) {
+      void this.run('explicit');
+      return;
+    }
+
+    this.setStatus(this.strings.waiting);
+    this.refreshButtons();
+  }
+
+  private async copyChanges(): Promise<void> {
+    const text = this.list.changesText();
+    if (text.length === 0) return;
+
+    const ok = await copyText(text);
+    this.announce(ok ? this.strings.copied : this.strings.copyFailed);
+  }
+
+  private downloadChanges(): void {
+    const text = this.list.changesJson();
+    if (text.length === 0) return;
+    downloadText(text, 'changes.json');
   }
 
   private async run(mode: RunMode): Promise<void> {
@@ -407,6 +482,12 @@ export class DiffSession {
     if (stat) stat.textContent = value;
   }
 
+  private fileName(side: Side): string | null {
+    const chip = this.shell.querySelector<HTMLElement>(`[data-file-chip="${side}"]`);
+    if (!chip || chip.hidden) return null;
+    return chip.querySelector('[data-file-name]')?.textContent ?? null;
+  }
+
   private setFile(side: Side, name: string | null): void {
     const chip = this.shell.querySelector<HTMLElement>(`[data-file-chip="${side}"]`);
     if (!chip) return;
@@ -446,6 +527,10 @@ export class DiffSession {
     el<HTMLButtonElement>(this.shell, '[data-action="clear"]').disabled =
       this.left.getLength() === 0 && this.right.getLength() === 0;
     el<HTMLButtonElement>(this.shell, '[data-action="cancel"]').hidden = !this.running;
+
+    const empty = this.list.count === 0;
+    el<HTMLButtonElement>(this.shell, '[data-diff-copy]').disabled = empty;
+    el<HTMLButtonElement>(this.shell, '[data-diff-download]').disabled = empty;
   }
 
   private setStatus(text: string): void {

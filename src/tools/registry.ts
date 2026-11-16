@@ -261,3 +261,16 @@ export const tools: readonly ToolDef[] = [
     available: false,
   },
 ];
+
+/** Tools that read something other than JSON, so they cannot receive a handoff. */
+const nonJsonInputOps = new Set(['csvToJson', 'yamlToJson', 'xmlToJson']);
+
+/** True when the tool takes JSON on its input side. */
+export function acceptsJsonInput(tool: ToolDef): boolean {
+  return !nonJsonInputOps.has(tool.workerOp);
+}
+
+/** Slug of the tool that runs a given worker op. */
+export function slugForOp(op: string): string | null {
+  return tools.find((tool) => tool.workerOp === op)?.slug ?? null;
+}

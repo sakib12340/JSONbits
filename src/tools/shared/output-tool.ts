@@ -4,6 +4,7 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
+import { setupSend, takeHandoff } from '../../lib/handoff';
 import { createSelectMenu, type SelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
 import { readIndent, writeIndent } from '../../lib/storage';
@@ -142,6 +143,21 @@ export class OutputToolSession {
     this.shell
       .querySelector<HTMLButtonElement>('[data-error-repair]')
       ?.addEventListener('click', () => void this.fix());
+
+    setupSend({
+      shell: this.shell,
+      locale: this.locale,
+      getText: () => (this.kind === 'repair' ? (this.outputText ?? '') : this.input.getDoc()),
+      onError: (message) => {
+        this.flash(message);
+        this.announce(message);
+      },
+      emptyMessage: this.strings.sendEmpty,
+      tooLargeMessage: this.strings.sendTooLarge,
+    });
+
+    const handoff = takeHandoff(this.kind === 'minify' ? 'json-minifier' : 'json-repair');
+    if (handoff) this.setInputText(handoff, true);
 
     const fileInput = el<HTMLInputElement>(this.shell, '[data-file-input]');
     fileInput.addEventListener('change', () => {

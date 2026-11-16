@@ -332,5 +332,12 @@
   "hub.comparisons.heading": "JSON comparison tools",
   "hub.comparisons.metaTitle": "JSON Comparison Tools — Free & Private | JSON Bits",
   "hub.generators.heading": "JSON generators",
-  "hub.generators.metaTitle": "JSON Generators — Free & Private | JSON Bits"
+  "hub.generators.metaTitle": "JSON Generators — Free & Private | JSON Bits",
+  "tool.send.label": "Send to",
+  "tool.send.heading": "Send the JSON to",
+  "tool.send.empty": "There is no JSON to send yet.",
+  "tool.send.tooLarge": "This JSON is too large to hand over to another tool.",
+  "tool.diff.swap": "Swap sides",
+  "tool.diff.copyList": "Copy list",
+  "tool.diff.downloadList": "Download"
 }

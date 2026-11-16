@@ -23,4 +23,7 @@ export interface DiffStrings extends BaseStrings {
   rightLabel: string;
   found: string;
   needBoth: string;
+  swap: string;
+  copyList: string;
+  downloadList: string;
 }

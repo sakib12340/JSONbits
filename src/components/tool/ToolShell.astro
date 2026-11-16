@@ -5,6 +5,7 @@ import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
 import FileDropzone from './FileDropzone.astro';
 import StatsBar from './StatsBar.astro';
+import SendMenu from './SendMenu.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
 import type { Locale } from '../../i18n/config';
 import type { ToolDef } from '../../tools/types';
@@ -72,13 +73,16 @@ const strings = commonToolStrings(locale);
           <h2 class="font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
             {t(locale, 'tool.input')}
           </h2>
-          <span
-            data-file-chip
-            hidden
-            class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
-          >
-            <span data-file-name class="truncate" />
-          </span>
+          <div class="flex items-center gap-2">
+            <span
+              data-file-chip
+              hidden
+              class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
+            >
+              <span data-file-name class="truncate" />
+            </span>
+            <SendMenu locale={locale} slug={tool.slug} />
+          </div>
         </div>
 
         <EditorPane kind="input" locale={locale}>

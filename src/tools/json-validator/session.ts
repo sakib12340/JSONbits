@@ -2,6 +2,7 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
+import { setupSend, takeHandoff } from '../../lib/handoff';
 import { readIndent } from '../../lib/storage';
 import { buildSnippet } from '../../lib/snippet';
 import { failure } from '../../workers/protocol';
@@ -104,6 +105,21 @@ export class ValidatorSession {
     el<HTMLButtonElement>(this.shell, '[data-error-repair]').addEventListener('click', () =>
       void this.fix(),
     );
+
+    setupSend({
+      shell: this.shell,
+      locale: this.locale,
+      getText: () => this.input.getDoc(),
+      onError: (message) => {
+        this.flash(message);
+        this.announce(message);
+      },
+      emptyMessage: this.strings.sendEmpty,
+      tooLargeMessage: this.strings.sendTooLarge,
+    });
+
+    const handoff = takeHandoff('json-validator');
+    if (handoff) this.setInputText(handoff, true);
 
     const fileInput = el<HTMLInputElement>(this.shell, '[data-file-input]');
     fileInput.addEventListener('change', () => {

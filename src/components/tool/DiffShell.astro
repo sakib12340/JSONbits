@@ -5,6 +5,7 @@ import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
 import FileDropzone from './FileDropzone.astro';
 import StatsBar from './StatsBar.astro';
+import SendMenu from './SendMenu.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
 import Icon from '../ui/Icon.astro';
 import type { Locale } from '../../i18n/config';
@@ -54,6 +55,9 @@ const strings = {
   rightLabel: t(locale, 'tool.diff.rightLabel'),
   found: t(locale, 'tool.diff.found'),
   needBoth: t(locale, 'tool.diff.needBoth'),
+  swap: t(locale, 'tool.diff.swap'),
+  copyList: t(locale, 'tool.diff.copyList'),
+  downloadList: t(locale, 'tool.diff.downloadList'),
 };
 ---
 
@@ -82,6 +86,14 @@ const strings = {
         />
         {t(locale, 'tool.diff.ignoreArrayOrder')}
       </label>
+      <button
+        type="button"
+        data-diff-swap
+        class="inline-flex min-h-[44px] items-center gap-1.5 rounded-[8px] px-2 text-[13px] font-semibold text-body-mid hover:bg-cream hover:text-ink"
+      >
+        <Icon name="swap" class="size-4" />
+        {t(locale, 'tool.diff.swap')}
+      </button>
       <span class="ms-auto hidden text-[12px] leading-5 text-body-mid sm:inline">
         {t(locale, 'tool.shortcutHint')}
       </span>
@@ -151,6 +163,7 @@ const strings = {
             >
               <span data-file-name class="truncate" />
             </span>
+            <SendMenu locale={locale} slug={tool.slug} />
           </div>
           <button
             type="button"
@@ -237,6 +250,25 @@ const strings = {
           </div>
 
           <span class="ms-auto text-[12px] leading-5 text-body-mid" data-diff-summary></span>
+
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              data-diff-copy
+              class="inline-flex min-h-[44px] items-center gap-1.5 rounded-[8px] px-2 text-[12px] font-semibold text-body-mid hover:bg-cream hover:text-ink disabled:opacity-40"
+            >
+              <Icon name="copy" class="size-3.5" />
+              {t(locale, 'tool.diff.copyList')}
+            </button>
+            <button
+              type="button"
+              data-diff-download
+              class="inline-flex min-h-[44px] items-center gap-1.5 rounded-[8px] px-2 text-[12px] font-semibold text-body-mid hover:bg-cream hover:text-ink disabled:opacity-40"
+            >
+              <Icon name="download" class="size-3.5" />
+              {t(locale, 'tool.diff.downloadList')}
+            </button>
+          </div>
         </div>
 
         <div
