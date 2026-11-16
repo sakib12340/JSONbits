@@ -286,6 +286,16 @@ The two-pane tools showed their divider lines at different heights: the pane tha
 - Browser pass on the production build: all eleven two-pane pages report 48 px headers and identical bottom edges for the panes that share a row, in light and dark theme, and the editors below them start on the same pixel. The formatter still formats, the validator still paints the error line and repairs it, the diff still compares and swaps sides, and the viewer still builds its tree, all without console errors.
 - Note for the next session: the browser used for checks intermittently answers 502 for a batch of parallel module requests, which leaves the CodeMirror editor unmounted. It is not a code fault — the same files answer 200 to a single request — so a page that shows only the skeleton needs one reload before it is judged.
 
+## One hover language for bordered boxes
+
+The “Related tools” rows at the bottom of a tool page jumped from a 14 % hairline straight to a solid ink border on hover. On a light theme that reads as a black outline, and in the dark theme `--ink` is nearly white, so the border flashed bright — heavier than anything else on the site.
+
+- The site actually had two hover intensities for the same kind of element: the cards on the home, hub, and learn pages used `hover:border-line-strong` plus `--shadow-1` (hairline 0.14 → 0.28 alpha and a 1 px soft shadow), while the related rows and the hub pills used `hover:border-ink` (hairline → solid near-black).
+- Both now use the card treatment: `transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-[var(--shadow-1)]`. The transition keeps the change calm instead of snapping.
+- `hover:border-ink` is now used nowhere on the site. The remaining hover vocabulary is: cream fill for quiet controls, `--line-strong` plus `--shadow-1` for bordered boxes, underline for links in prose, and the primary colour for the main action.
+- The 404 card keeps the border step without the shadow, because it has no card shape to lift.
+- `pnpm astro check` 0 errors, `pnpm test` 21/21, `pnpm build` 126 pages. In the built CSS `hover:border-ink` no longer appears, and the related rows, the hub pills, and the home, hub, and learn cards carry the identical hover signature.
+
 ## Phase 2 design-system verification
 
 - Tokens for canvas, cream, ink, body, primary, night bands, borders, focus, danger, success, and warning; light and dark palettes share one deep-teal accent.

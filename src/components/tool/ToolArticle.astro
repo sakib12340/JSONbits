@@ -94,7 +94,7 @@ const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related
               <li>
                 <a
                   href={localePath(locale, `/${entry.slug}`)}
-                  class="flex min-h-11 items-center justify-between gap-3 rounded-[8px] border border-line bg-canvas px-4 py-3 text-[15px] font-medium text-ink hover:border-ink"
+                  class="flex min-h-11 items-center justify-between gap-3 rounded-[8px] border border-line bg-canvas px-4 py-3 text-[15px] font-medium text-ink transition-[border-color,box-shadow] hover:border-line-strong hover:shadow-[var(--shadow-1)]"
                 >
                   {entry.name}
                 </a>
