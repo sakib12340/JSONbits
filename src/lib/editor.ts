@@ -132,18 +132,21 @@ const theme = EditorView.theme({
     alignItems: 'center',
     gap: '4px',
   },
-  // Same treatment as the home search field: one hairline that deepens on focus,
-  // never a second ring around it.
+  // Same treatment as the home and tree search fields: one hairline that
+  // deepens one step on hover and on focus, never a second ring around it.
   '.cm-panel.cm-search input[name="search"]': {
     flex: '1 1 6em',
     minWidth: '0',
     width: 'auto',
     borderColor: 'var(--line)',
+    transition: 'border-color 120ms ease',
+  },
+  '.cm-panel.cm-search input[name="search"]:hover': {
+    borderColor: 'var(--line-strong)',
   },
   '.cm-panel.cm-search input[name="search"]:focus, .cm-panel.cm-search input[name="search"]:focus-visible':
     {
-      outline: 'none',
-      borderColor: 'var(--ink)',
+      borderColor: 'var(--line-strong)',
     },
   '.cm-panel.cm-search input': {
     backgroundColor: 'var(--canvas)',

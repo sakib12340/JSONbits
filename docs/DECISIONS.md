@@ -296,6 +296,15 @@ The “Related tools” rows at the bottom of a tool page jumped from a 14 % hai
 - The 404 card keeps the border step without the shadow, because it has no card shape to lift.
 - `pnpm astro check` 0 errors, `pnpm test` 21/21, `pnpm build` 126 pages. In the built CSS `hover:border-ink` no longer appears, and the related rows, the hub pills, and the home, hub, and learn cards carry the identical hover signature.
 
+## One search field language
+
+The tree search field on the JSON Viewer page was the only field on the site with two focus signals at once: `focus:border-ink` painted a solid near-black hairline and the global `:focus-visible` rule painted the teal ring around it, so a small 32 px field ended up ringed in two heavy colours. It also had no hover state at all, which made the jump from idle to focused look sudden.
+
+- All three search inputs now behave the same: the home field, the viewer's tree search, and the CodeMirror find panel. At rest the border is the `--line` hairline, on hover it steps to `--line-strong`, and on focus it stays at `--line-strong` while the site's standard teal focus ring does the signalling. The solid ink border is gone from every search field.
+- The home field and the tree field dropped `focus:outline-none`, so they now use the same focus ring as every other control instead of a second, heavier indicator. The find panel input lost the `outline: none` rule in the editor theme for the same reason.
+- The border change is animated (150 ms on the page fields, 120 ms in the editor theme) so the step reads as a soft lift, like the cards.
+- `pnpm astro check` 0 errors, `pnpm test` 21/21, `pnpm build` 126 pages. The built CSS carries `hover:border-line-strong` and `focus:border-line-strong` for the page fields, and the built editor chunk carries the matching rules for the find panel. Behaviour checks on the production build: the home field still filters (17 tools down to 2 for "yaml"), the tree search still filters (1 match), the find panel still opens with a hairline border at rest, and no console errors.
+
 ## Phase 2 design-system verification
 
 - Tokens for canvas, cream, ink, body, primary, night bands, borders, focus, danger, success, and warning; light and dark palettes share one deep-teal accent.
