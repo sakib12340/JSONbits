@@ -226,6 +226,25 @@
   }
 }
 
+/* Pane headers sit next to each other, so their height is fixed instead of
+   following the content of whichever pane has the tallest control. */
+.pane-head {
+  display: flex;
+  height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+@media (pointer: coarse) {
+  .pane-head {
+    height: 60px;
+    padding: 0 12px;
+  }
+}
+
 /* Shared popover menu, used by the tree options and the "Send to…" button. */
 .menu-panel {
   position: absolute;

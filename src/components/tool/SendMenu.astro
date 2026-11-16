@@ -16,14 +16,14 @@ const targets = tools.filter(
 );
 ---
 
-<details class="relative" data-send-menu>
+<details class="relative inline-flex items-center" data-send-menu>
   <summary
     class="inline-flex min-h-[32px] cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2 text-[12px] font-semibold leading-5 text-body-mid hover:bg-cream hover:text-ink"
     aria-label={t(locale, 'tool.send.label')}
     title={t(locale, 'tool.send.label')}
   >
     <Icon name="arrow-right" class="size-4" />
-    <span>{t(locale, 'tool.send.label')}</span>
+    <span class="hidden sm:inline">{t(locale, 'tool.send.label')}</span>
   </summary>
 
   <div class="menu-panel">

@@ -275,6 +275,17 @@ The two gaps deferred from the audit are now built. Both stay inside the browser
 - Browser pass: all 12 tool pages show one send menu (8 targets on the JSON-source tools, 9 on the three converters that produce JSON) with no console errors. Formatter → JSON Viewer carried `{"team":"jsonbits","tags":[1,2,3]}` into the tree (“Tree built in 0.8 ms”); viewer → formatter, JSON Repair → validator (repaired `{"a": 1}` validated as valid), and diff → formatter all landed with the document in place and the handoff cleared. The diff sample pair reported two changes; swapping the sides kept two changes with the values reversed; “Download” produced the expected JSON array and “Copy list” announced “Copied”. Escape and an outside click both close the menu. The menu panel paints above the editor (`elementFromPoint` returns the menu item) and the German page shows “Seiten tauschen” and “Liste kopieren”.
 - The SendMenu script ships as an external module, so the strict CSP still holds; the only inline script on a page is the theme bootstrap.
 
+## Aligned pane headers
+
+The two-pane tools showed their divider lines at different heights: the pane that carries the “Send to” button had a 49 px header while its neighbour had 46 px, so the underline under “INPUT” and the underline under “OUTPUT” never met. The cause was the header height following its content, and the new popover button being 3 px taller than the label beside it.
+
+- Pane headers now use one shared class, `.pane-head`, with a fixed height (48 px, 60 px on coarse pointers where the controls are 44 px) instead of a minimum height. Every pane header of every shell uses it, so the input, output, tree, left, and right headers always end on the same line, whatever control sits inside them.
+- The “Send to” button shrank to an icon-only control below the `sm` breakpoint so a long file name and the button still fit a narrow pane; the desktop button keeps its label. The popover is absolutely positioned, so the fixed height never clips it.
+- The diff change-list header stays auto-height on purpose: it holds the filter row and the copy and download buttons, which need to wrap on narrow screens, and it sits in its own row below the two editors.
+- `pnpm test` 21/21, `pnpm astro check` 0 errors (2 pre-existing `fast-xml-parser` hints), `pnpm build` 126 pages.
+- Browser pass on the production build: all eleven two-pane pages report 48 px headers and identical bottom edges for the panes that share a row, in light and dark theme, and the editors below them start on the same pixel. The formatter still formats, the validator still paints the error line and repairs it, the diff still compares and swaps sides, and the viewer still builds its tree, all without console errors.
+- Note for the next session: the browser used for checks intermittently answers 502 for a batch of parallel module requests, which leaves the CodeMirror editor unmounted. It is not a code fault — the same files answer 200 to a single request — so a page that shows only the skeleton needs one reload before it is judged.
+
 ## Phase 2 design-system verification
 
 - Tokens for canvas, cream, ink, body, primary, night bands, borders, focus, danger, success, and warning; light and dark palettes share one deep-teal accent.
