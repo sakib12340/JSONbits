@@ -305,6 +305,16 @@ The tree search field on the JSON Viewer page was the only field on the site wit
 - The border change is animated (150 ms on the page fields, 120 ms in the editor theme) so the step reads as a soft lift, like the cards.
 - `pnpm astro check` 0 errors, `pnpm test` 21/21, `pnpm build` 126 pages. The built CSS carries `hover:border-line-strong` and `focus:border-line-strong` for the page fields, and the built editor chunk carries the matching rules for the find panel. Behaviour checks on the production build: the home field still filters (17 tools down to 2 for "yaml"), the tree search still filters (1 match), the find panel still opens with a hairline border at rest, and no console errors.
 
+## Popovers stay inside their frame
+
+On the JSON Diff page the "Send to…" panel was cut off on the left. The shared `.menu-panel` rule pinned every menu to the trigger's inline-end edge, so a button near the left of the left pane grew a 208 px panel leftwards, straight through the tool frame's `overflow: hidden`. Measured before the fix: frame `[89, 1193]`, panel `[53, 261]` — 36 px clipped.
+
+- Added `src/lib/popover.ts`. `positionPopover(trigger, panel)` finds the nearest clipping ancestor (usually `[data-tool-frame]`, otherwise the viewport with an 8 px gutter), compares the room on both inline sides, flips with logical `inset-inline-*` properties (so RTL works), and clamps the panel width when neither side fits. `chooseAlignment()` is pure and unit-tested.
+- When both sides fit, the stylesheet default wins, so the viewer's tree menu, the language switcher and the indent select keep their existing position on wide screens. Only the diff menu changes side there.
+- Wired into all four popover kinds: send menu, tree options menu, indent select list, and language switcher. Each repositions on open and on window resize while open.
+- `.menu-panel` also gets `max-width: calc(100vw - 2rem)` and `max-height: min(60vh, 360px)` with its own scroll, so a tall coarse-pointer menu (44 px rows) cannot spill out of a short mobile frame.
+- `pnpm astro check` 0 errors, `pnpm test` 24/24 (3 new alignment cases), `pnpm build` 126 pages. Browser checks: diff panel now `[179, 387]` inside frame `[89, 1193]` with 0 px clipped; with a forced 240 px frame it flips and clamps to 149 px with 0 px clipped; with the page reflowed to 360 px it opens start-aligned at `[114, 322]` inside frame `[24, 336]`. Viewer tree menu, formatter indent select and language switcher all stay in bounds, Escape closes and returns focus, a 44 px-row menu becomes scrollable inside the frame, simulated RTL stays in bounds, and no console errors.
+
 ## Phase 2 design-system verification
 
 - Tokens for canvas, cream, ink, body, primary, night bands, borders, focus, danger, success, and warning; light and dark palettes share one deep-teal accent.

@@ -1,3 +1,5 @@
+import { positionPopover } from './popover';
+
 interface SelectOption {
   el: HTMLElement;
   value: string;
@@ -77,6 +79,7 @@ export function createSelectMenu(root: HTMLElement): SelectMenu {
     if (open) return;
     open = true;
     list.hidden = false;
+    positionPopover(trigger, list);
     trigger.setAttribute('aria-expanded', 'true');
     setActive(Math.max(0, options.findIndex((option) => option.value === current)));
     list.focus();
@@ -95,6 +98,10 @@ export function createSelectMenu(root: HTMLElement): SelectMenu {
   function onOutside(event: PointerEvent): void {
     if (!root.contains(event.target as Node)) hide();
   }
+
+  window.addEventListener('resize', () => {
+    if (open) positionPopover(trigger, list);
+  });
 
   trigger.addEventListener('click', () => {
     if (open) hide();

@@ -1,4 +1,5 @@
 import { copyText } from '../../lib/clipboard';
+import { positionPopover } from '../../lib/popover';
 import { fill } from '../shared/strings';
 import { formatPath, type TreeLine, type TreeStore } from './store';
 import type { ViewerStrings } from './strings';
@@ -194,6 +195,16 @@ export class TreeView {
 
   private bindMenu(): void {
     if (!this.menu) return;
+
+    const summary = this.menu.querySelector('summary');
+    const panel = this.menu.querySelector<HTMLElement>('.menu-panel');
+    if (summary && panel) {
+      const update = (): void => {
+        if (this.menu?.open) positionPopover(summary, panel);
+      };
+      this.menu.addEventListener('toggle', update);
+      window.addEventListener('resize', update);
+    }
 
     this.menu.querySelector<HTMLButtonElement>('[data-tree-collapse]')?.addEventListener(
       'click',

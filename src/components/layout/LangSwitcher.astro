@@ -28,7 +28,10 @@ const options = locales.map((code) => ({
     <span>{current.label}</span>
     <Icon name="chevron-down" class="size-4 text-body-mid" />
   </summary>
-  <div class="absolute right-0 z-50 mt-2 w-52 max-w-[calc(100vw-2rem)] rounded-[10px] border border-line bg-canvas p-1 shadow-[var(--shadow-1)]">
+  <div
+    data-lang-panel
+    class="absolute right-0 z-50 mt-2 w-52 max-w-[calc(100vw-2rem)] rounded-[10px] border border-line bg-canvas p-1 shadow-[var(--shadow-1)]"
+  >
     <ul class="flex flex-col">
       {
         options.map((option) => (
@@ -52,3 +55,19 @@ const options = locales.map((code) => ({
     </ul>
   </div>
 </details>
+
+<script>
+  import { positionPopover } from '../../lib/popover';
+
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('[data-lang-switcher]')) {
+    const summary = menu.querySelector('summary');
+    const panel = menu.querySelector<HTMLElement>('[data-lang-panel]');
+    if (!summary || !panel) continue;
+
+    const update = (): void => {
+      if (menu.open) positionPopover(summary, panel);
+    };
+    menu.addEventListener('toggle', update);
+    window.addEventListener('resize', update);
+  }
+</script>

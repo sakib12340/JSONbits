@@ -55,7 +55,19 @@ const targets = tools.filter(
 </style>
 
 <script>
+  import { positionPopover } from '../../lib/popover';
+
   for (const menu of document.querySelectorAll<HTMLDetailsElement>('[data-send-menu]')) {
+    const summary = menu.querySelector('summary');
+    const panel = menu.querySelector<HTMLElement>('.menu-panel');
+    if (summary && panel) {
+      const update = (): void => {
+        if (menu.open) positionPopover(summary, panel);
+      };
+      menu.addEventListener('toggle', update);
+      window.addEventListener('resize', update);
+    }
+
     menu.addEventListener('click', (event) => {
       const target = (event.target as HTMLElement).closest<HTMLElement>('[data-send-target]');
       if (!target) return;
