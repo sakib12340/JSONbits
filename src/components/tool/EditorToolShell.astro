@@ -4,6 +4,7 @@ import Toolbar from './Toolbar.astro';
 import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
 import FileDropzone from './FileDropzone.astro';
+import OutputMeta from './OutputMeta.astro';
 import StatsBar from './StatsBar.astro';
 import SendMenu from './SendMenu.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
@@ -52,6 +53,7 @@ const strings = {
   minifiedMeta: t(locale, 'tool.minifiedMeta'),
   noFixes: t(locale, 'tool.noFixes'),
   fixesApplied: t(locale, 'tool.fixesApplied'),
+  fixesAppliedOne: t(locale, 'tool.fixesApplied.one'),
   outputLabel: t(locale, 'tool.output'),
   outputPlaceholder,
   fix: {
@@ -157,11 +159,8 @@ const strings = {
           <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
             {t(locale, 'tool.output')}
           </h2>
-          <div class="flex items-center gap-2">
-            <span
-              class="max-w-[70%] truncate font-mono text-[11px] leading-4 text-body-mid"
-              data-output-meta
-            ></span>
+          <div class="flex min-w-0 items-center gap-2">
+            <OutputMeta locale={locale} variant={kind === 'repair' ? 'list' : 'text'} />
             {kind === 'repair' && <SendMenu locale={locale} slug={tool.slug} />}
           </div>
         </div>

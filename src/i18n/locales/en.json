@@ -157,6 +157,7 @@
   "tool.outputPlaceholder.repaired": "Repaired JSON appears here.",
   "tool.noFixes": "No common mistakes found",
   "tool.fixesApplied": "{count} fixes",
+  "tool.fixesApplied.one": "1 fix",
   "tool.fix.comments": "Comments",
   "tool.fix.trailingCommas": "Trailing commas",
   "tool.fix.singleQuotes": "Single quotes",

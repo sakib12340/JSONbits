@@ -1,0 +1,106 @@
+---
+import Icon from '../ui/Icon.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+  /**
+   * `text` is a plain summary that wraps to two lines instead of truncating.
+   * `list` adds a popover with the per-fix breakdown, so a long list of repairs
+   * never squeezes the pane header.
+   */
+  variant?: 'text' | 'list';
+}
+
+const { locale, variant = 'text' } = Astro.props;
+---
+
+{
+  variant === 'list' ? (
+    <>
+      <span class="output-meta-text" data-output-meta hidden />
+      <details class="fix-meta" data-fix-meta data-popover hidden>
+        <summary class="fix-meta__summary">
+          <span data-fix-count />
+          <Icon name="chevron-down" class="size-3.5" />
+        </summary>
+        <div class="menu-panel">
+          <p class="menu-heading">{t(locale, 'tool.stats.fixes')}</p>
+          <ul class="fix-list" data-fix-list />
+        </div>
+      </details>
+    </>
+  ) : (
+    <span class="output-meta-text" data-output-meta />
+  )
+}
+
+<script>
+  import { setupDetailsPopover } from '../../lib/popover';
+
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('[data-fix-meta]')) {
+    setupDetailsPopover(menu);
+  }
+</script>
+
+<style>
+  .output-meta-text {
+    display: -webkit-box;
+    overflow: hidden;
+    min-width: 0;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    text-align: end;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--body-mid);
+  }
+
+  .fix-meta {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .fix-meta[hidden] {
+    display: none;
+  }
+
+  .fix-meta__summary {
+    display: inline-flex;
+    height: 28px;
+    align-items: center;
+    gap: 4px;
+    border-radius: 6px;
+    padding: 0 6px;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 16px;
+    color: var(--body-mid);
+  }
+
+  .fix-meta__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .fix-meta__summary:hover,
+  .fix-meta[open] .fix-meta__summary {
+    background: var(--cream);
+    color: var(--ink);
+  }
+
+  .fix-meta__summary:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  @media (pointer: coarse) {
+    .fix-meta__summary {
+      height: 44px;
+    }
+  }
+</style>

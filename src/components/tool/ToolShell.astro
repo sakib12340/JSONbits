@@ -4,6 +4,7 @@ import Toolbar from './Toolbar.astro';
 import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
 import FileDropzone from './FileDropzone.astro';
+import OutputMeta from './OutputMeta.astro';
 import StatsBar from './StatsBar.astro';
 import SendMenu from './SendMenu.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
@@ -101,7 +102,7 @@ const strings = commonToolStrings(locale);
           <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
             {t(locale, 'tool.output')}
           </h2>
-          <span class="font-mono text-[11px] leading-4 text-body-mid" data-output-meta></span>
+          <OutputMeta locale={locale} />
         </div>
 
         <EditorPane kind="output" locale={locale}>

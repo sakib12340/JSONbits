@@ -15,6 +15,7 @@ import type {
   MinifyResult,
   MinifyStats,
   ProgressUpdate,
+  RepairFix,
   RepairResult,
   RepairStats,
 } from '../../workers/protocol';
@@ -404,29 +405,25 @@ export class OutputToolSession {
       el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     }
 
-    const meta = el<HTMLElement>(this.shell, '[data-output-meta]');
     let status: string;
 
     if (this.kind === 'minify') {
       const stats = result.stats as MinifyStats;
       this.setStats(stats);
-      meta.textContent = fill(this.strings.minifiedMeta, {
-        before: formatBytes(stats.bytes, this.locale),
-        after: formatBytes(stats.outputBytes, this.locale),
-        percent: formatInteger(stats.savedPercent, this.locale),
-      });
-      meta.title = meta.textContent;
+      this.setMetaText(
+        fill(this.strings.minifiedMeta, {
+          before: formatBytes(stats.bytes, this.locale),
+          after: formatBytes(stats.outputBytes, this.locale),
+          percent: formatInteger(stats.savedPercent, this.locale),
+        }),
+      );
       status = fill(this.strings.minifyDone, {
         time: formatMilliseconds(stats.parseTimeMs, this.locale),
       });
     } else {
       const stats = result.stats as RepairStats;
       this.setStats(stats);
-      const parts = stats.fixes.map(
-        (fix) => `${this.strings.fix[fix.kind]} ×${formatInteger(fix.count, this.locale)}`,
-      );
-      meta.textContent = parts.length > 0 ? parts.join(' · ') : this.strings.noFixes;
-      meta.title = meta.textContent;
+      this.showFixMeta(stats.fixes);
       status = fill(this.strings.repairDone, {
         time: formatMilliseconds(stats.parseTimeMs, this.locale),
       });
@@ -592,10 +589,80 @@ export class OutputToolSession {
     this.input.markError(null);
     el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
-    el<HTMLElement>(this.shell, '[data-output-meta]').textContent = '';
-    el<HTMLElement>(this.shell, '[data-output-meta]').title = '';
+    this.clearMeta();
     this.showOutputDot(false);
     this.refreshButtons();
+  }
+
+  /** Writes the short summary that sits in the output pane header. */
+  private setMetaText(text: string): void {
+    const meta = this.shell.querySelector<HTMLElement>('[data-output-meta]');
+    if (!meta) return;
+    meta.hidden = false;
+    meta.textContent = text;
+    meta.title = text;
+  }
+
+  /**
+   * Repair lists every fix kind. The header shows the total instead, and the
+   * full breakdown lives in a popover so long lists never get clipped.
+   */
+  private showFixMeta(fixes: RepairFix[]): void {
+    const menu = this.shell.querySelector<HTMLDetailsElement>('[data-fix-meta]');
+    const count = menu?.querySelector<HTMLElement>('[data-fix-count]');
+    const list = menu?.querySelector<HTMLElement>('[data-fix-list]');
+    if (!menu || !count || !list) return;
+
+    const total = fixes.reduce((sum, fix) => sum + fix.count, 0);
+    if (total === 0) {
+      menu.hidden = true;
+      menu.removeAttribute('open');
+      this.setMetaText(this.strings.noFixes);
+      return;
+    }
+
+    list.replaceChildren(
+      ...fixes.map((fix) => {
+        const row = document.createElement('li');
+        const label = document.createElement('span');
+        label.textContent = this.strings.fix[fix.kind];
+        const amount = document.createElement('span');
+        amount.className = 'fix-count';
+        amount.textContent = `×${formatInteger(fix.count, this.locale)}`;
+        row.append(label, amount);
+        return row;
+      }),
+    );
+
+    count.textContent =
+      total === 1
+        ? this.strings.fixesAppliedOne
+        : fill(this.strings.fixesApplied, { count: formatInteger(total, this.locale) });
+
+    const meta = this.shell.querySelector<HTMLElement>('[data-output-meta]');
+    if (meta) {
+      meta.textContent = '';
+      meta.title = '';
+      meta.hidden = true;
+    }
+    menu.hidden = false;
+  }
+
+  private clearMeta(): void {
+    const meta = this.shell.querySelector<HTMLElement>('[data-output-meta]');
+    if (meta) {
+      meta.textContent = '';
+      meta.title = '';
+      meta.hidden = true;
+    }
+
+    const menu = this.shell.querySelector<HTMLDetailsElement>('[data-fix-meta]');
+    if (!menu) return;
+    menu.hidden = true;
+    menu.removeAttribute('open');
+    const count = menu.querySelector<HTMLElement>('[data-fix-count]');
+    if (count) count.textContent = '';
+    menu.querySelector<HTMLElement>('[data-fix-list]')?.replaceChildren();
   }
 
   private resetStats(): void {

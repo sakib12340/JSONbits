@@ -55,6 +55,8 @@ export interface OutputToolStrings extends BaseStrings {
   minifiedMeta: string;
   noFixes: string;
   fixesApplied: string;
+  /** Same as `fixesApplied` but for exactly one fix, so it does not read "1 fixes". */
+  fixesAppliedOne: string;
   fix: Record<RepairFixKind, string>;
 }
 

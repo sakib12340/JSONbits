@@ -70,3 +70,41 @@ export function positionPopover(trigger: HTMLElement, panel: HTMLElement): void 
     panel.style.maxWidth = `${Math.max(0, Math.floor(space))}px`;
   }
 }
+
+let outsideCloseBound = false;
+
+/** Closes any open `details[data-popover]` the pointer landed outside of. */
+function closeOutsidePopovers(event: PointerEvent): void {
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('details[data-popover][open]')) {
+    if (event.target instanceof Node && menu.contains(event.target)) continue;
+    menu.removeAttribute('open');
+  }
+}
+
+/**
+ * Wires a `<details>` menu: keeps its panel inside the clipping ancestor, closes
+ * on Escape and on an outside pointer press. Used by the fix breakdown popover.
+ */
+export function setupDetailsPopover(menu: HTMLDetailsElement): void {
+  const summary = menu.querySelector<HTMLElement>('summary');
+  const panel = menu.querySelector<HTMLElement>('.menu-panel');
+  if (!summary || !panel) return;
+
+  const update = (): void => {
+    if (menu.open) positionPopover(summary, panel);
+  };
+
+  menu.addEventListener('toggle', update);
+  window.addEventListener('resize', update);
+  menu.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !menu.open) return;
+    event.preventDefault();
+    menu.removeAttribute('open');
+    summary.focus();
+  });
+
+  if (!outsideCloseBound) {
+    outsideCloseBound = true;
+    document.addEventListener('pointerdown', closeOutsidePopovers);
+  }
+}

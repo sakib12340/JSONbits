@@ -296,6 +296,32 @@
   }
 }
 
+/* Repair breakdown rows are built in TypeScript, so their styles live here. */
+.fix-list {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 2px;
+}
+
+.fix-list li {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--ink);
+}
+
+.fix-list .fix-count {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--body-mid);
+}
+
 /* Virtualized JSON tree rows are created in TypeScript, so their styles live here. */
 .tree-row {
   display: flex;
