@@ -305,6 +305,14 @@ The tree search field on the JSON Viewer page was the only field on the site wit
 - The border change is animated (150 ms on the page fields, 120 ms in the editor theme) so the step reads as a soft lift, like the cards.
 - `pnpm astro check` 0 errors, `pnpm test` 21/21, `pnpm build` 126 pages. The built CSS carries `hover:border-line-strong` and `focus:border-line-strong` for the page fields, and the built editor chunk carries the matching rules for the find panel. Behaviour checks on the production build: the home field still filters (17 tools down to 2 for "yaml"), the tree search still filters (1 match), the find panel still opens with a hairline border at rest, and no console errors.
 
+## One surface for code blocks in both themes
+
+The example blocks on tool pages disappeared into the page in the dark theme. Their surface came from `--code-surface`, which was `#121715` in dark mode against a `#0a0f0e` canvas — a difference too small to read at block size. Light mode looked fine because the same block sat on white.
+
+- Both themes now use one code surface, `#1a2320`, and one edge, `--code-line` at 16 % white. The tool-page example blocks and markdown code blocks also get a 1 px border, so the block is defined by its edge as well as its fill.
+- This keeps the terminal-style dark block that light mode already had, while making it visible in dark mode. Guide code blocks (Shiki `github-dark`) inherit the same border, and the home hero code card now lifts off the dark canvas too.
+- `pnpm astro check` 0 errors, `pnpm test` 24/24, `pnpm build` 126 pages. Computed styles on both themes: `rgb(26, 35, 32)` background, `rgba(237, 239, 236, 0.16)` 1 px border. Screenshots checked in light and dark on a tool page, a `/learn` guide, and the home hero; the production preview serves the new CSS with no console errors.
+
 ## Popovers stay inside their frame
 
 On the JSON Diff page the "Send to…" panel was cut off on the left. The shared `.menu-panel` rule pinned every menu to the trigger's inline-end edge, so a button near the left of the left pane grew a 208 px panel leftwards, straight through the tool frame's `overflow: hidden`. Measured before the fix: frame `[89, 1193]`, panel `[53, 261]` — 36 px clipped.
