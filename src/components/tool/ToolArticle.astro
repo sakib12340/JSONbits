@@ -55,11 +55,15 @@ const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related
     <div class="mt-4 grid gap-3 sm:grid-cols-2">
       <figure class="min-w-0">
         <figcaption class="article-caption">{t(locale, 'article.input')}</figcaption>
-        <pre class="article-code" tabindex="0"><code>{copy.data.example.input}</code></pre>
+        <div class="article-code">
+          <pre tabindex="0"><code>{copy.data.example.input}</code></pre>
+        </div>
       </figure>
       <figure class="min-w-0">
         <figcaption class="article-caption">{t(locale, 'article.output')}</figcaption>
-        <pre class="article-code" tabindex="0"><code>{copy.data.example.output}</code></pre>
+        <div class="article-code">
+          <pre tabindex="0"><code>{copy.data.example.output}</code></pre>
+        </div>
       </figure>
     </div>
 
@@ -168,17 +172,50 @@ const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related
     color: var(--body-mid);
   }
 
+  /* The wrapper owns the rounded edge so the scrollbar is clipped by it. */
   .article-code {
-    overflow-x: auto;
-    border: 1px solid var(--code-line);
+    overflow: hidden;
     border-radius: 10px;
     background: var(--code-surface);
+  }
+
+  .article-code pre {
+    overflow-x: auto;
     padding: 14px 16px;
     font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.6;
     color: var(--code-text);
     tab-size: 2;
+    scrollbar-width: thin;
+    scrollbar-color: var(--code-mute) transparent;
+  }
+
+  .article-code pre::-webkit-scrollbar {
+    height: 9px;
+  }
+
+  .article-code pre::-webkit-scrollbar-track,
+  .article-code pre::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .article-code pre::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: var(--code-mute);
+    background-clip: content-box;
+  }
+
+  .article-code pre::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  /* The wrapper clips overflow, so keep the keyboard ring inside the block.
+     The code surface is dark in both themes, so the ring uses the code accent. */
+  .article-code pre:focus-visible {
+    outline-color: var(--code-key);
+    outline-offset: -2px;
   }
 
   .article-list {

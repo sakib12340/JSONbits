@@ -36,11 +36,11 @@
   --signature-body: #c3cdc8;
   --signature-accent: #9fd3c6;
   --signature-line: rgb(237 239 236 / 0.14);
-  --code-surface: #1a2320;
+  --code-surface: #1c2623;
   --code-surface-soft: #1b2321;
   --code-text: #edefec;
   --code-mute: #98a19a;
-  --code-line: rgb(237 239 236 / 0.16);
+  --code-line: rgb(237 239 236 / 0.14);
   --code-key: #9fd3c6;
   --code-string: #e8c07a;
   --code-number: #a9c4e6;
@@ -87,11 +87,11 @@
   --signature-body: #b9c2bb;
   --signature-accent: #9fd3c6;
   --signature-line: rgb(237 239 236 / 0.12);
-  --code-surface: #1a2320;
+  --code-surface: #1c2623;
   --code-surface-soft: #192120;
   --code-text: #edefec;
   --code-mute: #8d968f;
-  --code-line: rgb(237 239 236 / 0.16);
+  --code-line: rgb(237 239 236 / 0.12);
   --code-key: #9fd3c6;
   --code-string: #e8c07a;
   --code-number: #a9c4e6;
@@ -687,7 +687,6 @@
   overflow-x: auto;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  border: 1px solid var(--code-line);
   border-radius: 10px;
   background: var(--code-surface);
   padding: 14px 16px;

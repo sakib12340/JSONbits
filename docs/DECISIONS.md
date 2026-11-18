@@ -309,9 +309,11 @@ The tree search field on the JSON Viewer page was the only field on the site wit
 
 The example blocks on tool pages disappeared into the page in the dark theme. Their surface came from `--code-surface`, which was `#121715` in dark mode against a `#0a0f0e` canvas — a difference too small to read at block size. Light mode looked fine because the same block sat on white.
 
-- Both themes now use one code surface, `#1a2320`, and one edge, `--code-line` at 16 % white. The tool-page example blocks and markdown code blocks also get a 1 px border, so the block is defined by its edge as well as its fill.
-- This keeps the terminal-style dark block that light mode already had, while making it visible in dark mode. Guide code blocks (Shiki `github-dark`) inherit the same border, and the home hero code card now lifts off the dark canvas too.
-- `pnpm astro check` 0 errors, `pnpm test` 24/24, `pnpm build` 126 pages. Computed styles on both themes: `rgb(26, 35, 32)` background, `rgba(237, 239, 236, 0.16)` 1 px border. Screenshots checked in light and dark on a tool page, a `/learn` guide, and the home hero; the production preview serves the new CSS with no console errors.
+- Both themes now use one code surface, `#1c2623`. There is no outer border: a first attempt used a 16 % white hairline, but at 1 px around a dark block it read as a glow, so the border was removed and the surface carries the shape alone.
+- The horizontal scrollbar was painting square into the rounded bottom corners. Scrolling now lives on the inner `<pre>` inside a wrapper that owns the 10 px radius, background, and `overflow: hidden`, so the scrollbar is clipped by the curve. The scrollbar is thin with a transparent track, a muted rounded thumb, and no arrow buttons. The `pre` keeps its `tabindex` and draws an inset code-accent focus ring, because the wrapper would clip the default outline.
+- `--code-line` returned to 14 % in light and 12 % in dark for the home hero's internal dividers. No code block uses it as an outer border now.
+- Guide blocks (Shiki `github-dark`) keep their own `#24292e` background without the extra border; the home hero code card uses the same `#1c2623` surface.
+- `pnpm astro check` 0 errors, `pnpm test` 24/24, `pnpm build` 126 pages. Computed styles in both themes: tool block `rgb(28, 38, 35)`, 0 px border, 10 px radius; guide pre `rgb(36, 41, 46)` with 0 px border; hero card `rgb(28, 38, 35)` with 0 px border. Light and dark screenshots show no outline glow, and the keyboard focus ring measures 2 px `#9fd3c6` inset when the example is tabbed to.
 
 ## Popovers stay inside their frame
 
