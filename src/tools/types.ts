@@ -23,6 +23,11 @@ export type ToolUi =
   | 'viewer'
   | 'diff'
   | 'converter'
+  | 'sort'
+  | 'escape'
+  | 'jsonpath'
+  | 'typescript'
+  | 'schema'
   | 'pending';
 
 export interface ToolDef {

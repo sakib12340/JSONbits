@@ -1,0 +1,261 @@
+---
+import ToolPage from './ToolPage.astro';
+import Toolbar from './Toolbar.astro';
+import PaneOptions from './PaneOptions.astro';
+import EditorPane from './EditorPane.astro';
+import ErrorPanel from './ErrorPanel.astro';
+import FileDropzone from './FileDropzone.astro';
+import OutputMeta from './OutputMeta.astro';
+import StatsBar from './StatsBar.astro';
+import SendMenu from './SendMenu.astro';
+import ShortcutsDialog from './ShortcutsDialog.astro';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import { t } from '../../i18n/t';
+import { commonToolStrings } from '../../i18n/tool-strings';
+import type { PaneVariant } from './PaneOptions.astro';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+const { locale, tool } = Astro.props;
+const variant = tool.ui as PaneVariant;
+
+const configs = {
+  sort: {
+    action: 'sort',
+    label: t(locale, 'tool.sort'),
+    largeLabel: t(locale, 'tool.sortFile'),
+    verb: t(locale, 'tool.sorting'),
+    done: t(locale, 'tool.sortDone'),
+    placeholder: t(locale, 'tool.placeholder.sort'),
+    outputPlaceholder: t(locale, 'tool.outputPlaceholder.sort'),
+    stats: [
+      { key: 'size', label: t(locale, 'tool.stats.size') },
+      { key: 'keys', label: t(locale, 'tool.stats.keys') },
+      { key: 'lines', label: t(locale, 'tool.stats.lines') },
+      { key: 'time', label: t(locale, 'tool.stats.time') },
+    ],
+  },
+  escape: {
+    action: 'escape',
+    label: t(locale, 'tool.escape'),
+    largeLabel: t(locale, 'tool.escapeFile'),
+    verb: t(locale, 'tool.escaping'),
+    done: t(locale, 'tool.escapeDone'),
+    placeholder: t(locale, 'tool.placeholder.escape'),
+    outputPlaceholder: t(locale, 'tool.outputPlaceholder.escape'),
+    stats: [
+      { key: 'size', label: t(locale, 'tool.stats.size') },
+      { key: 'output', label: t(locale, 'tool.stats.output') },
+      { key: 'lines', label: t(locale, 'tool.stats.lines') },
+      { key: 'time', label: t(locale, 'tool.stats.time') },
+    ],
+  },
+  jsonpath: {
+    action: 'jsonpath',
+    label: t(locale, 'tool.run'),
+    largeLabel: t(locale, 'tool.runFile'),
+    verb: t(locale, 'tool.querying'),
+    done: t(locale, 'tool.queryDone'),
+    placeholder: t(locale, 'tool.placeholder.jsonpath'),
+    outputPlaceholder: t(locale, 'tool.outputPlaceholder.jsonpath'),
+    stats: [
+      { key: 'size', label: t(locale, 'tool.stats.size') },
+      { key: 'matches', label: t(locale, 'tool.matches') },
+      { key: 'output', label: t(locale, 'tool.stats.output') },
+      { key: 'time', label: t(locale, 'tool.stats.time') },
+    ],
+  },
+  typescript: {
+    action: 'jsonToTypescript',
+    label: t(locale, 'tool.generate'),
+    largeLabel: t(locale, 'tool.generateFile'),
+    verb: t(locale, 'tool.generating'),
+    done: t(locale, 'tool.generateDone'),
+    placeholder: t(locale, 'tool.placeholder.typescript'),
+    outputPlaceholder: t(locale, 'tool.outputPlaceholder.typescript'),
+    stats: [
+      { key: 'size', label: t(locale, 'tool.stats.size') },
+      { key: 'declarations', label: t(locale, 'tool.declarations') },
+      { key: 'properties', label: t(locale, 'tool.properties') },
+      { key: 'time', label: t(locale, 'tool.stats.time') },
+    ],
+  },
+};
+
+const config = configs[variant];
+const largeAction = config.label;
+
+const strings = {
+  ...commonToolStrings(locale),
+  largeRun: t(locale, 'tool.largeRunAction', { action: largeAction }),
+  largeLoaded: t(locale, 'tool.largeLoadedAction', { action: largeAction }),
+  largeWarning: t(locale, 'tool.largeWarningAction', { action: largeAction }),
+  largeRunTemplate: t(locale, 'tool.largeRunAction'),
+  largeLoadedTemplate: t(locale, 'tool.largeLoadedAction'),
+  largeWarningTemplate: t(locale, 'tool.largeWarningAction'),
+  runVerb: config.verb,
+  runDone: config.done,
+  escapeVerb: t(locale, 'tool.escaping'),
+  escapeDone: t(locale, 'tool.escapeDone'),
+  unescapeVerb: t(locale, 'tool.unescaping'),
+  unescapeDone: t(locale, 'tool.unescapeDone'),
+  escapeLabel: t(locale, 'tool.escape'),
+  unescapeLabel: t(locale, 'tool.unescape'),
+  emptyExpression: t(locale, 'tool.jsonpath.needExpression'),
+  keysMeta: t(locale, 'tool.sortedKeys'),
+  replacementsMeta: t(locale, 'tool.replacementsMeta'),
+  matchesMeta: t(locale, 'tool.matchesMeta'),
+  declarationsMeta: t(locale, 'tool.declarationsMeta'),
+  truncatedSuffix: t(locale, 'tool.truncatedSuffix'),
+  inputLabel: t(locale, 'tool.inputLabel.generic'),
+  outputLabel: t(locale, 'tool.outputLabel.generic'),
+  placeholder: config.placeholder,
+  outputPlaceholder: config.outputPlaceholder,
+};
+---
+
+<ToolPage locale={locale} tool={tool} strings={strings}>
+  <div
+    class="mt-5 overflow-hidden rounded-[16px] border border-line bg-canvas sm:mt-7"
+    data-tool-frame
+  >
+    <Toolbar
+      locale={locale}
+      action={config.action}
+      label={config.label}
+      showIndent={variant === 'sort'}
+      showFind={true}
+      showFullscreen
+      accept={variant === 'escape'
+        ? '.txt,.json,.log,.md,text/plain,application/json'
+        : '.json,.txt,.geojson,application/json,text/plain'}
+    />
+
+    <PaneOptions locale={locale} variant={variant} />
+
+    <div
+      class="flex items-center gap-1 border-b border-line px-2 md:hidden"
+      role="tablist"
+      aria-label={`${t(locale, 'tool.input')} / ${t(locale, 'tool.output')}`}
+      data-mobile-tabs
+    >
+      <button
+        type="button"
+        id="tab-input"
+        data-tab="input"
+        role="tab"
+        aria-selected="true"
+        aria-controls="pane-input"
+        tabindex="0"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.input')}
+      </button>
+      <button
+        type="button"
+        id="tab-output"
+        data-tab="output"
+        role="tab"
+        aria-selected="false"
+        aria-controls="pane-output"
+        tabindex="-1"
+        class="tool-tab"
+      >
+        {t(locale, 'tool.output')}
+        <span class="ml-1 inline-block size-1.5 rounded-full bg-primary align-middle" data-output-dot hidden></span>
+      </button>
+    </div>
+
+    <div class="tool-panes md:grid md:grid-cols-2" data-mobile-view="input">
+      <section
+        class="tool-pane is-active min-w-0 flex-col"
+        data-pane="input"
+        id="pane-input"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.input')}
+      >
+        <div class="pane-head">
+          <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.input')}
+          </h2>
+          <div class="flex items-center gap-2">
+            <span
+              data-file-chip
+              hidden
+              class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body"
+            >
+              <span data-file-name class="truncate" />
+            </span>
+            {variant !== 'escape' && <SendMenu locale={locale} slug={tool.slug} />}
+          </div>
+        </div>
+
+        <EditorPane
+          kind="input"
+          locale={locale}
+          largeAction={`${config.action}-large`}
+          largeLabel={config.largeLabel}
+        >
+          <FileDropzone locale={locale} />
+        </EditorPane>
+      </section>
+
+      <section
+        class="tool-pane min-w-0 flex-col md:border-l md:border-line"
+        data-pane="output"
+        id="pane-output"
+        role="tabpanel"
+        aria-label={t(locale, 'tool.output')}
+      >
+        <div class="pane-head">
+          <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.output')}
+          </h2>
+          <div class="flex min-w-0 items-center gap-2">
+            <OutputMeta locale={locale} />
+          </div>
+        </div>
+
+        <EditorPane kind="output" locale={locale}>
+          <ErrorPanel locale={locale} canRepair={variant !== 'escape'} />
+        </EditorPane>
+      </section>
+    </div>
+
+    <StatsBar locale={locale} stats={config.stats} />
+  </div>
+</ToolPage>
+
+<ShortcutsDialog locale={locale} runLabel={config.label} />
+
+<style>
+  .tool-tab {
+    position: relative;
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--body-mid);
+  }
+
+  .tool-tab[aria-selected="true"] {
+    color: var(--ink);
+    box-shadow: inset 0 -2px 0 var(--primary);
+  }
+
+  @media (max-width: 767px) {
+    .tool-pane {
+      display: none;
+    }
+
+    .tool-pane.is-active {
+      display: flex;
+    }
+  }
+</style>

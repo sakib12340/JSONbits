@@ -55,7 +55,7 @@ const widths = [62, 44, 76, 52, 68, 36, 58, 30];
   </div>
 
   {
-    kind === 'input' && (
+    (kind === 'input' || kind === 'left' || kind === 'right') && (
       <div
         class="absolute inset-0 z-10 flex flex-col justify-center gap-3 bg-canvas p-6"
         data-large-input

@@ -8,6 +8,11 @@ import { repairJson } from './ops/repair';
 import { validateJson } from './ops/validate';
 import { diffJson } from './ops/diff';
 import { JsonTree } from './ops/tree';
+import { sortJson } from './ops/sort';
+import { transformEscapes } from './ops/escape';
+import { queryJsonPath } from './ops/jsonpath';
+import { jsonToTypescript } from './ops/typescript';
+import { validateSchema } from './ops/schema';
 import { failure } from './protocol';
 import type {
   ProgressPhase,
@@ -199,6 +204,41 @@ async function handle(request: WorkerRequest): Promise<void> {
         return;
       }
 
+      case 'sort': {
+        const text = await readText(id, request.payload, 'sorting');
+        if (text === null) return;
+        withOutput(id, sortJson(text, request.options));
+        return;
+      }
+
+      case 'escape': {
+        const text = await readText(id, request.payload, 'escaping');
+        if (text === null) return;
+        withOutput(id, transformEscapes(text, request.options), 'text/plain');
+        return;
+      }
+
+      case 'jsonpath': {
+        const text = await readText(id, request.payload, 'querying');
+        if (text === null) return;
+        withOutput(id, queryJsonPath(text, request.options));
+        return;
+      }
+
+      case 'jsonToTypescript': {
+        const text = await readText(id, request.payload, 'generating');
+        if (text === null) return;
+        withOutput(id, jsonToTypescript(text, request.options), 'text/plain');
+        return;
+      }
+
+      case 'validateSchema': {
+        progress(id, 'validating');
+        await tick();
+        post({ id, ok: true, result: validateSchema(request.payload) });
+        return;
+      }
+
       case 'jsonToCsv': {
         const text = await readText(id, request.payload, 'converting');
         if (text === null) return;
@@ -270,6 +310,11 @@ async function handle(request: WorkerRequest): Promise<void> {
       treeSearch: 'tree search',
       treeValue: 'tree viewer',
       diff: 'comparison',
+      sort: 'sorter',
+      escape: 'escape tool',
+      jsonpath: 'JSONPath tester',
+      jsonToTypescript: 'TypeScript generator',
+      validateSchema: 'schema validator',
       jsonToCsv: 'CSV converter',
       csvToJson: 'CSV converter',
       jsonToYaml: 'YAML converter',

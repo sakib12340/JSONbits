@@ -1,4 +1,5 @@
-import type { FormatStats, JsonPath, JsonType } from '../protocol';
+import type { FormatIndent, FormatStats, JsonPath, JsonType } from '../protocol';
+import { OutputBuilder } from './output';
 import { parseJson, type JsonSink } from './parser';
 
 export type JsonNode =
@@ -213,66 +214,85 @@ class ValueWriter {
   }
 }
 
-function writeIndent(writer: ValueWriter, depth: number): void {
-  writer.write(' '.repeat(depth * 2));
+interface TextSink {
+  readonly ok?: boolean;
+  write(text: string): void;
 }
 
-function writeNode(writer: ValueWriter, node: JsonNode, depth: number): void {
-  if (!writer.ok) return;
+/** Reads the live flag through a call so control-flow narrowing stays out of the loops. */
+function saturated(sink: TextSink): boolean {
+  return sink.ok === false;
+}
+
+function writeIndent(sink: TextSink, depth: number, unit: string): void {
+  sink.write(unit.repeat(depth));
+}
+
+function writeNode(sink: TextSink, node: JsonNode, depth: number, unit: string): void {
+  if (saturated(sink)) return;
 
   if (node.kind === 'object') {
     if (node.entries.length === 0) {
-      writer.write('{}');
+      sink.write('{}');
       return;
     }
 
-    writer.write('{\n');
+    sink.write('{\n');
     for (let index = 0; index < node.entries.length; index += 1) {
-      if (!writer.ok) return;
+      if (saturated(sink)) return;
       const entry = node.entries[index];
-      writeIndent(writer, depth + 1);
-      writer.write(JSON.stringify(entry.key));
-      writer.write(': ');
-      writeNode(writer, entry.value, depth + 1);
-      if (index < node.entries.length - 1) writer.write(',');
-      writer.write('\n');
+      writeIndent(sink, depth + 1, unit);
+      sink.write(JSON.stringify(entry.key));
+      sink.write(': ');
+      writeNode(sink, entry.value, depth + 1, unit);
+      if (index < node.entries.length - 1) sink.write(',');
+      sink.write('\n');
     }
-    writeIndent(writer, depth);
-    writer.write('}');
+    writeIndent(sink, depth, unit);
+    sink.write('}');
     return;
   }
 
   if (node.kind === 'array') {
     if (node.items.length === 0) {
-      writer.write('[]');
+      sink.write('[]');
       return;
     }
 
-    writer.write('[\n');
+    sink.write('[\n');
     for (let index = 0; index < node.items.length; index += 1) {
-      if (!writer.ok) return;
-      writeIndent(writer, depth + 1);
-      writeNode(writer, node.items[index], depth + 1);
-      if (index < node.items.length - 1) writer.write(',');
-      writer.write('\n');
+      if (saturated(sink)) return;
+      writeIndent(sink, depth + 1, unit);
+      writeNode(sink, node.items[index], depth + 1, unit);
+      if (index < node.items.length - 1) sink.write(',');
+      sink.write('\n');
     }
-    writeIndent(writer, depth);
-    writer.write(']');
+    writeIndent(sink, depth, unit);
+    sink.write(']');
     return;
   }
 
   // The raw token keeps the original number precision and string escapes.
-  writer.write(node.raw);
+  sink.write(node.raw);
 }
 
 /** Serializes one node as pretty JSON without losing big-number precision. */
 export function serializeNode(node: JsonNode, limit: number): SerializedValue {
   const writer = new ValueWriter(limit);
-  writeNode(writer, node, 0);
+  writeNode(writer, node, 0, '  ');
 
   return writer.ok
     ? { text: writer.toString(), size: writer.size }
     : { text: null, size: writer.size };
+}
+
+/** Pretty-prints a full AST with the requested indent, chunking writes. */
+export function serializeAst(node: JsonNode, indent: FormatIndent = 2): string {
+  const output = new OutputBuilder();
+  const unit = indent === 'tab' ? '\t' : ' '.repeat(indent);
+  const sink: TextSink = { write: (text) => output.push(text) };
+  writeNode(sink, node, 0, unit);
+  return output.toString();
 }
 
 /** Stable text for order-independent array matching. */

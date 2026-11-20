@@ -32,3 +32,21 @@ export class JsonFormatError extends Error {
     };
   }
 }
+
+/** Convert a string offset into a 1-based line and column. */
+export function positionAt(text: string, offset: number): { line: number; column: number } {
+  const end = Math.min(Math.max(0, offset), text.length);
+  let line = 1;
+  let column = 1;
+
+  for (let index = 0; index < end; index += 1) {
+    if (text.charCodeAt(index) === 0x0a) {
+      line += 1;
+      column = 1;
+    } else {
+      column += 1;
+    }
+  }
+
+  return { line, column };
+}

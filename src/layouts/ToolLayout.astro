@@ -6,6 +6,8 @@ import ValidatorShell from '../components/tool/ValidatorShell.astro';
 import ViewerShell from '../components/tool/ViewerShell.astro';
 import DiffShell from '../components/tool/DiffShell.astro';
 import ConverterShell from '../components/tool/ConverterShell.astro';
+import PaneShell from '../components/tool/PaneShell.astro';
+import SchemaShell from '../components/tool/SchemaShell.astro';
 import ToolArticle from '../components/tool/ToolArticle.astro';
 import JsonLd from '../components/seo/JsonLd.astro';
 import type { Locale } from '../i18n/config';
@@ -66,6 +68,11 @@ const structuredData = [
   {tool.ui === 'viewer' && <ViewerShell locale={locale} tool={tool} />}
   {tool.ui === 'diff' && <DiffShell locale={locale} tool={tool} />}
   {tool.ui === 'converter' && <ConverterShell locale={locale} tool={tool} />}
+  {(tool.ui === 'sort' ||
+    tool.ui === 'escape' ||
+    tool.ui === 'jsonpath' ||
+    tool.ui === 'typescript') && <PaneShell locale={locale} tool={tool} />}
+  {tool.ui === 'schema' && <SchemaShell locale={locale} tool={tool} />}
 
   <ToolArticle locale={locale} tool={tool} copy={copy} />
 </BaseLayout>

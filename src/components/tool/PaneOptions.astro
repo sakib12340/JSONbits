@@ -1,0 +1,138 @@
+---
+import OptionSelect from './OptionSelect.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+export type PaneVariant = 'sort' | 'escape' | 'jsonpath' | 'typescript';
+
+interface Props {
+  locale: Locale;
+  variant: PaneVariant;
+}
+
+const { locale, variant } = Astro.props;
+const field = 'flex flex-col gap-1.5';
+const caption = 'text-[12px] font-medium leading-4 text-body-mid';
+const check =
+  'inline-flex min-h-11 cursor-pointer items-center gap-2 text-[14px] leading-5 text-ink';
+const box = 'size-4 rounded-[3px] accent-[var(--primary)]';
+
+const directionOptions = [
+  { value: 'asc', label: t(locale, 'tool.option.asc') },
+  { value: 'desc', label: t(locale, 'tool.option.desc') },
+];
+
+const modeOptions = [
+  { value: 'escape', label: t(locale, 'tool.escape') },
+  { value: 'unescape', label: t(locale, 'tool.unescape') },
+];
+---
+
+<div
+  class="flex flex-wrap items-end gap-x-5 gap-y-3 border-b border-line px-3 py-3 sm:px-4"
+  role="group"
+  aria-label={t(locale, 'tool.settings')}
+  data-options
+>
+  {
+    variant === 'sort' && (
+      <>
+        <div class={field}>
+          <span id="pane-direction-label" class={caption}>
+            {t(locale, 'tool.option.direction')}
+          </span>
+          <OptionSelect
+            id="pane-direction"
+            name="direction"
+            labelledBy="pane-direction-label"
+            value="asc"
+            options={directionOptions}
+            class="w-36"
+          />
+        </div>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="deep" checked />
+          <span>{t(locale, 'tool.option.deep')}</span>
+        </label>
+      </>
+    )
+  }
+
+  {
+    variant === 'escape' && (
+      <>
+        <div class={field}>
+          <span id="pane-mode-label" class={caption}>
+            {t(locale, 'tool.option.mode')}
+          </span>
+          <OptionSelect
+            id="pane-mode"
+            name="mode"
+            labelledBy="pane-mode-label"
+            value="escape"
+            options={modeOptions}
+            class="w-40"
+          />
+        </div>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="quotes" />
+          <span>{t(locale, 'tool.option.wrapQuotes')}</span>
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="ascii" />
+          <span>{t(locale, 'tool.option.escapeAscii')}</span>
+        </label>
+      </>
+    )
+  }
+
+  {
+    variant === 'jsonpath' && (
+      <div class={`${field} w-full`}>
+        <label for="pane-expression" class={caption}>
+          {t(locale, 'tool.jsonpath.expression')}
+        </label>
+        <input
+          id="pane-expression"
+          type="text"
+          value={'$.store.books[?(@.price < 10)]'}
+          data-option="expression"
+          class="h-11 w-full rounded-[8px] border border-line bg-canvas px-3 font-mono text-[14px] text-ink"
+          spellcheck="false"
+          autocomplete="off"
+          autocapitalize="off"
+          aria-describedby="jsonpath-query-error"
+        />
+        <p
+          id="jsonpath-query-error"
+          class="font-mono text-[12px] leading-5 text-danger"
+          data-query-error
+          role="alert"
+          hidden
+        />
+      </div>
+    )
+  }
+
+  {
+    variant === 'typescript' && (
+      <>
+        <label class={field}>
+          <span class={caption}>{t(locale, 'tool.option.rootName')}</span>
+          <input
+            type="text"
+            value="Root"
+            data-option="root"
+            class="h-11 w-44 rounded-[8px] border border-line bg-canvas px-3 font-mono text-[14px] text-ink"
+            spellcheck="false"
+            autocomplete="off"
+          />
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="readonly" />
+          <span>{t(locale, 'tool.option.readonly')}</span>
+        </label>
+      </>
+    )
+  }
+</div>

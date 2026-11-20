@@ -198,6 +198,119 @@ export interface DiffPayload {
   right: string;
 }
 
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortOptions {
+  direction: SortDirection;
+  /** Sort every nested object, not just the first level. */
+  deep: boolean;
+  indent: FormatIndent;
+}
+
+export interface SortStats extends FormatStats {
+  sortedKeys: number;
+}
+
+export interface SortResult {
+  output: string | null;
+  blob: Blob | null;
+  stats: SortStats;
+}
+
+export type EscapeMode = 'escape' | 'unescape';
+
+export interface EscapeOptions {
+  mode: EscapeMode;
+  /** Wrap escaped output in double quotes. */
+  quotes: boolean;
+  /** Escape every non-ASCII character as \uXXXX. */
+  ascii: boolean;
+}
+
+export interface EscapeStats {
+  bytes: number;
+  outputBytes: number;
+  lines: number;
+  replacements: number;
+  parseTimeMs: number;
+}
+
+export interface EscapeResult {
+  output: string | null;
+  blob: Blob | null;
+  stats: EscapeStats;
+}
+
+export interface JsonPathOptions {
+  expression: string;
+  /** Maximum matches before the result is truncated. */
+  limit: number;
+}
+
+export interface JsonPathStats {
+  bytes: number;
+  outputBytes: number;
+  lines: number;
+  matches: number;
+  total: number;
+  truncated: boolean;
+  parseTimeMs: number;
+}
+
+export interface JsonPathResult {
+  output: string | null;
+  blob: Blob | null;
+  stats: JsonPathStats;
+}
+
+export interface TypescriptOptions {
+  rootName: string;
+  readonly: boolean;
+}
+
+export interface TypescriptStats {
+  bytes: number;
+  outputBytes: number;
+  lines: number;
+  declarations: number;
+  properties: number;
+  parseTimeMs: number;
+}
+
+export interface TypescriptResult {
+  output: string | null;
+  blob: Blob | null;
+  stats: TypescriptStats;
+}
+
+export interface SchemaPayload {
+  schema: string;
+  document: string;
+}
+
+export interface SchemaIssue {
+  path: string;
+  keyword: string;
+  message: string;
+}
+
+export interface SchemaStats {
+  checked: number;
+  errors: number;
+  timeMs: number;
+  schemaBytes: number;
+  documentBytes: number;
+}
+
+export interface SchemaResult {
+  valid: boolean;
+  errors: SchemaIssue[];
+  schemaErrors: string[];
+  /** Validation keywords present in the schema that this validator skips. */
+  unsupported: string[];
+  stats: SchemaStats;
+}
+
 export type TextPayload = { text: string } | { buffer: ArrayBuffer };
 
 export interface TreePageOptions {
@@ -251,6 +364,31 @@ export interface OpMap {
     options: DiffOptions;
     result: DiffResult;
   };
+  sort: {
+    payload: TextPayload;
+    options: SortOptions;
+    result: SortResult;
+  };
+  escape: {
+    payload: TextPayload;
+    options: EscapeOptions;
+    result: EscapeResult;
+  };
+  jsonpath: {
+    payload: TextPayload;
+    options: JsonPathOptions;
+    result: JsonPathResult;
+  };
+  jsonToTypescript: {
+    payload: TextPayload;
+    options: TypescriptOptions;
+    result: TypescriptResult;
+  };
+  validateSchema: {
+    payload: SchemaPayload;
+    options: Record<string, never>;
+    result: SchemaResult;
+  };
   jsonToCsv: {
     payload: TextPayload;
     options: JsonToCsvOptions;
@@ -303,6 +441,10 @@ export type ProgressPhase =
   | 'indexing'
   | 'comparing'
   | 'converting'
+  | 'sorting'
+  | 'escaping'
+  | 'querying'
+  | 'generating'
   | 'searching';
 
 export interface ProgressUpdate {

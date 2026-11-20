@@ -65,6 +65,31 @@ const localOps: { [K in WorkerOp]: Local<K> } = {
     return diffJson(payload.left, payload.right, options);
   },
 
+  async sort(payload, options) {
+    const { sortJson } = await import('./ops/sort');
+    return sortJson(text(payload), options);
+  },
+
+  async escape(payload, options) {
+    const { transformEscapes } = await import('./ops/escape');
+    return transformEscapes(text(payload), options);
+  },
+
+  async jsonpath(payload, options) {
+    const { queryJsonPath } = await import('./ops/jsonpath');
+    return queryJsonPath(text(payload), options);
+  },
+
+  async jsonToTypescript(payload, options) {
+    const { jsonToTypescript } = await import('./ops/typescript');
+    return jsonToTypescript(text(payload), options);
+  },
+
+  async validateSchema(payload) {
+    const { validateSchema } = await import('./ops/schema');
+    return validateSchema(payload);
+  },
+
   async jsonToCsv(payload, options) {
     const { jsonToCsv } = await import('./ops/convert/csv');
     return jsonToCsv(text(payload), options);

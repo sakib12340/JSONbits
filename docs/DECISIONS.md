@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-15
-Status: Phase 8 complete. Accessibility, performance, and large-file audits pass with zero known violations; Tier 2 articles, guides, and hubs still fall back to English.
+Last updated: 2026-11-19
+Status: Phase 10 complete. All 17 tools, six category hubs, five guides, and the privacy page are implemented in five locales; Tier 3 articles are English-first. Cloudflare Pages settings are documented below and awaiting deploy approval.
 
 ## Product identity
 
@@ -207,6 +207,38 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Browser pass (in-app Chromium against the production preview): formatter live formatting, valid output preserving `9007199254740993` and `1.23456789012345678`, and a trailing-comma error at line 3 column 1 with a hint; validator valid/invalid verdicts; minifier kept `1.5000`; repair applied 8 fixes; viewer expanded by keyboard and found one search match; diff reported 4 changes (1 added, 3 changed); JSON→CSV, CSV→JSON (quoted comma), JSON→YAML, and XML→JSON all produced correct output.
 - Large-input browser check: 1.58 MB pasted JSON formatted in 160 ms; a 4.48 MB dropped file took the large-file path (read-only input, “Press Format to run”), formatted in 301 ms into a 9.59 MB download panel. No console errors on any tested page, every request was same-origin, the hashed worker asset loaded, and `localStorage`/`sessionStorage` stayed empty.
 - Harness limit: the `files.drop` browser RPC failed with `UnknownVizError`, so the drop was simulated in-page with a real `File` and `DragEvent`; this still exercised `File.arrayBuffer()`, the worker transfer, and the large-file branch. Browser interaction evidence beyond that is otherwise direct.
+
+## Phase 10 Tier 3 tools and deployment
+
+- Shipped the five remaining Tier 3 tools through the registry and one-op-per-tool worker pattern: `json-sorter` (format), `json-escape-unescape` (convert), `jsonpath-tester` (view), `json-to-typescript` (generate), and `json-schema-validator` (validate). All five are `available: true`, appear on the home grid, category hubs, related links, sitemap, hreflang sets, and JSON-LD.
+- Added `PaneShell.astro` for the four single-editor tools and `SchemaShell.astro` for the schema/document pair. Both reuse the existing editor, toolbar, shortcuts, dropzone, handoff, download, theme, and mobile-tab primitives through `PaneSession` and `SchemaSession`; no third editor shell was introduced.
+- Sorter sorts keys at every depth or only the top level, ascending or descending, and preserves number token text (the sample keeps `9007199254740993`). Escape/unescape applies JSON string rules with optional ASCII escaping, switches the primary action and status labels with the mode, and treats input as text. JSONPath supports root, dot/bracket keys, indexes including negative, wildcards, recursive descent, slices, unions, filters with comparisons/existence/not/`&&`/`||`, and reports expression errors under the query field. TypeScript generation handles root objects, arrays, primitives, merged item types, optional fields, unions, quoted keys, and readonly output.
+- JSON Schema validation is explicit (Run / Ctrl+Enter) and implements boolean schemas, local `$ref`, `type`, `enum`, `const`, `properties`, `required`, `additionalProperties`, property counts, `items` (single and tuple), item counts, `uniqueItems`, string length/`pattern`, numeric bounds, `exclusiveMinimum`/`exclusiveMaximum`/`multipleOf`, `allOf`, `anyOf`, `oneOf`, and `not`. It reports unsupported keywords separately instead of pretending to enforce them: `format`, `patternProperties`, `if`/`then`/`else`, `contains`, `dependentRequired`, and `propertyNames`; an external `$ref` is a schema error.
+- Size tiers match the rest of the site: live runs under 1 MB, explicit Run/Sort/Generate/Query above it, the large-file panel above 4 MB, a warning above 50 MB, and a friendly stop above 100 MB. JSONPath requests 2,000 matches and caps displayed values at 20,000 characters and output near 2 MB, with `total`/`truncated` kept honest.
+- UI strings were added to all five locale files (425 keys each, no missing keys). The five English Tier 3 articles, the new `generators` hub, and the schema keyword list are English-first; localized routes fall back to English article content with correct `lang`, canonical, and hreflang.
+- `pnpm astro check`: 0 errors, 0 warnings, 2 pre-existing `fast-xml-parser` deprecation hints. `pnpm test`: 4 files, 38 tests pass. `pnpm build`: 156 pages, sitemap with 155 URLs.
+- Browser verification: sorter sample sorted 5 keys and preserved the 64-bit integer in both directions; a 1.81 MB file took the explicit-run path and sorted in 215 ms; a 4.98 MB file used the large-file panel and sorted in 1,067 ms; escape/unescape switched labels and produced correct text, including the 1.2 MB “Press Unescape to run” prompt; JSONPath returned one filtered match with a path and reported a bad filter under the field; TypeScript generated `Root` and then `User` with readonly fields; schema validation showed 2 errors for the sample, a valid verdict plus `format` on the unsupported list, and a trailing-comma parse error at line 3; German labels, hreflang, and dark theme were checked on `/de/json-sorter`; the home page linked all five tools.
+- No console errors on any tested Tier 3 page. The schema page loaded only same-origin documents, modules, CSS, and the self-hosted font (plus the Vite HMR socket in dev); there were no third-party origins.
+- At a 390×844 viewport, the sorter's panes stacked, the tab bar measured 45 px with 44 px controls, switching to Output changed the visible pane, and the page had no horizontal overflow.
+
+## Deployment — Cloudflare Pages
+
+| Setting | Value |
+|---|---|
+| Framework preset | Astro |
+| Build command | `pnpm build` |
+| Build output directory | `dist` |
+| Root directory | `/` (leave blank) |
+| Production branch | `main` |
+| `NODE_VERSION` | `22.23.4` — the current Pages v3 default and the floor in `package.json` `engines` |
+| `PNPM_VERSION` | `12.16.1` — matches `packageManager` |
+| Secrets / site env vars | none; no analytics, API keys, or server runtime |
+
+- Pin both versions in the Pages environment. The v3 build image does not infer pnpm from the lockfile or Node from `engines`, so leaving them unset can silently select a different toolchain.
+- `public/_headers` ships as-is and provides the strict CSP (`connect-src 'none'`), nosniff, referrer policy, permissions policy, frame denial, COOP/CORP, revalidated HTML, and immutable `/_astro/*` and `/fonts/*` caching.
+- Custom domain: add `jsonbits.com` under Pages → Custom domains, let Cloudflare create the apex record (CNAME flattening), then add `www` and redirect it to the apex with a Redirect Rule. Keep one canonical host; canonical, Open Graph, sitemap, and `site` already point to `https://jsonbits.com`.
+- SSL/TLS: Full (strict), Always Use HTTPS on. HSTS is optional and only after every subdomain is confirmed HTTPS. Do not enable Rocket Loader or Cloudflare Web Analytics; both add scripts or requests and contradict the privacy claim.
+- Post-deploy checklist: `curl -I` a tool route and confirm 200 plus the CSP header; load `/`, all 17 tool routes, six hubs, five guides, `/privacy`, `/robots.txt`, and `/sitemap-index.xml`; check canonical/hreflang in page source; confirm the custom 404; open DevTools → Network, load a tool, run a sample, and confirm zero requests after the initial assets; paste a 10 MB document and confirm no upload; download a result and reopen the file locally; spot-check mobile stacking, theme persistence, and one non-English route. Submit the sitemap to Google Search Console and Bing Webmaster Tools after the first successful production deploy.
 
 ## Theme independence (supersedes the Phase 2 three-state theme)
 

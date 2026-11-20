@@ -15,6 +15,11 @@ const loaders: Record<string, () => Promise<ToolModule>> = {
   'yaml-to-json': () => import('../tools/yaml-to-json/ui'),
   'json-to-xml': () => import('../tools/json-to-xml/ui'),
   'xml-to-json': () => import('../tools/xml-to-json/ui'),
+  'json-sorter': () => import('../tools/json-sorter/ui'),
+  'json-escape-unescape': () => import('../tools/json-escape-unescape/ui'),
+  'jsonpath-tester': () => import('../tools/jsonpath-tester/ui'),
+  'json-to-typescript': () => import('../tools/json-to-typescript/ui'),
+  'json-schema-validator': () => import('../tools/json-schema-validator/ui'),
 };
 
 function readStrings(shell: HTMLElement): Record<string, string> {
