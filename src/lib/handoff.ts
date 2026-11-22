@@ -16,6 +16,8 @@ export interface SendOptions {
   onError: (message: string) => void;
   emptyMessage: string;
   tooLargeMessage: string;
+  /** Only answer menus from this side; omitted means any menu. */
+  side?: 'input' | 'output';
 }
 
 /** Stores the JSON for the next tool page. Nothing leaves the browser. */
@@ -55,9 +57,10 @@ export function toolUrl(locale: string, slug: string): string {
 /** Wires the "Send to…" menu of a tool page to its own JSON. */
 export function setupSend(options: SendOptions): void {
   options.shell.addEventListener('jsonbits:send', (event) => {
-    const detail = (event as CustomEvent<{ tool?: string }>).detail;
+    const detail = (event as CustomEvent<{ tool?: string; side?: string }>).detail;
     const slug = detail?.tool;
     if (!slug) return;
+    if (options.side && detail?.side !== options.side) return;
 
     const text = options.getText();
 

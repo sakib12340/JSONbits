@@ -8,15 +8,21 @@ interface Props {
   locale: Locale;
   /** Slug of the tool the menu lives on; it is left out of the targets. */
   slug: string;
+  /** Which side owns the JSON sent through the menu. */
+  side?: 'input' | 'output';
+  /** Explicit target slugs; otherwise every JSON-accepting tool is offered. */
+  targetSlugs?: readonly string[];
 }
 
-const { locale, slug } = Astro.props;
-const targets = tools.filter(
-  (tool) => tool.available && tool.slug !== slug && acceptsJsonInput(tool),
-);
+const { locale, slug, side = 'input', targetSlugs } = Astro.props;
+const targets = targetSlugs
+  ? tools.filter((tool) => targetSlugs.includes(tool.slug) && tool.slug !== slug)
+  : tools.filter(
+      (tool) => tool.available && tool.slug !== slug && acceptsJsonInput(tool),
+    );
 ---
 
-<details class="relative inline-flex items-center" data-send-menu>
+<details class="relative inline-flex items-center" data-send-menu data-side={side}>
   <summary
     class="inline-flex min-h-[32px] cursor-pointer list-none items-center gap-1.5 rounded-[8px] px-2 text-[12px] font-semibold leading-5 text-body-mid hover:bg-cream hover:text-ink"
     aria-label={t(locale, 'tool.send.label')}
@@ -79,7 +85,7 @@ const targets = tools.filter(
       frame?.dispatchEvent(
         new CustomEvent('jsonbits:send', {
           bubbles: true,
-          detail: { tool: target.dataset.sendTarget },
+          detail: { tool: target.dataset.sendTarget, side: menu.dataset.side ?? 'input' },
         }),
       );
     });

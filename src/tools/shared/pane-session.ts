@@ -4,7 +4,7 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
-import { setupSend, takeHandoff, toolUrl, writeHandoff } from '../../lib/handoff';
+import { setupSend, takeHandoff } from '../../lib/handoff';
 import { createSelectMenu, type SelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
 import { readIndent, writeIndent } from '../../lib/storage';
@@ -191,9 +191,6 @@ export class PaneSession {
       ?.addEventListener('click', () => void this.fix());
 
     if (this.op === 'jsonpath') {
-      for (const button of this.shell.querySelectorAll<HTMLButtonElement>('[data-output-send]')) {
-        button.addEventListener('click', () => this.sendOutput(button.dataset.sendSlug ?? ''));
-      }
       this.shell.querySelector('[data-download-all]')?.addEventListener('click', () => {
         this.downloadAll();
       });
@@ -218,7 +215,23 @@ export class PaneSession {
       },
       emptyMessage: this.strings.sendEmpty,
       tooLargeMessage: this.strings.sendTooLarge,
+      side: 'input',
     });
+
+    if (this.op === 'jsonpath') {
+      setupSend({
+        shell: this.shell,
+        locale: this.locale,
+        getText: () => this.outputText ?? this.allText ?? '',
+        onError: (message) => {
+          this.flash(message);
+          this.announce(message);
+        },
+        emptyMessage: this.strings.sendEmpty,
+        tooLargeMessage: this.strings.sendTooLarge,
+        side: 'output',
+      });
+    }
 
     const handoff = takeHandoff(slugForOp(this.op) ?? '');
     if (handoff) this.setInputText(handoff, true);
@@ -515,8 +528,6 @@ export class PaneSession {
       this.renderExamples(jp.keys ?? []);
       const downloadAll = this.shell.querySelector<HTMLElement>('[data-download-all]');
       if (downloadAll) downloadAll.hidden = jp.allOutput === null && jp.allBlob === null;
-      const actions = this.shell.querySelector<HTMLElement>('[data-output-actions]');
-      if (actions) actions.hidden = jp.output === null && jp.blob === null;
     }
 
     this.setStats(result.stats);
@@ -818,8 +829,6 @@ export class PaneSession {
     this.input.markError(null);
     el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
-    const actions = this.shell.querySelector<HTMLElement>('[data-output-actions]');
-    if (actions) actions.hidden = true;
     const downloadAll = this.shell.querySelector<HTMLElement>('[data-download-all]');
     if (downloadAll) downloadAll.hidden = true;
     this.allText = null;
@@ -1117,22 +1126,6 @@ export class PaneSession {
         return chip;
       }),
     );
-  }
-
-  private sendOutput(slug: string): void {
-    if (!slug) return;
-    const text = this.outputText ?? this.allText ?? '';
-    if (text.trim().length === 0) {
-      this.flash(this.strings.sendEmpty);
-      this.announce(this.strings.sendEmpty);
-      return;
-    }
-    if (!writeHandoff(slug, text)) {
-      this.flash(this.strings.sendTooLarge);
-      this.announce(this.strings.sendTooLarge);
-      return;
-    }
-    window.location.href = toolUrl(this.locale, slug);
   }
 
   private downloadAll(): void {

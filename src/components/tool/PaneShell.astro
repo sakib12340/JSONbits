@@ -1,7 +1,7 @@
 ---
 import ToolPage from './ToolPage.astro';
 import Toolbar from './Toolbar.astro';
-import JsonPathOutputActions from './JsonPathOutputActions.astro';
+import Icon from '../ui/Icon.astro';
 import PaneOptions from './PaneOptions.astro';
 import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
@@ -88,6 +88,7 @@ const configs = {
 
 const config = configs[variant];
 const largeAction = config.label;
+const outputSendTargets = ['json-formatter', 'json-to-csv', 'json-to-json-schema'];
 
 const strings = {
   ...commonToolStrings(locale),
@@ -218,10 +219,29 @@ const strings = {
           </h2>
           <div class="flex min-w-0 items-center gap-2">
             <OutputMeta locale={locale} />
+            {variant === 'jsonpath' && (
+              <>
+                <button
+                  type="button"
+                  data-download-all
+                  hidden
+                  class="inline-flex min-h-[32px] items-center gap-1.5 rounded-[8px] px-2 text-[12px] font-semibold leading-5 text-body-mid hover:bg-cream hover:text-ink"
+                  aria-label={t(locale, 'tool.jsonpath.downloadAll')}
+                  title={t(locale, 'tool.jsonpath.downloadAll')}
+                >
+                  <Icon name="download" class="size-4" />
+                </button>
+                <SendMenu
+                  locale={locale}
+                  slug={tool.slug}
+                  side="output"
+                  targetSlugs={outputSendTargets}
+                />
+              </>
+            )}
           </div>
         </div>
 
-        {variant === 'jsonpath' && <JsonPathOutputActions locale={locale} />}
         <EditorPane kind="output" locale={locale}>
           <ErrorPanel locale={locale} canRepair={variant !== 'escape'} />
         </EditorPane>
