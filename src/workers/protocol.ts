@@ -307,6 +307,41 @@ export interface TypescriptResult {
   stats: TypescriptStats;
 }
 
+export type SchemaDraft = '2020-12' | 'draft-07';
+
+export interface JsonToJsonSchemaOptions {
+  draft: SchemaDraft;
+  additionalProperties: boolean;
+  detectFormats: boolean;
+  detectEnums: boolean;
+  includeSchema: boolean;
+  includeTitle: boolean;
+  title: string;
+}
+
+export interface ZodOptions {
+  schemaName: string;
+  exportKeyword: boolean;
+  inferType: boolean;
+  optionalNullable: boolean;
+  strict: boolean;
+}
+
+export interface InferStats {
+  bytes: number;
+  outputBytes: number;
+  lines: number;
+  properties: number;
+  types: number;
+  parseTimeMs: number;
+}
+
+export interface InferResult {
+  output: string | null;
+  blob: Blob | null;
+  stats: InferStats;
+}
+
 export type JwtWarningCode = 'algNone' | 'missingSignature' | 'expired';
 
 export interface JwtDecodeResult {
@@ -430,6 +465,16 @@ export interface OpMap {
     options: Record<string, never>;
     result: JwtDecodeResult;
   };
+  jsonToJsonSchema: {
+    payload: TextPayload;
+    options: JsonToJsonSchemaOptions;
+    result: InferResult;
+  };
+  jsonToZod: {
+    payload: TextPayload;
+    options: ZodOptions;
+    result: InferResult;
+  };
   validateSchema: {
     payload: SchemaPayload;
     options: Record<string, never>;
@@ -492,7 +537,8 @@ export type ProgressPhase =
   | 'querying'
   | 'generating'
   | 'searching'
-  | 'decoding';
+  | 'decoding'
+  | 'inferring';
 
 export interface ProgressUpdate {
   phase: ProgressPhase;

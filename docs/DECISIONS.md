@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
 Last updated: 2026-11-22
-Status: Feature Pack 2 in progress. Phases 1–3 are complete: repair-review UI, JSONPath extract modes, and the JWT decoder are shipped. There are now 18 tools. Phases 4–8 remain. Cloudflare Pages settings are documented below and awaiting deploy approval.
+Status: Feature Pack 2 in progress. Phases 1–4 are complete: repair-review UI, JSONPath extract modes, the JWT decoder, and the two inference tools (JSON Schema and Zod) are shipped. There are now 20 tools. Phases 5–8 remain. Cloudflare Pages settings are documented below and awaiting deploy approval.
 
 ## Feature Pack 2 — Phases 1–3
 
@@ -12,7 +12,11 @@ Status: Feature Pack 2 in progress. Phases 1–3 are complete: repair-review UI,
 - UI consistency fixes: the repair review dialog is centered and mobile-safe; JSONPath options align on one row, example chips use the site's bordered-control style, the output send menu matches the input menu, and editor panes now grow to fill their pane instead of leaving dead space below a fixed-height editor.
 - New English content follows the existing schema (140–155 character descriptions, 3 steps, 4–6 FAQs, ≥500 words). New UI keys exist in all five locales with English fallback and English-first articles.
 - Verification so far: `pnpm validate` passes key parity, title/description ranges and the CSP hash; `pnpm astro check` 0 errors; `pnpm test` 50/50; `pnpm build` 161 pages. Browser checks covered repair review, all JSONPath modes and handoff, JWT decode/warnings/JWE rejection, and desktop plus 390 px layouts with no console errors or third-party requests.
-- Known limitation until Phase 4: the JSONPath "JSON to Schema" handoff target does not exist yet, so that menu entry resolves only after `json-to-json-schema` ships.
+- **Phase 4:** added `json-to-json-schema` and `json-to-zod` (both category `generate`). The schema tool infers types, required keys, item schemas, draft 2020-12/draft-07, formats, low-cardinality enums, and `additionalProperties: false`. The Zod tool emits Zod 4 code using top-level format helpers (`z.email()`, `z.uuid()`, `z.url()`, `z.ipv4()`, `z.iso.date()`, `z.iso.datetime()`) and reuses the existing typed AST from the TypeScript generator. Both run in the worker with lazy CodeMirror output.
+- Decision — Zod version: the generated code targets Zod 4, verified against the official Zod API documentation (context7 MCP was not available in this environment). Zod 3 chained string validators are deliberately not emitted.
+- Decision — schema handoff: "Validate with this schema" stores `{ schema, document }` under a one-shot `jsonbits:schema-handoff` key in `sessionStorage` in addition to the existing handoff, and the validator reads and clears it. No content leaves the browser. A pre-existing bug where the validator's Run button stayed disabled after any handoff was fixed by refreshing buttons when readiness changes.
+- The JSONPath "JSON to Schema" menu entry now resolves because `json-to-json-schema` exists.
+- Phase 4 verification: `pnpm validate` passes 513 keys per locale, title/description ranges, and the CSP hash; `pnpm astro check` 0 errors; `pnpm test` 58/58; `pnpm build` 171 pages. Browser checks covered inferred formats and enums, draft settings, the full handoff into the validator (document reported valid), Zod v4 output with `z.infer`, and no console errors or third-party requests.
 
 ## Product identity
 

@@ -4,7 +4,7 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
-import { setupSend, takeHandoff } from '../../lib/handoff';
+import { setupSend, takeHandoff, toolUrl, writeSchemaHandoff } from '../../lib/handoff';
 import { createSelectMenu, type SelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
 import { readIndent, writeIndent } from '../../lib/storage';
@@ -13,6 +13,7 @@ import type {
   EscapeOptions,
   EscapeStats,
   FormatIndent,
+  InferStats,
   JsonError,
   JsonPathResult,
   JsonPathStats,
@@ -51,12 +52,14 @@ export interface PaneStrings extends BaseStrings {
   showingMatches: string;
   queryErrorAt: string;
   declarationsMeta: string;
+  inferMeta: string;
+  validateWith: string;
   truncatedSuffix: string;
 }
 
 type RunMode = 'live' | 'explicit';
 type OpOutcome = RunOutcome<PaneOp>;
-type AnyStats = SortStats | EscapeStats | JsonPathStats | TypescriptStats;
+type AnyStats = SortStats | EscapeStats | JsonPathStats | TypescriptStats | InferStats;
 
 interface Options {
   shell: HTMLElement;
@@ -99,6 +102,7 @@ export class PaneSession {
     'matches',
     'declarations',
     'properties',
+    'types',
   ];
 
   private indentMenu: SelectMenu | null = null;
@@ -189,6 +193,12 @@ export class PaneSession {
     this.shell
       .querySelector<HTMLButtonElement>('[data-error-repair]')
       ?.addEventListener('click', () => void this.fix());
+
+    if (this.op === 'jsonToJsonSchema') {
+      this.shell.querySelector('[data-validate-with]')?.addEventListener('click', () => {
+        this.validateWithSchema();
+      });
+    }
 
     if (this.op === 'jsonpath') {
       this.shell.querySelector('[data-download-all]')?.addEventListener('click', () => {
@@ -521,6 +531,11 @@ export class PaneSession {
       el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     }
 
+    if (this.op === 'jsonToJsonSchema') {
+      const validate = this.shell.querySelector<HTMLElement>('[data-validate-with]');
+      if (validate) validate.hidden = result.output === null && result.blob === null;
+    }
+
     if (this.op === 'jsonpath') {
       const jp = result as unknown as JsonPathResult;
       this.allText = jp.allOutput;
@@ -569,6 +584,11 @@ export class PaneSession {
       case 'jsonToTypescript':
         return fill(this.strings.declarationsMeta, {
           count: formatInteger((stats as TypescriptStats).declarations, this.locale),
+        });
+      case 'jsonToJsonSchema':
+      case 'jsonToZod':
+        return fill(this.strings.inferMeta, {
+          count: formatInteger((stats as InferStats).properties, this.locale),
         });
     }
   }
@@ -831,6 +851,8 @@ export class PaneSession {
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
     const downloadAll = this.shell.querySelector<HTMLElement>('[data-download-all]');
     if (downloadAll) downloadAll.hidden = true;
+    const validate = this.shell.querySelector<HTMLElement>('[data-validate-with]');
+    if (validate) validate.hidden = true;
     this.allText = null;
     this.allBlob = null;
     this.clearMeta();
@@ -901,6 +923,15 @@ export class PaneSession {
       if (properties) {
         properties.textContent = formatInteger(types.properties, this.locale);
       }
+      return;
+    }
+
+    if (this.op === 'jsonToJsonSchema' || this.op === 'jsonToZod') {
+      const inferred = stats as InferStats;
+      const properties = this.stat('properties');
+      const typeCount = this.stat('types');
+      if (properties) properties.textContent = formatInteger(inferred.properties, this.locale);
+      if (typeCount) typeCount.textContent = formatInteger(inferred.types, this.locale);
     }
   }
 
@@ -1044,6 +1075,10 @@ export class PaneSession {
         return 'matches.json';
       case 'jsonToTypescript':
         return 'types.ts';
+      case 'jsonToJsonSchema':
+        return 'schema.json';
+      case 'jsonToZod':
+        return 'schema.ts';
     }
   }
 
@@ -1126,6 +1161,17 @@ export class PaneSession {
         return chip;
       }),
     );
+  }
+
+  private validateWithSchema(): void {
+    if (this.outputText === null) return;
+    const documentText = this.input.getDoc();
+    if (!writeSchemaHandoff(this.outputText, documentText)) {
+      this.flash(this.strings.sendTooLarge);
+      this.announce(this.strings.sendTooLarge);
+      return;
+    }
+    window.location.href = toolUrl(this.locale, 'json-schema-validator');
   }
 
   private downloadAll(): void {

@@ -76,6 +76,8 @@ const structuredData = [
   {(tool.ui === 'sort' ||
     tool.ui === 'escape' ||
     tool.ui === 'jsonpath' ||
+    tool.ui === 'jsonschema' ||
+    tool.ui === 'zod' ||
     tool.ui === 'typescript') && <PaneShell locale={locale} tool={tool} />}
   {tool.ui === 'schema' && <SchemaShell locale={locale} tool={tool} />}
   {tool.ui === 'jwt' && <JwtShell locale={locale} tool={tool} />}

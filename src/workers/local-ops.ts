@@ -90,6 +90,16 @@ const localOps: { [K in WorkerOp]: Local<K> } = {
     return decodeJwt(text(payload));
   },
 
+  async jsonToJsonSchema(payload, options) {
+    const { jsonToJsonSchema } = await import('./ops/schema-infer');
+    return jsonToJsonSchema(text(payload), options);
+  },
+
+  async jsonToZod(payload, options) {
+    const { jsonToZod } = await import('./ops/zod');
+    return jsonToZod(text(payload), options);
+  },
+
   async validateSchema(payload) {
     const { validateSchema } = await import('./ops/schema');
     return validateSchema(payload);

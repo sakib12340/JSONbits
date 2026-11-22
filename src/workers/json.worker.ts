@@ -13,6 +13,8 @@ import { transformEscapes } from './ops/escape';
 import { queryJsonPath } from './ops/jsonpath';
 import { jsonToTypescript } from './ops/typescript';
 import { decodeJwt } from './ops/jwt';
+import { jsonToJsonSchema } from './ops/schema-infer';
+import { jsonToZod } from './ops/zod';
 import { validateSchema } from './ops/schema';
 import { failure } from './protocol';
 import type {
@@ -240,6 +242,20 @@ async function handle(request: WorkerRequest): Promise<void> {
         return;
       }
 
+      case 'jsonToJsonSchema': {
+        const text = await readText(id, request.payload, 'inferring');
+        if (text === null) return;
+        withOutput(id, jsonToJsonSchema(text, request.options), 'application/schema+json');
+        return;
+      }
+
+      case 'jsonToZod': {
+        const text = await readText(id, request.payload, 'inferring');
+        if (text === null) return;
+        withOutput(id, jsonToZod(text, request.options), 'text/plain');
+        return;
+      }
+
       case 'validateSchema': {
         progress(id, 'validating');
         await tick();
@@ -323,6 +339,8 @@ async function handle(request: WorkerRequest): Promise<void> {
       jsonpath: 'JSONPath tester',
       jsonToTypescript: 'TypeScript generator',
       jwtDecode: 'JWT decoder',
+      jsonToJsonSchema: 'schema generator',
+      jsonToZod: 'Zod generator',
       validateSchema: 'schema validator',
       jsonToCsv: 'CSV converter',
       csvToJson: 'CSV converter',

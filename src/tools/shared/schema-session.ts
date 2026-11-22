@@ -5,7 +5,7 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
-import { takeHandoff } from '../../lib/handoff';
+import { takeHandoff, takeSchemaHandoff } from '../../lib/handoff';
 import { failure } from '../../workers/protocol';
 import type { JsonError, ProgressUpdate, SchemaIssue, SchemaResult } from '../../workers/protocol';
 import { RunController } from '../../workers/run-controller';
@@ -175,13 +175,23 @@ export class SchemaSession {
       if (file) void this.loadFile(this.activeSide, file);
     });
 
-    const handoff = takeHandoff('json-schema-validator');
-    if (handoff) {
+    const schemaHandoff = takeSchemaHandoff();
+    if (schemaHandoff) {
       this.applying = true;
-      this.document.setDoc(handoff);
+      this.schema.setDoc(schemaHandoff.schema);
+      this.document.setDoc(schemaHandoff.document);
       this.applying = false;
       this.activeSide = 'document';
       this.updateReadyStatus();
+    } else {
+      const handoff = takeHandoff('json-schema-validator');
+      if (handoff) {
+        this.applying = true;
+        this.document.setDoc(handoff);
+        this.applying = false;
+        this.activeSide = 'document';
+        this.updateReadyStatus();
+      }
     }
   }
 
@@ -636,6 +646,7 @@ export class SchemaSession {
 
   private updateReadyStatus(): void {
     this.setStatus(this.ready() ? this.strings.ready : this.strings.waiting);
+    this.refreshButtons();
   }
 
   private async copyReport(): Promise<void> {

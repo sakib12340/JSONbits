@@ -2,16 +2,26 @@ import type {
   EscapeOptions,
   FormatIndent,
   JsonPathOptions,
+  JsonToJsonSchemaOptions,
   SortOptions,
   TypescriptOptions,
+  ZodOptions,
 } from '../../workers/protocol';
 
-export type PaneOp = 'sort' | 'escape' | 'jsonpath' | 'jsonToTypescript';
+export type PaneOp =
+  | 'sort'
+  | 'escape'
+  | 'jsonpath'
+  | 'jsonToTypescript'
+  | 'jsonToJsonSchema'
+  | 'jsonToZod';
 export type PaneOptions =
   | SortOptions
   | EscapeOptions
   | JsonPathOptions
-  | TypescriptOptions;
+  | TypescriptOptions
+  | JsonToJsonSchemaOptions
+  | ZodOptions;
 
 export interface PaneStats {
   bytes: number;
@@ -31,6 +41,8 @@ const outputInfo: Record<PaneOp, PaneOutputInfo> = {
   escape: { extension: 'txt', mime: 'text/plain' },
   jsonpath: { extension: 'json', mime: 'application/json' },
   jsonToTypescript: { extension: 'ts', mime: 'text/plain' },
+  jsonToJsonSchema: { extension: 'schema.json', mime: 'application/schema+json' },
+  jsonToZod: { extension: 'ts', mime: 'text/plain' },
 };
 
 export function paneOutput(op: PaneOp): PaneOutputInfo {
@@ -89,6 +101,26 @@ export function readPaneOptions(shell: HTMLElement, op: PaneOp): PaneOptions {
         mode,
       };
     }
+
+    case 'jsonToJsonSchema':
+      return {
+        draft: text(shell, 'draft', '2020-12') === 'draft-07' ? 'draft-07' : '2020-12',
+        additionalProperties: checked(shell, 'additionalProperties', false),
+        detectFormats: checked(shell, 'detectFormats', true),
+        detectEnums: checked(shell, 'detectEnums', false),
+        includeSchema: checked(shell, 'includeSchema', true),
+        includeTitle: checked(shell, 'includeTitle', false),
+        title: text(shell, 'title', 'Sample').trim() || 'Sample',
+      };
+
+    case 'jsonToZod':
+      return {
+        schemaName: text(shell, 'schemaName', 'Root').trim() || 'Root',
+        exportKeyword: checked(shell, 'exportKeyword', true),
+        inferType: checked(shell, 'inferType', true),
+        optionalNullable: checked(shell, 'optionalNullable', true),
+        strict: checked(shell, 'strict', false),
+      };
 
     case 'jsonToTypescript':
       return {

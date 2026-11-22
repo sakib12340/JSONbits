@@ -21,6 +21,8 @@ const loaders: Record<string, () => Promise<ToolModule>> = {
   'json-to-typescript': () => import('../tools/json-to-typescript/ui'),
   'json-schema-validator': () => import('../tools/json-schema-validator/ui'),
   'jwt-decoder': () => import('../tools/jwt-decoder/ui'),
+  'json-to-json-schema': () => import('../tools/json-to-json-schema/ui'),
+  'json-to-zod': () => import('../tools/json-to-zod/ui'),
 };
 
 function readStrings(shell: HTMLElement): Record<string, string> {

@@ -3,7 +3,7 @@ import OptionSelect from './OptionSelect.astro';
 import type { Locale } from '../../i18n/config';
 import { t } from '../../i18n/t';
 
-export type PaneVariant = 'sort' | 'escape' | 'jsonpath' | 'typescript';
+export type PaneVariant = 'sort' | 'escape' | 'jsonpath' | 'typescript' | 'jsonschema' | 'zod';
 
 interface Props {
   locale: Locale;
@@ -33,6 +33,11 @@ const jsonpathModes = [
   { value: 'first', label: t(locale, 'tool.jsonpath.mode.first') },
   { value: 'paths', label: t(locale, 'tool.jsonpath.mode.paths') },
   { value: 'pathValue', label: t(locale, 'tool.jsonpath.mode.pathValue') },
+];
+
+const draftOptions = [
+  { value: '2020-12', label: t(locale, 'tool.option.draft2020') },
+  { value: 'draft-07', label: t(locale, 'tool.option.draft7') },
 ];
 ---
 
@@ -137,6 +142,68 @@ const jsonpathModes = [
           />
         </div>
       </div>
+    )
+  }
+
+  {
+    variant === 'jsonschema' && (
+      <>
+        <div class={field}>
+          <span id="pane-draft-label" class={caption}>{t(locale, 'tool.option.draft')}</span>
+          <OptionSelect id="pane-draft" name="draft" labelledBy="pane-draft-label" value="2020-12" options={draftOptions} class="w-36" />
+        </div>
+        <label class={field}>
+          <span class={caption}>{t(locale, 'tool.option.title')}</span>
+          <input type="text" value="Sample" data-option="title" class="h-11 w-40 rounded-[8px] border border-line bg-canvas px-3 font-mono text-[14px] text-ink" spellcheck="false" autocomplete="off" />
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="additionalProperties" />
+          <span>{t(locale, 'tool.option.additionalProperties')}</span>
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="detectFormats" checked />
+          <span>{t(locale, 'tool.option.detectFormats')}</span>
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="detectEnums" />
+          <span>{t(locale, 'tool.option.detectEnums')}</span>
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="includeSchema" checked />
+          <span>{t(locale, 'tool.option.includeSchema')}</span>
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="includeTitle" />
+          <span>{t(locale, 'tool.option.includeTitle')}</span>
+        </label>
+      </>
+    )
+  }
+
+  {
+    variant === 'zod' && (
+      <>
+        <label class={field}>
+          <span class={caption}>{t(locale, 'tool.option.schemaName')}</span>
+          <input type="text" value="Root" data-option="schemaName" class="h-11 w-40 rounded-[8px] border border-line bg-canvas px-3 font-mono text-[14px] text-ink" spellcheck="false" autocomplete="off" />
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="exportKeyword" checked />
+          <span>{t(locale, 'tool.option.exportKeyword')}</span>
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="inferType" checked />
+          <span>{t(locale, 'tool.option.inferType')}</span>
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="optionalNullable" checked />
+          <span>{t(locale, 'tool.option.optionalNullable')}</span>
+        </label>
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="strict" />
+          <span>{t(locale, 'tool.option.strict')}</span>
+        </label>
+      </>
     )
   }
 

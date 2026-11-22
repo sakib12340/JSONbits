@@ -69,6 +69,36 @@ const configs = {
       { key: 'time', label: t(locale, 'tool.stats.time') },
     ],
   },
+  jsonschema: {
+    action: 'jsonToJsonSchema',
+    label: t(locale, 'tool.infer.generate'),
+    largeLabel: t(locale, 'tool.generateFile'),
+    verb: t(locale, 'tool.infer.generating'),
+    done: t(locale, 'tool.infer.done'),
+    placeholder: t(locale, 'tool.infer.placeholder.schema'),
+    outputPlaceholder: t(locale, 'tool.infer.outputPlaceholder.schema'),
+    stats: [
+      { key: 'size', label: t(locale, 'tool.stats.size') },
+      { key: 'properties', label: t(locale, 'tool.infer.properties') },
+      { key: 'types', label: t(locale, 'tool.infer.types') },
+      { key: 'time', label: t(locale, 'tool.stats.time') },
+    ],
+  },
+  zod: {
+    action: 'jsonToZod',
+    label: t(locale, 'tool.infer.generate'),
+    largeLabel: t(locale, 'tool.generateFile'),
+    verb: t(locale, 'tool.infer.generating'),
+    done: t(locale, 'tool.infer.done'),
+    placeholder: t(locale, 'tool.infer.placeholder.zod'),
+    outputPlaceholder: t(locale, 'tool.infer.outputPlaceholder.zod'),
+    stats: [
+      { key: 'size', label: t(locale, 'tool.stats.size') },
+      { key: 'properties', label: t(locale, 'tool.infer.properties') },
+      { key: 'types', label: t(locale, 'tool.infer.types') },
+      { key: 'time', label: t(locale, 'tool.stats.time') },
+    ],
+  },
   typescript: {
     action: 'jsonToTypescript',
     label: t(locale, 'tool.generate'),
@@ -112,6 +142,8 @@ const strings = {
   matchesMeta: t(locale, 'tool.matchesMeta'),
   showingMatches: t(locale, 'tool.jsonpath.showing'),
   queryErrorAt: t(locale, 'tool.jsonpath.errorAt'),
+  inferMeta: t(locale, 'tool.infer.meta'),
+  validateWith: t(locale, 'tool.infer.validateWith'),
   declarationsMeta: t(locale, 'tool.declarationsMeta'),
   truncatedSuffix: t(locale, 'tool.truncatedSuffix'),
   inputLabel: t(locale, 'tool.inputLabel.generic'),
@@ -219,6 +251,16 @@ const strings = {
           </h2>
           <div class="flex min-w-0 items-center gap-2">
             <OutputMeta locale={locale} />
+            {variant === 'jsonschema' && (
+              <button
+                type="button"
+                data-validate-with
+                hidden
+                class="inline-flex min-h-[32px] items-center rounded-[8px] px-2 text-[12px] font-semibold leading-5 text-body-mid hover:bg-cream hover:text-ink"
+              >
+                {t(locale, 'tool.infer.validateWith')}
+              </button>
+            )}
             {variant === 'jsonpath' && (
               <>
                 <button

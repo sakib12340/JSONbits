@@ -29,6 +29,8 @@ export type ToolUi =
   | 'typescript'
   | 'schema'
   | 'jwt'
+  | 'jsonschema'
+  | 'zod'
   | 'pending';
 
 export interface ToolDef {
