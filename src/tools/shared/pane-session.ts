@@ -4,7 +4,7 @@ import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
 import { setupFullscreen } from '../../lib/fullscreen';
-import { setupSend, takeHandoff } from '../../lib/handoff';
+import { setupSend, takeHandoff, toolUrl, writeHandoff } from '../../lib/handoff';
 import { createSelectMenu, type SelectMenu } from '../../lib/select-menu';
 import { buildSnippet } from '../../lib/snippet';
 import { readIndent, writeIndent } from '../../lib/storage';
@@ -14,6 +14,7 @@ import type {
   EscapeStats,
   FormatIndent,
   JsonError,
+  JsonPathResult,
   JsonPathStats,
   ProgressUpdate,
   SortStats,
@@ -47,6 +48,8 @@ export interface PaneStrings extends BaseStrings {
   keysMeta: string;
   replacementsMeta: string;
   matchesMeta: string;
+  showingMatches: string;
+  queryErrorAt: string;
   declarationsMeta: string;
   truncatedSuffix: string;
 }
@@ -113,6 +116,8 @@ export class PaneSession {
   private statusToken = 0;
   private lastError: JsonError | null = null;
   private stopFullscreen: (() => void) | null = null;
+  private allText: string | null = null;
+  private allBlob: Blob | null = null;
 
   constructor(options: Options) {
     this.shell = options.shell;
@@ -184,6 +189,24 @@ export class PaneSession {
     this.shell
       .querySelector<HTMLButtonElement>('[data-error-repair]')
       ?.addEventListener('click', () => void this.fix());
+
+    if (this.op === 'jsonpath') {
+      for (const button of this.shell.querySelectorAll<HTMLButtonElement>('[data-output-send]')) {
+        button.addEventListener('click', () => this.sendOutput(button.dataset.sendSlug ?? ''));
+      }
+      this.shell.querySelector('[data-download-all]')?.addEventListener('click', () => {
+        this.downloadAll();
+      });
+      this.shell.querySelector('[data-query-examples]')?.addEventListener('click', (event) => {
+        const target = event.target as HTMLElement;
+        const chip = target.closest<HTMLElement>('[data-example]');
+        if (!chip) return;
+        const field = this.queryInput();
+        if (field) field.value = chip.dataset.example ?? '';
+        this.hideQueryError();
+        void this.run('explicit');
+      });
+    }
 
     setupSend({
       shell: this.shell,
@@ -485,6 +508,17 @@ export class PaneSession {
       el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     }
 
+    if (this.op === 'jsonpath') {
+      const jp = result as unknown as JsonPathResult;
+      this.allText = jp.allOutput;
+      this.allBlob = jp.allBlob;
+      this.renderExamples(jp.keys ?? []);
+      const downloadAll = this.shell.querySelector<HTMLElement>('[data-download-all]');
+      if (downloadAll) downloadAll.hidden = jp.allOutput === null && jp.allBlob === null;
+      const actions = this.shell.querySelector<HTMLElement>('[data-output-actions]');
+      if (actions) actions.hidden = jp.output === null && jp.blob === null;
+    }
+
     this.setStats(result.stats);
     this.setMetaText(this.metaFor(result.stats));
 
@@ -511,10 +545,15 @@ export class PaneSession {
         });
       case 'jsonpath': {
         const path = stats as JsonPathStats;
-        const base = fill(this.strings.matchesMeta, {
+        if (path.truncated) {
+          return fill(this.strings.showingMatches, {
+            shown: formatInteger(path.matches, this.locale),
+            total: formatInteger(path.total, this.locale),
+          });
+        }
+        return fill(this.strings.matchesMeta, {
           count: formatInteger(path.total, this.locale),
         });
-        return path.truncated ? `${base} · ${this.strings.truncatedSuffix}` : base;
       }
       case 'jsonToTypescript':
         return fill(this.strings.declarationsMeta, {
@@ -525,7 +564,16 @@ export class PaneSession {
 
   private showFailure(info: JsonError, mode: RunMode): void {
     if (this.op === 'jsonpath' && info.message.startsWith('Expression: ')) {
-      this.showQueryFailure(info.message.slice(12));
+      const message = info.message.slice(12);
+      const located =
+        info.line > 0
+          ? fill(this.strings.queryErrorAt, {
+              message,
+              line: info.line,
+              column: info.column,
+            })
+          : message;
+      this.showQueryFailure(located);
       return;
     }
 
@@ -770,6 +818,12 @@ export class PaneSession {
     this.input.markError(null);
     el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
+    const actions = this.shell.querySelector<HTMLElement>('[data-output-actions]');
+    if (actions) actions.hidden = true;
+    const downloadAll = this.shell.querySelector<HTMLElement>('[data-download-all]');
+    if (downloadAll) downloadAll.hidden = true;
+    this.allText = null;
+    this.allBlob = null;
     this.clearMeta();
     this.hideQueryError();
     this.showOutputDot(false);
@@ -1041,6 +1095,54 @@ export class PaneSession {
     return this.escapeMode() === 'unescape'
       ? this.strings.unescapeVerb
       : this.strings.escapeVerb;
+  }
+
+  private renderExamples(keys: string[]): void {
+    const container = this.shell.querySelector<HTMLElement>('[data-query-examples]');
+    if (!container) return;
+    if (keys.length === 0) {
+      container.hidden = true;
+      return;
+    }
+    container.hidden = false;
+    const label = container.firstElementChild;
+    container.replaceChildren(
+      ...(label ? [label] : []),
+      ...keys.map((key) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'min-h-11 rounded-full bg-cream px-2.5 font-mono text-[12px] text-body hover:text-ink';
+        chip.dataset.example = `$.${key}`;
+        chip.textContent = key;
+        return chip;
+      }),
+    );
+  }
+
+  private sendOutput(slug: string): void {
+    if (!slug) return;
+    const text = this.outputText ?? this.allText ?? '';
+    if (text.trim().length === 0) {
+      this.flash(this.strings.sendEmpty);
+      this.announce(this.strings.sendEmpty);
+      return;
+    }
+    if (!writeHandoff(slug, text)) {
+      this.flash(this.strings.sendTooLarge);
+      this.announce(this.strings.sendTooLarge);
+      return;
+    }
+    window.location.href = toolUrl(this.locale, slug);
+  }
+
+  private downloadAll(): void {
+    if (this.allBlob) {
+      downloadBlob(this.allBlob, 'matches-all.json');
+      return;
+    }
+    if (this.allText !== null) {
+      downloadBlob(new Blob([this.allText], { type: 'application/json' }), 'matches-all.json');
+    }
   }
 
   dispose(): void {

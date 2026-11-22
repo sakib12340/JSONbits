@@ -434,5 +434,19 @@
   "tool.reviewTitle": "Review repair changes",
   "tool.diffOriginal": "Original",
   "tool.diffRepaired": "Repaired",
-  "tool.reviewDiff": "Unterschiede"
+  "tool.reviewDiff": "Unterschiede",
+  "tool.jsonpath.mode": "Result mode",
+  "tool.jsonpath.mode.values": "Values",
+  "tool.jsonpath.mode.flat": "Flatten arrays",
+  "tool.jsonpath.mode.first": "First value",
+  "tool.jsonpath.mode.paths": "Paths",
+  "tool.jsonpath.mode.pathValue": "Path + value",
+  "tool.jsonpath.examples": "Try a key",
+  "tool.jsonpath.showing": "Showing first {shown} of {total} matches.",
+  "tool.jsonpath.downloadAll": "Download all matches",
+  "tool.jsonpath.errorAt": "{message} (line {line}, column {column})",
+  "tool.jsonpath.sendOutput": "Send output to",
+  "tool.jsonpath.sendFormatter": "Formatter",
+  "tool.jsonpath.sendCsv": "JSON to CSV",
+  "tool.jsonpath.sendSchema": "JSON to Schema"
 }

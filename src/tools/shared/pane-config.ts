@@ -76,11 +76,19 @@ export function readPaneOptions(shell: HTMLElement, op: PaneOp): PaneOptions {
         ascii: checked(shell, 'ascii', false),
       };
 
-    case 'jsonpath':
+    case 'jsonpath': {
+      const modes = ['values', 'flat', 'first', 'paths', 'pathValue'] as const;
+      const raw = text(shell, 'mode', 'values');
+      const mode = modes.includes(raw as (typeof modes)[number])
+        ? (raw as (typeof modes)[number])
+        : 'values';
       return {
         expression: text(shell, 'expression', '').trim(),
-        limit: 2000,
+        limit: 20_000,
+        display: 2_000,
+        mode,
       };
+    }
 
     case 'jsonToTypescript':
       return {

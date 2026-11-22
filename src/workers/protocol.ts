@@ -255,10 +255,15 @@ export interface EscapeResult {
   stats: EscapeStats;
 }
 
+export type JsonPathMode = 'values' | 'flat' | 'first' | 'paths' | 'pathValue';
+
 export interface JsonPathOptions {
   expression: string;
-  /** Maximum matches before the result is truncated. */
+  /** Maximum matches gathered in the worker. */
   limit: number;
+  /** Matches included in the visible output. */
+  display: number;
+  mode: JsonPathMode;
 }
 
 export interface JsonPathStats {
@@ -275,6 +280,11 @@ export interface JsonPathResult {
   output: string | null;
   blob: Blob | null;
   stats: JsonPathStats;
+  /** All matches, for "download all" when the visible output is capped. */
+  allOutput: string | null;
+  allBlob: Blob | null;
+  /** Top-level keys of the loaded document, used for example-query chips. */
+  keys: string[];
 }
 
 export interface TypescriptOptions {

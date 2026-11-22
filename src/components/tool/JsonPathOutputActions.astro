@@ -1,0 +1,41 @@
+---
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const targets = [
+  { slug: 'json-formatter', label: t(locale, 'tool.jsonpath.sendFormatter') },
+  { slug: 'json-to-csv', label: t(locale, 'tool.jsonpath.sendCsv') },
+  { slug: 'json-to-json-schema', label: t(locale, 'tool.jsonpath.sendSchema') },
+];
+---
+
+<div
+  data-output-actions
+  hidden
+  class="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2 text-[12px] text-body-mid"
+>
+  <span>{t(locale, 'tool.jsonpath.sendOutput')}</span>
+  {targets.map((target) => (
+    <button
+      type="button"
+      data-output-send
+      data-send-slug={target.slug}
+      class="min-h-11 rounded-md border border-line px-2.5 hover:border-line-strong hover:text-ink"
+    >
+      {target.label}
+    </button>
+  ))}
+  <button
+    type="button"
+    data-download-all
+    hidden
+    class="min-h-11 rounded-md border border-line px-2.5 hover:border-line-strong hover:text-ink"
+  >
+    {t(locale, 'tool.jsonpath.downloadAll')}
+  </button>
+</div>

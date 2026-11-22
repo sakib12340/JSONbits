@@ -221,7 +221,7 @@ async function handle(request: WorkerRequest): Promise<void> {
       case 'jsonpath': {
         const text = await readText(id, request.payload, 'querying');
         if (text === null) return;
-        withOutput(id, queryJsonPath(text, request.options));
+        post({ id, ok: true, result: queryJsonPath(text, request.options) });
         return;
       }
 

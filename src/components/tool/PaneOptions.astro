@@ -26,6 +26,14 @@ const modeOptions = [
   { value: 'escape', label: t(locale, 'tool.escape') },
   { value: 'unescape', label: t(locale, 'tool.unescape') },
 ];
+
+const jsonpathModes = [
+  { value: 'values', label: t(locale, 'tool.jsonpath.mode.values') },
+  { value: 'flat', label: t(locale, 'tool.jsonpath.mode.flat') },
+  { value: 'first', label: t(locale, 'tool.jsonpath.mode.first') },
+  { value: 'paths', label: t(locale, 'tool.jsonpath.mode.paths') },
+  { value: 'pathValue', label: t(locale, 'tool.jsonpath.mode.pathValue') },
+];
 ---
 
 <div
@@ -88,29 +96,47 @@ const modeOptions = [
 
   {
     variant === 'jsonpath' && (
-      <div class={`${field} w-full`}>
-        <label for="pane-expression" class={caption}>
-          {t(locale, 'tool.jsonpath.expression')}
-        </label>
-        <input
-          id="pane-expression"
-          type="text"
-          value={'$.store.books[?(@.price < 10)]'}
-          data-option="expression"
-          class="h-11 w-full rounded-[8px] border border-line bg-canvas px-3 font-mono text-[14px] text-ink"
-          spellcheck="false"
-          autocomplete="off"
-          autocapitalize="off"
-          aria-describedby="jsonpath-query-error"
-        />
-        <p
-          id="jsonpath-query-error"
-          class="font-mono text-[12px] leading-5 text-danger"
-          data-query-error
-          role="alert"
-          hidden
-        />
-      </div>
+      <>
+        <div class={`${field} min-w-[180px] flex-1`}>
+          <label for="pane-expression" class={caption}>
+            {t(locale, 'tool.jsonpath.expression')}
+          </label>
+          <input
+            id="pane-expression"
+            type="text"
+            value={'$.store.books[?(@.price < 10)]'}
+            data-option="expression"
+            class="h-11 w-full rounded-[8px] border border-line bg-canvas px-3 font-mono text-[14px] text-ink"
+            spellcheck="false"
+            autocomplete="off"
+            autocapitalize="off"
+            aria-describedby="jsonpath-query-error"
+          />
+          <p
+            id="jsonpath-query-error"
+            class="font-mono text-[12px] leading-5 text-danger"
+            data-query-error
+            role="alert"
+            hidden
+          />
+          <div class="flex flex-wrap items-center gap-1.5 pt-1" data-query-examples hidden>
+            <span class="text-[12px] text-body-mid">{t(locale, 'tool.jsonpath.examples')}</span>
+          </div>
+        </div>
+        <div class={field}>
+          <span id="pane-jsonpath-mode-label" class={caption}>
+            {t(locale, 'tool.jsonpath.mode')}
+          </span>
+          <OptionSelect
+            id="pane-jsonpath-mode"
+            name="mode"
+            labelledBy="pane-jsonpath-mode-label"
+            value="values"
+            options={jsonpathModes}
+            class="w-40"
+          />
+        </div>
+      </>
     )
   }
 

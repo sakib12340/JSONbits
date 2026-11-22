@@ -1,7 +1,6 @@
 import type { JsonPath, JsonPathOptions, JsonPathResult } from '../protocol';
 import { JsonFormatError, positionAt } from './errors';
 import {
-  formatPath,
   parseAst,
   serializeNode,
   type JsonNode,
@@ -596,66 +595,98 @@ export function queryJsonPath(text: string, options: JsonPathOptions): JsonPathR
     }
   }
 
-  const output = new OutputBuilder();
-  output.push('{\n  "expression": ', JSON.stringify(expression), ',\n  "matches": [');
-
-  let outputSize = 0;
-  let written = 0;
-
-  for (const match of matches) {
+  const mode = options.mode ?? 'values';
+  const display = Math.max(1, Math.min(options.display || 2000, 20_000));
+  const visible = matches.slice(0, display);
+  const valueText = (match: Match): string => {
     const serialized = serializeNode(match.node, VALUE_LIMIT);
-    const valueText =
-      serialized.text === null ? 'null' : serialized.text.replace(/\n/g, '\n      ');
-    const size = valueText.length + 120;
+    return serialized.text ?? 'null';
+  };
 
-    if (outputSize + size > OUTPUT_LIMIT && written > 0) {
-      truncated = true;
-      break;
+  const build = (list: Match[]): string => {
+    const out = new OutputBuilder();
+    if (mode === 'first') {
+      out.push(list.length > 0 ? valueText(list[0]) : 'null');
+      return out.toString();
     }
 
-    const entry = [
-      written === 0 ? '\n' : ',\n',
-      '    {\n      "path": ',
-      JSON.stringify(formatPath(match.path)),
-      ',\n      "type": ',
-      JSON.stringify(match.node.kind),
-      ',\n      "value": ',
-      valueText,
-    ];
+    out.push('[');
+    list.forEach((match, index) => {
+      if (index > 0) out.push(', ');
+      if (mode === 'paths') {
+        out.push(JSON.stringify(bracketPath(match.path)));
+      } else if (mode === 'pathValue') {
+        out.push('{"path": ', JSON.stringify(bracketPath(match.path)), ', "value": ', valueText(match), '}');
+      } else if (mode === 'flat') {
+        if (match.node.kind === 'array') {
+          match.node.items.forEach((item, itemIndex) => {
+            if (itemIndex > 0) out.push(', ');
+            const serialized = serializeNode(item, VALUE_LIMIT);
+            out.push(serialized.text ?? 'null');
+          });
+        } else {
+          out.push(valueText(match));
+        }
+      } else {
+        out.push(valueText(match));
+      }
+    });
+    out.push(']');
+    return out.toString();
+  };
 
-    if (serialized.text === null) entry.push(',\n      "valueTruncated": true');
-    entry.push('\n    }');
+  let visibleText = build(visible);
+  let allText = matches.length === visible.length ? visibleText : build(matches);
 
-    for (const part of entry) output.push(part);
-    outputSize += size;
-    written += 1;
+  // Keep the visible result small; the full result is offered as a download.
+  let visibleBlob: Blob | null = null;
+  if (utf8Length(visibleText) > OUTPUT_LIMIT) {
+    visibleBlob = new Blob([visibleText], { type: 'application/json' });
+    visibleText = '';
+  }
+  let allBlob: Blob | null = null;
+  if (allText !== visibleText && utf8Length(allText) > OUTPUT_LIMIT) {
+    allBlob = new Blob([allText], { type: 'application/json' });
+    allText = '';
   }
 
-  if (written > 0) output.push('\n  ');
-  output.push(
-    '],\n  "total": ',
-    String(matches.length),
-    ',\n  "truncated": ',
-    truncated ? 'true' : 'false',
-    ',\n  "timeMs": ',
-    String(Math.round((performance.now() - started) * 10) / 10),
-    '\n}',
-  );
-
-  const result = output.toString();
   const timeMs = Math.round((performance.now() - started) * 10) / 10;
+  const keys = topLevelKeys(root);
 
   return {
-    output: result,
-    blob: null,
+    output: visibleText,
+    blob: visibleBlob,
+    allOutput: allText,
+    allBlob,
+    keys,
     stats: {
       bytes: utf8Length(text),
-      outputBytes: utf8Length(result),
-      lines: countLines(result),
-      matches: written,
+      outputBytes: utf8Length(visibleText) + (visibleBlob?.size ?? 0),
+      lines: countLines(visibleText),
+      matches: visible.length,
       total: matches.length,
-      truncated,
+      truncated: truncated || matches.length > visible.length,
       parseTimeMs: timeMs,
     },
   };
+}
+
+function bracketPath(path: JsonPath): string {
+  let out = '$';
+  for (const segment of path) {
+    if (typeof segment === 'number') out += `[${segment}]`;
+    else out += `['${String(segment).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}']`;
+  }
+  return out;
+}
+
+function topLevelKeys(root: JsonNode): string[] {
+  if (root.kind === 'object') return root.entries.slice(0, 30).map((entry) => entry.key);
+  if (root.kind === 'array') {
+    const first = root.items.find((item) => item.kind === 'object');
+    if (first && first.kind === 'object') {
+      return first.entries.slice(0, 30).map((entry) => entry.key);
+    }
+  }
+  return [];
 }

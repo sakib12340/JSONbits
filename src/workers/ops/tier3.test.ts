@@ -82,25 +82,67 @@ describe('jsonpath tester', () => {
     },
   });
 
-  it('returns filtered matches with paths', () => {
+  it('returns filtered values in values mode', () => {
     const result = queryJsonPath(document, {
       expression: '$.store.books[?(@.price < 10)]',
       limit: 2000,
+      display: 2000,
+      mode: 'values',
     });
-    const parsed = JSON.parse(result.output ?? '') as {
-      matches: Array<{ path: string }>;
-      truncated: boolean;
-    };
-
-    expect(parsed.matches).toHaveLength(1);
-    expect(parsed.matches[0].path).toBe('$.store.books[0]');
-    expect(parsed.truncated).toBe(false);
+    expect(JSON.parse(result.output ?? '')).toEqual([{ title: 'A', price: 8 }]);
+    expect(result.stats.total).toBe(1);
+    expect(result.keys).toContain('store');
   });
 
-  it('supports recursive descent and slices', () => {
+  it('returns normalized paths and path+value pairs', () => {
+    const paths = queryJsonPath(document, {
+      expression: '$.store.books[*].title',
+      limit: 2000,
+      display: 2000,
+      mode: 'paths',
+    });
+    expect(JSON.parse(paths.output ?? '')).toEqual([
+      "$['store']['books'][0]['title']",
+      "$['store']['books'][1]['title']",
+    ]);
+
+    const pairs = queryJsonPath(document, {
+      expression: '$.store.books[0].title',
+      limit: 2000,
+      display: 2000,
+      mode: 'pathValue',
+    });
+    expect(JSON.parse(pairs.output ?? '')).toEqual([
+      { path: "$['store']['books'][0]['title']", value: 'A' },
+    ]);
+  });
+
+  it('supports flat and first modes and caps the visible output', () => {
+    const result = queryJsonPath('{"a":[1,2],"b":[3]}', {
+      expression: '$.*',
+      limit: 2000,
+      display: 1,
+      mode: 'flat',
+    });
+    expect(JSON.parse(result.output ?? '')).toEqual([1, 2]);
+    expect(result.stats.truncated).toBe(true);
+    expect(result.allOutput).not.toBeNull();
+
+    const first = queryJsonPath('{"a":1}', {
+      expression: '$.a',
+      limit: 2000,
+      display: 2000,
+      mode: 'first',
+    });
+    expect(JSON.parse(first.output ?? '')).toBe(1);
+  });
+
+  it('supports recursive descent', () => {
     const result = queryJsonPath('{"a":{"id":1},"b":[{"id":2},{"id":3}]}', {
       expression: '$..id',
       limit: 2000,
+      display: 2000,
+      mode: 'values',
     });
 
     expect(result.stats.matches).toBe(3);

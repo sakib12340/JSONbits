@@ -1,6 +1,7 @@
 ---
 import ToolPage from './ToolPage.astro';
 import Toolbar from './Toolbar.astro';
+import JsonPathOutputActions from './JsonPathOutputActions.astro';
 import PaneOptions from './PaneOptions.astro';
 import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
@@ -108,6 +109,8 @@ const strings = {
   keysMeta: t(locale, 'tool.sortedKeys'),
   replacementsMeta: t(locale, 'tool.replacementsMeta'),
   matchesMeta: t(locale, 'tool.matchesMeta'),
+  showingMatches: t(locale, 'tool.jsonpath.showing'),
+  queryErrorAt: t(locale, 'tool.jsonpath.errorAt'),
   declarationsMeta: t(locale, 'tool.declarationsMeta'),
   truncatedSuffix: t(locale, 'tool.truncatedSuffix'),
   inputLabel: t(locale, 'tool.inputLabel.generic'),
@@ -218,6 +221,7 @@ const strings = {
           </div>
         </div>
 
+        {variant === 'jsonpath' && <JsonPathOutputActions locale={locale} />}
         <EditorPane kind="output" locale={locale}>
           <ErrorPanel locale={locale} canRepair={variant !== 'escape'} />
         </EditorPane>
