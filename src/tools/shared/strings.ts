@@ -57,6 +57,14 @@ export interface OutputToolStrings extends BaseStrings {
   fixesApplied: string;
   /** Same as `fixesApplied` but for exactly one fix, so it does not read "1 fixes". */
   fixesAppliedOne: string;
+  repairNotice: string;
+  repairNoticeOne: string;
+  reviewChanges: string;
+  revertOriginal: string;
+  repairAmbiguous: string;
+  reviewTitle: string;
+  diffOriginal: string;
+  diffRepaired: string;
   fix: Record<RepairFixKind, string>;
 }
 

@@ -63,7 +63,18 @@ export type RepairFixKind =
 
 export interface RepairFix {
   kind: RepairFixKind;
-  count: number;
+  line: number;
+  column: number;
+  before: string;
+  after: string;
+  description: string;
+  ambiguous?: boolean;
+}
+
+export interface RepairTextDiffLine {
+  type: 'equal' | 'removed' | 'added' | 'changed';
+  left: string | null;
+  right: string | null;
 }
 
 export interface RepairStats extends FormatStats {
@@ -74,6 +85,9 @@ export interface RepairResult {
   output: string | null;
   blob: Blob | null;
   stats: RepairStats;
+  fixes: RepairFix[];
+  fixCount: number;
+  diff: RepairTextDiffLine[];
 }
 
 export interface ConvertStats {

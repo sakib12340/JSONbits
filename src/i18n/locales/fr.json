@@ -425,5 +425,13 @@
   "tool.schema.runSchemaFile": "Exécuter avec ce schéma",
   "tool.schema.runDocumentFile": "Exécuter avec ce document",
   "tool.schema.drop": "Déposez un fichier de schéma",
-  "tool.document.drop": "Déposez un fichier de document"
+  "tool.document.drop": "Déposez un fichier de document",
+  "tool.repairNotice": "Repaired {count} issues.",
+  "tool.repairNotice.one": "Repaired 1 issue.",
+  "tool.reviewChanges": "Review changes",
+  "tool.revertOriginal": "Revert to original",
+  "tool.repairAmbiguous": "Check this",
+  "tool.reviewTitle": "Review repair changes",
+  "tool.diffOriginal": "Original",
+  "tool.diffRepaired": "Repaired"
 }

@@ -425,5 +425,13 @@
   "tool.schema.runSchemaFile": "Run with this schema",
   "tool.schema.runDocumentFile": "Run with this document",
   "tool.schema.drop": "Drop a schema file",
-  "tool.document.drop": "Drop a document file"
+  "tool.document.drop": "Drop a document file",
+  "tool.repairNotice": "Repaired {count} issues.",
+  "tool.repairNotice.one": "Repaired 1 issue.",
+  "tool.reviewChanges": "Review changes",
+  "tool.revertOriginal": "Revert to original",
+  "tool.repairAmbiguous": "Check this",
+  "tool.reviewTitle": "Review repair changes",
+  "tool.diffOriginal": "Original",
+  "tool.diffRepaired": "Repaired"
 }

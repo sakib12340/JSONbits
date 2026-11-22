@@ -18,6 +18,7 @@ import type {
   RepairFix,
   RepairResult,
   RepairStats,
+  RepairTextDiffLine,
 } from '../../workers/protocol';
 import { RunController, type RunOutcome } from '../../workers/run-controller';
 import { LIVE_LIMIT, MAX_FILE, PREVIEW_LIMIT } from '../limits';
@@ -74,6 +75,9 @@ export class OutputToolSession {
   private statusToken = 0;
   private lastError: JsonError | null = null;
   private stopFullscreen: (() => void) | null = null;
+  private lastOriginal: string | null = null;
+  private lastFixes: RepairFix[] = [];
+  private lastDiff: RepairTextDiffLine[] = [];
 
   constructor(options: Options) {
     this.shell = options.shell;
@@ -145,6 +149,16 @@ export class OutputToolSession {
       .querySelector<HTMLButtonElement>('[data-error-repair]')
       ?.addEventListener('click', () => void this.fix());
 
+    this.shell
+      .querySelector<HTMLButtonElement>('[data-action="review-repair"]')
+      ?.addEventListener('click', () => this.openReview());
+    // The review dialog lives outside the tool shell, so wire it from document.
+    document
+      .querySelector<HTMLButtonElement>('[data-action="close-review"]')
+      ?.addEventListener('click', () => this.closeReview());
+    document
+      .querySelector<HTMLButtonElement>('[data-action="revert-repair"]')
+      ?.addEventListener('click', () => this.revertRepair());
     setupSend({
       shell: this.shell,
       locale: this.locale,
@@ -311,6 +325,7 @@ export class OutputToolSession {
     }
 
     const text = this.input.getDoc();
+    if (this.kind === 'repair') this.lastOriginal = text;
 
     if (text.trim().length === 0) {
       if (mode === 'explicit') {
@@ -421,8 +436,12 @@ export class OutputToolSession {
         time: formatMilliseconds(stats.parseTimeMs, this.locale),
       });
     } else {
-      const stats = result.stats as RepairStats;
+      const repair = result as RepairResult;
+      const stats = repair.stats as RepairStats;
       this.setStats(stats);
+      this.lastFixes = repair.fixes ?? stats.fixes;
+      this.lastDiff = repair.diff ?? [];
+      this.showRepairNotice(this.lastFixes.length);
       this.showFixMeta(stats.fixes);
       status = fill(this.strings.repairDone, {
         time: formatMilliseconds(stats.parseTimeMs, this.locale),
@@ -589,6 +608,8 @@ export class OutputToolSession {
     this.input.markError(null);
     el<HTMLElement>(this.shell, '[data-large-output]').hidden = true;
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
+    const notice = this.shell.querySelector<HTMLElement>('[data-repair-notice]');
+    if (notice) notice.hidden = true;
     this.clearMeta();
     this.showOutputDot(false);
     this.refreshButtons();
@@ -613,7 +634,7 @@ export class OutputToolSession {
     const list = menu?.querySelector<HTMLElement>('[data-fix-list]');
     if (!menu || !count || !list) return;
 
-    const total = fixes.reduce((sum, fix) => sum + fix.count, 0);
+    const total = fixes.length;
     if (total === 0) {
       menu.hidden = true;
       menu.removeAttribute('open');
@@ -621,14 +642,17 @@ export class OutputToolSession {
       return;
     }
 
+    // Aggregate individual fixes by kind for the compact header breakdown.
+    const byKind = new Map<string, number>();
+    for (const fix of fixes) byKind.set(fix.kind, (byKind.get(fix.kind) ?? 0) + 1);
     list.replaceChildren(
-      ...fixes.map((fix) => {
+      ...[...byKind.entries()].map(([kind, count]) => {
         const row = document.createElement('li');
         const label = document.createElement('span');
-        label.textContent = this.strings.fix[fix.kind];
+        label.textContent = this.strings.fix[kind as keyof typeof this.strings.fix] ?? kind;
         const amount = document.createElement('span');
         amount.className = 'fix-count';
-        amount.textContent = `×${formatInteger(fix.count, this.locale)}`;
+        amount.textContent = `×${formatInteger(count, this.locale)}`;
         row.append(label, amount);
         return row;
       }),
@@ -691,10 +715,7 @@ export class OutputToolSession {
     const fixes = this.stat('fixes');
     const lines = this.stat('lines');
     if (fixes) {
-      fixes.textContent = formatInteger(
-        repair.fixes.reduce((total, fix) => total + fix.count, 0),
-        this.locale,
-      );
+      fixes.textContent = formatInteger(repair.fixes.length, this.locale);
     }
     if (lines) lines.textContent = formatInteger(repair.lines, this.locale);
   }
@@ -855,6 +876,104 @@ export class OutputToolSession {
     }
 
     this.setStatus(this.kind === 'minify' ? this.strings.minifying : this.strings.repairing);
+  }
+
+  private showRepairNotice(count: number): void {
+    if (this.kind !== 'repair') return;
+    const notice = this.shell.querySelector<HTMLElement>('[data-repair-notice]');
+    if (!notice) return;
+    if (count <= 0) {
+      notice.hidden = true;
+      return;
+    }
+    notice.hidden = false;
+    const text = notice.querySelector<HTMLElement>('[data-repair-notice-text]');
+    if (text) {
+      text.textContent =
+        count === 1
+          ? this.strings.repairNoticeOne
+          : fill(this.strings.repairNotice, { count: formatInteger(count, this.locale) });
+    }
+  }
+
+  private openReview(): void {
+    const dialog = document.querySelector<HTMLDialogElement>('[data-repair-dialog]');
+    if (!dialog) return;
+    this.renderReview();
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  }
+
+  private closeReview(): void {
+    const dialog = document.querySelector<HTMLDialogElement>('[data-repair-dialog]');
+    if (!dialog) return;
+    if (typeof dialog.close === 'function') dialog.close();
+    else dialog.removeAttribute('open');
+  }
+
+  private renderReview(): void {
+    const fixesList = document.querySelector<HTMLElement>('[data-review-fixes]');
+    if (fixesList) {
+      fixesList.replaceChildren(
+        ...this.lastFixes.map((fix) => {
+          const row = document.createElement('li');
+          row.className = 'flex items-start gap-2 rounded-md border border-line px-2 py-1';
+          const loc = document.createElement('span');
+          loc.className = 'font-mono text-[11px] text-body-mid';
+          loc.textContent = `${fix.line}:${fix.column}`;
+          const kind = document.createElement('span');
+          kind.className = 'font-semibold text-ink';
+          kind.textContent = this.strings.fix[fix.kind] ?? fix.kind;
+          const arrow = document.createElement('span');
+          arrow.className = 'font-mono text-[11px] text-body';
+          arrow.textContent = `${fix.before} → ${fix.after}`;
+          row.append(loc, kind, arrow);
+          if (fix.ambiguous) {
+            const badge = document.createElement('span');
+            badge.className = 'rounded-full bg-danger/10 px-2 py-0.5 text-[11px] text-danger';
+            badge.textContent = this.strings.repairAmbiguous;
+            row.append(badge);
+          }
+          row.style.cursor = 'pointer';
+          row.addEventListener('click', () => {
+            this.showView('input');
+            this.input.gotoLine(fix.line, fix.column);
+          });
+          return row;
+        }),
+      );
+      if (this.lastFixes.length === 0) {
+        const empty = document.createElement('li');
+        empty.textContent = this.strings.noFixes;
+        fixesList.append(empty);
+      }
+    }
+
+    const left = document.querySelector<HTMLElement>('[data-review-left]');
+    const right = document.querySelector<HTMLElement>('[data-review-right]');
+    if (left && right) {
+      // Use the worker's text diff so each side highlights its own changes.
+      const leftLines: string[] = [];
+      const rightLines: string[] = [];
+      for (const line of this.lastDiff) {
+        if (line.left !== null) {
+          const mark = line.type === 'removed' || line.type === 'changed' ? '- ' : '  ';
+          leftLines.push(mark + line.left);
+        }
+        if (line.right !== null) {
+          const mark = line.type === 'added' || line.type === 'changed' ? '+ ' : '  ';
+          rightLines.push(mark + line.right);
+        }
+      }
+      left.textContent = leftLines.length ? leftLines.join('\n') : (this.lastOriginal ?? '');
+      right.textContent = rightLines.length ? rightLines.join('\n') : (this.outputText ?? '');
+    }
+  }
+
+  private revertRepair(): void {
+    if (this.lastOriginal === null) return;
+    this.closeReview();
+    this.setInputText(this.lastOriginal, false);
   }
 
   dispose(): void {

@@ -21,7 +21,7 @@ export async function repairText(
   if (outcome.status === 'stale') return { status: 'skipped' };
   if (outcome.status === 'failed') return { status: 'failed', info: outcome.failure.info };
 
-  const fixes = outcome.result.stats.fixes.reduce((total, fix) => total + fix.count, 0);
+  const fixes = outcome.result.stats.fixes.length;
   return {
     status: 'ok',
     text: outcome.result.output ?? text,

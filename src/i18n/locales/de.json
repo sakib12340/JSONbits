@@ -425,5 +425,13 @@
   "tool.schema.runSchemaFile": "Mit diesem Schema ausführen",
   "tool.schema.runDocumentFile": "Mit diesem Dokument ausführen",
   "tool.schema.drop": "Schema-Datei ablegen",
-  "tool.document.drop": "Dokumentdatei ablegen"
+  "tool.document.drop": "Dokumentdatei ablegen",
+  "tool.repairNotice": "Repaired {count} issues.",
+  "tool.repairNotice.one": "Repaired 1 issue.",
+  "tool.reviewChanges": "Review changes",
+  "tool.revertOriginal": "Revert to original",
+  "tool.repairAmbiguous": "Check this",
+  "tool.reviewTitle": "Review repair changes",
+  "tool.diffOriginal": "Original",
+  "tool.diffRepaired": "Repaired"
 }
