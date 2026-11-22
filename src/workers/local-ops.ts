@@ -85,6 +85,11 @@ const localOps: { [K in WorkerOp]: Local<K> } = {
     return jsonToTypescript(text(payload), options);
   },
 
+  async jwtDecode(payload) {
+    const { decodeJwt } = await import('./ops/jwt');
+    return decodeJwt(text(payload));
+  },
+
   async validateSchema(payload) {
     const { validateSchema } = await import('./ops/schema');
     return validateSchema(payload);

@@ -1,0 +1,4 @@
+export const SAMPLE_JWT =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImRlbW8tMSJ9.' +
+  'eyJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tIiwic3ViIjoidXNlci0xMjMiLCJhdWQiOiJqc29uYml0cy1kZW1vIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjQxMDI0NDQ4MDAsIm5hbWUiOiJBZGEgTG92ZWxhY2UifQ.' +
+  'signature-demo';

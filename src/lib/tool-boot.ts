@@ -20,6 +20,7 @@ const loaders: Record<string, () => Promise<ToolModule>> = {
   'jsonpath-tester': () => import('../tools/jsonpath-tester/ui'),
   'json-to-typescript': () => import('../tools/json-to-typescript/ui'),
   'json-schema-validator': () => import('../tools/json-schema-validator/ui'),
+  'jwt-decoder': () => import('../tools/jwt-decoder/ui'),
 };
 
 function readStrings(shell: HTMLElement): Record<string, string> {

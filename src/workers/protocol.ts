@@ -307,6 +307,23 @@ export interface TypescriptResult {
   stats: TypescriptStats;
 }
 
+export type JwtWarningCode = 'algNone' | 'missingSignature' | 'expired';
+
+export interface JwtDecodeResult {
+  header: Record<string, unknown>;
+  payload: Record<string, unknown>;
+  headerText: string;
+  payloadText: string;
+  signaturePresent: boolean;
+  warnings: JwtWarningCode[];
+  stats: {
+    bytes: number;
+    headerBytes: number;
+    payloadBytes: number;
+    timeMs: number;
+  };
+}
+
 export interface SchemaPayload {
   schema: string;
   document: string;
@@ -408,6 +425,11 @@ export interface OpMap {
     options: TypescriptOptions;
     result: TypescriptResult;
   };
+  jwtDecode: {
+    payload: TextPayload;
+    options: Record<string, never>;
+    result: JwtDecodeResult;
+  };
   validateSchema: {
     payload: SchemaPayload;
     options: Record<string, never>;
@@ -469,7 +491,8 @@ export type ProgressPhase =
   | 'escaping'
   | 'querying'
   | 'generating'
-  | 'searching';
+  | 'searching'
+  | 'decoding';
 
 export interface ProgressUpdate {
   phase: ProgressPhase;

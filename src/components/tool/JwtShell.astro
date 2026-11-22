@@ -1,0 +1,160 @@
+---
+import ToolPage from './ToolPage.astro';
+import Toolbar from './Toolbar.astro';
+import EditorPane from './EditorPane.astro';
+import ErrorPanel from './ErrorPanel.astro';
+import OutputMeta from './OutputMeta.astro';
+import StatsBar from './StatsBar.astro';
+import ShortcutsDialog from './ShortcutsDialog.astro';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import { t } from '../../i18n/t';
+import { commonToolStrings } from '../../i18n/tool-strings';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+const { locale, tool } = Astro.props;
+const label = t(locale, 'tool.jwt.decode');
+const stats = [
+  { key: 'size', label: t(locale, 'tool.jwt.stats.size') },
+  { key: 'claims', label: t(locale, 'tool.jwt.stats.claims') },
+  { key: 'time', label: t(locale, 'tool.jwt.stats.time') },
+];
+
+const strings = {
+  ...commonToolStrings(locale),
+  largeRun: t(locale, 'tool.largeRunAction', { action: label }),
+  largeLoaded: t(locale, 'tool.largeLoadedAction', { action: label }),
+  largeWarning: t(locale, 'tool.largeWarningAction', { action: label }),
+  decoding: t(locale, 'tool.decoding'),
+  done: t(locale, 'tool.jwt.done'),
+  meta: t(locale, 'tool.jwt.meta'),
+  placeholder: t(locale, 'tool.jwt.placeholder'),
+  outputPlaceholder: t(locale, 'tool.jwt.outputPlaceholder'),
+  warningAlgNone: t(locale, 'tool.jwt.warning.algNone'),
+  warningMissingSignature: t(locale, 'tool.jwt.warning.missingSignature'),
+  warningExpired: t(locale, 'tool.jwt.warning.expired'),
+  claimLabels: {
+    exp: t(locale, 'tool.jwt.claim.exp'),
+    iat: t(locale, 'tool.jwt.claim.iat'),
+    nbf: t(locale, 'tool.jwt.claim.nbf'),
+    iss: t(locale, 'tool.jwt.claim.iss'),
+    sub: t(locale, 'tool.jwt.claim.sub'),
+    aud: t(locale, 'tool.jwt.claim.aud'),
+    alg: t(locale, 'tool.jwt.claim.alg'),
+    typ: t(locale, 'tool.jwt.claim.typ'),
+    kid: t(locale, 'tool.jwt.claim.kid'),
+  },
+  notPresent: t(locale, 'tool.jwt.notPresent'),
+  utc: t(locale, 'tool.jwt.utc'),
+  local: t(locale, 'tool.jwt.local'),
+  expiresIn: t(locale, 'tool.jwt.expiresIn'),
+  expiredAgo: t(locale, 'tool.jwt.expiredAgo'),
+  issuedAgo: t(locale, 'tool.jwt.issuedAgo'),
+  inputLabel: t(locale, 'tool.inputLabel.generic'),
+  outputLabel: t(locale, 'tool.jwt.outputLabel'),
+};
+---
+
+<ToolPage locale={locale} tool={tool} strings={strings}>
+  <div
+    class="mt-5 overflow-hidden rounded-[16px] border border-line bg-canvas sm:mt-7"
+    data-tool-frame
+  >
+    <Toolbar
+      locale={locale}
+      action="jwtDecode"
+      label={label}
+      showIndent={false}
+      showFind={true}
+      showFullscreen
+      accept=".jwt,.txt,.json,text/plain,application/json"
+    />
+
+    <div
+      role="note"
+      class="border-b border-line bg-cream/60 px-3 py-2 text-[13px] leading-5 text-body"
+      data-jwt-notice
+    >
+      {t(locale, 'tool.jwt.notice')}
+    </div>
+    <div
+      role="status"
+      class="border-b border-line px-3 py-2 text-[13px] leading-5 text-danger"
+      data-jwt-warnings
+      hidden
+    ></div>
+
+    <div
+      class="flex items-center gap-1 border-b border-line px-2 md:hidden"
+      role="tablist"
+      aria-label={`${t(locale, 'tool.input')} / ${t(locale, 'tool.output')}`}
+      data-mobile-tabs
+    >
+      <button type="button" id="tab-input" data-tab="input" role="tab" aria-selected="true" aria-controls="pane-input" tabindex="0" class="tool-tab">
+        {t(locale, 'tool.input')}
+      </button>
+      <button type="button" id="tab-output" data-tab="output" role="tab" aria-selected="false" aria-controls="pane-output" tabindex="-1" class="tool-tab">
+        {t(locale, 'tool.output')}
+        <span class="ml-1 inline-block size-1.5 rounded-full bg-primary align-middle" data-output-dot hidden></span>
+      </button>
+    </div>
+
+    <div class="tool-panes md:grid md:grid-cols-2" data-mobile-view="input">
+      <section class="tool-pane is-active min-w-0 flex-col" data-pane="input" id="pane-input" role="tabpanel" aria-label={t(locale, 'tool.input')}>
+        <div class="pane-head">
+          <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.input')}
+          </h2>
+          <span data-file-chip hidden class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body">
+            <span data-file-name class="truncate" />
+          </span>
+        </div>
+        <EditorPane kind="input" locale={locale} largeAction="jwtDecode-large" largeLabel={t(locale, 'tool.jwt.decodeFile')} />
+      </section>
+
+      <section class="tool-pane min-w-0 flex-col md:border-l md:border-line" data-pane="output" id="pane-output" role="tabpanel" aria-label={t(locale, 'tool.output')}>
+        <div class="pane-head">
+          <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
+            {t(locale, 'tool.output')}
+          </h2>
+          <OutputMeta locale={locale} />
+        </div>
+        <div data-jwt-claims class="max-h-[38%] overflow-y-auto border-b border-line px-3 py-2 text-[13px]" aria-live="polite"></div>
+        <EditorPane kind="output" locale={locale}>
+          <ErrorPanel locale={locale} canRepair={false} />
+        </EditorPane>
+      </section>
+    </div>
+
+    <StatsBar locale={locale} stats={stats} />
+  </div>
+
+  <p class="mt-4 text-[13px] leading-6 text-body-mid">{t(locale, 'tool.jwt.privacy')}</p>
+</ToolPage>
+
+<ShortcutsDialog locale={locale} runLabel={label} />
+
+<style>
+  .tool-tab {
+    position: relative;
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--body-mid);
+  }
+  .tool-tab[aria-selected="true"] {
+    color: var(--ink);
+    box-shadow: inset 0 -2px 0 var(--primary);
+  }
+  @media (max-width: 767px) {
+    .tool-pane { display: none; }
+    .tool-pane.is-active { display: flex; }
+  }
+</style>

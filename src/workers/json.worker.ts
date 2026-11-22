@@ -12,6 +12,7 @@ import { sortJson } from './ops/sort';
 import { transformEscapes } from './ops/escape';
 import { queryJsonPath } from './ops/jsonpath';
 import { jsonToTypescript } from './ops/typescript';
+import { decodeJwt } from './ops/jwt';
 import { validateSchema } from './ops/schema';
 import { failure } from './protocol';
 import type {
@@ -232,6 +233,13 @@ async function handle(request: WorkerRequest): Promise<void> {
         return;
       }
 
+      case 'jwtDecode': {
+        const text = await readText(id, request.payload, 'decoding');
+        if (text === null) return;
+        post({ id, ok: true, result: decodeJwt(text) });
+        return;
+      }
+
       case 'validateSchema': {
         progress(id, 'validating');
         await tick();
@@ -314,6 +322,7 @@ async function handle(request: WorkerRequest): Promise<void> {
       escape: 'escape tool',
       jsonpath: 'JSONPath tester',
       jsonToTypescript: 'TypeScript generator',
+      jwtDecode: 'JWT decoder',
       validateSchema: 'schema validator',
       jsonToCsv: 'CSV converter',
       csvToJson: 'CSV converter',
