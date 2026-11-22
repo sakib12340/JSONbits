@@ -345,6 +345,7 @@ export class JwtSession {
       add(this.strings.claimLabels[key], raw === undefined ? this.strings.notPresent : String(raw));
     }
     host.replaceChildren(list);
+    host.hidden = false;
   }
 
   private relative(epoch: number, key: 'exp' | 'iat' | 'nbf'): string {
@@ -385,7 +386,7 @@ export class JwtSession {
     this.lastError = info;
     this.outputText = null;
     this.output.setDoc('');
-    this.renderClaims({ header: {}, payload: {}, headerText: '', payloadText: '', signaturePresent: false, warnings: [], stats: { bytes: 0, headerBytes: 0, payloadBytes: 0, timeMs: 0 } });
+    el<HTMLElement>(this.shell, '[data-jwt-claims]').hidden = true;
     this.renderWarnings([]);
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = false;
     el<HTMLElement>(this.shell, '[data-error-message]').textContent = info.message;
@@ -416,7 +417,9 @@ export class JwtSession {
     this.input.markError(null);
     el<HTMLElement>(this.shell, '[data-error-panel]').hidden = true;
     el<HTMLElement>(this.shell, '[data-jwt-warnings]').hidden = true;
-    el<HTMLElement>(this.shell, '[data-jwt-claims]').replaceChildren();
+    const claims = el<HTMLElement>(this.shell, '[data-jwt-claims]');
+    claims.hidden = true;
+    claims.replaceChildren();
     for (const key of ['size', 'claims', 'time']) {
       const stat = this.shell.querySelector<HTMLElement>(`[data-stat="${key}"]`);
       if (stat) stat.textContent = '—';
