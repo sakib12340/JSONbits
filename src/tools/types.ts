@@ -31,6 +31,7 @@ export type ToolUi =
   | 'jwt'
   | 'jsonschema'
   | 'zod'
+  | 'ndjson'
   | 'pending';
 
 export interface ToolDef {

@@ -307,6 +307,46 @@ export interface TypescriptResult {
   stats: TypescriptStats;
 }
 
+export interface NdjsonOptions {
+  skipInvalid: boolean;
+  stopAtFirst: boolean;
+  pretty: boolean;
+  trimBlank: boolean;
+  delimiter: CsvDelimiter;
+  flatten: boolean;
+  header: boolean;
+  guard: boolean;
+}
+
+export interface NdjsonIssue {
+  line: number;
+  column: number;
+  message: string;
+  hint: string;
+}
+
+export interface NdjsonStats {
+  bytes: number;
+  lines: number;
+  valid: number;
+  invalid: number;
+  blank: number;
+  errorsShown: number;
+  truncated: boolean;
+  timeMs: number;
+}
+
+export interface NdjsonValidateResult {
+  stats: NdjsonStats;
+  issues: NdjsonIssue[];
+}
+
+export interface NdjsonConvertResult {
+  output: string | null;
+  blob: Blob | null;
+  stats: NdjsonStats;
+}
+
 export type SchemaDraft = '2020-12' | 'draft-07';
 
 export interface JsonToJsonSchemaOptions {
@@ -465,6 +505,26 @@ export interface OpMap {
     options: Record<string, never>;
     result: JwtDecodeResult;
   };
+  ndjsonValidate: {
+    payload: TextPayload;
+    options: NdjsonOptions;
+    result: NdjsonValidateResult;
+  };
+  ndjsonToJson: {
+    payload: TextPayload;
+    options: NdjsonOptions;
+    result: NdjsonConvertResult;
+  };
+  jsonToNdjson: {
+    payload: TextPayload;
+    options: NdjsonOptions;
+    result: NdjsonConvertResult;
+  };
+  ndjsonToCsv: {
+    payload: TextPayload;
+    options: NdjsonOptions;
+    result: NdjsonConvertResult;
+  };
   jsonToJsonSchema: {
     payload: TextPayload;
     options: JsonToJsonSchemaOptions;
@@ -542,6 +602,7 @@ export type ProgressPhase =
 
 export interface ProgressUpdate {
   phase: ProgressPhase;
+  percent?: number;
 }
 
 export type WorkerResponse<T = unknown> =

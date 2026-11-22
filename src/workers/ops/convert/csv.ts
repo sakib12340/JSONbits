@@ -134,9 +134,8 @@ function guardCell(value: string): string {
   return value.length > 0 && FORMULA_PREFIX.test(value) ? `'${value}` : value;
 }
 
-export function jsonToCsv(text: string, options: JsonToCsvOptions): ConvertResult {
-  const started = performance.now();
-  const rows = toRows(readJsonValue(text));
+/** Converts already-parsed rows to CSV. Shared by the JSON and NDJSON tools. */
+export function rowsToCsv(rows: Record<string, unknown>[], options: JsonToCsvOptions): string {
   const prepared = rows.map((row) =>
     options.flatten ? flattenRow(row, options.arrays) : row,
   );
@@ -162,15 +161,19 @@ export function jsonToCsv(text: string, options: JsonToCsvOptions): ConvertResul
   };
 
   if (options.header) write(columns);
-
   for (const row of prepared) {
     write(columns.map((column) => cellText(row[column], options.arrays)));
   }
+  return lines.join('\r\n');
+}
 
-  const output = lines.join('\r\n');
+export function jsonToCsv(text: string, options: JsonToCsvOptions): ConvertResult {
+  const started = performance.now();
+  const rows = toRows(readJsonValue(text));
+  const output = rowsToCsv(rows, options);
   const stats = finishStats(text, output, started, {
-    rows: prepared.length,
-    columns: columns.length,
+    rows: rows.length,
+    columns: output.length > 0 ? output.split('\r\n', 1)[0].split(options.delimiter).length : 0,
   });
 
   return { output, blob: null, stats };

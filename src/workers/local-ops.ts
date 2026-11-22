@@ -85,6 +85,26 @@ const localOps: { [K in WorkerOp]: Local<K> } = {
     return jsonToTypescript(text(payload), options);
   },
 
+  async ndjsonValidate(payload, options) {
+    const { ndjsonValidate } = await import('./ops/ndjson');
+    return ndjsonValidate({ text: text(payload) }, options);
+  },
+
+  async ndjsonToJson(payload, options) {
+    const { ndjsonToJson } = await import('./ops/ndjson');
+    return ndjsonToJson({ text: text(payload) }, options);
+  },
+
+  async jsonToNdjson(payload, options) {
+    const { jsonToNdjson } = await import('./ops/ndjson');
+    return jsonToNdjson({ text: text(payload) }, options);
+  },
+
+  async ndjsonToCsv(payload, options) {
+    const { ndjsonToCsv } = await import('./ops/ndjson');
+    return ndjsonToCsv({ text: text(payload) }, options);
+  },
+
   async jwtDecode(payload) {
     const { decodeJwt } = await import('./ops/jwt');
     return decodeJwt(text(payload));

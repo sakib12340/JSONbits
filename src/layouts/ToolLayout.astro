@@ -9,6 +9,7 @@ import ConverterShell from '../components/tool/ConverterShell.astro';
 import PaneShell from '../components/tool/PaneShell.astro';
 import SchemaShell from '../components/tool/SchemaShell.astro';
 import JwtShell from '../components/tool/JwtShell.astro';
+import NdjsonShell from '../components/tool/NdjsonShell.astro';
 import ToolArticle from '../components/tool/ToolArticle.astro';
 import JsonLd from '../components/seo/JsonLd.astro';
 import type { Locale } from '../i18n/config';
@@ -81,6 +82,7 @@ const structuredData = [
     tool.ui === 'typescript') && <PaneShell locale={locale} tool={tool} />}
   {tool.ui === 'schema' && <SchemaShell locale={locale} tool={tool} />}
   {tool.ui === 'jwt' && <JwtShell locale={locale} tool={tool} />}
+  {tool.ui === 'ndjson' && <NdjsonShell locale={locale} tool={tool} />}
 
   <ToolArticle locale={locale} tool={tool} copy={copy} />
 </BaseLayout>

@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
 Last updated: 2026-11-22
-Status: Feature Pack 2 in progress. Phases 1–4 are complete: repair-review UI, JSONPath extract modes, the JWT decoder, and the two inference tools (JSON Schema and Zod) are shipped. There are now 20 tools. Phases 5–8 remain. Cloudflare Pages settings are documented below and awaiting deploy approval.
+Status: Feature Pack 2 in progress. Phases 1–5 are complete: repair-review UI, JSONPath extract modes, the JWT decoder, the two inference tools (JSON Schema and Zod), and the four JSON Lines tools are shipped. There are now 24 tools. Phases 6–8 remain. Cloudflare Pages settings are documented below and awaiting deploy approval.
 
 ## Feature Pack 2 — Phases 1–3
 
@@ -17,6 +17,9 @@ Status: Feature Pack 2 in progress. Phases 1–4 are complete: repair-review UI,
 - Decision — schema handoff: "Validate with this schema" stores `{ schema, document }` under a one-shot `jsonbits:schema-handoff` key in `sessionStorage` in addition to the existing handoff, and the validator reads and clears it. No content leaves the browser. A pre-existing bug where the validator's Run button stayed disabled after any handoff was fixed by refreshing buttons when readiness changes.
 - The JSONPath "JSON to Schema" menu entry now resolves because `json-to-json-schema` exists.
 - Phase 4 verification: `pnpm validate` passes 513 keys per locale, title/description ranges, and the CSP hash; `pnpm astro check` 0 errors; `pnpm test` 58/58; `pnpm build` 171 pages. Browser checks covered inferred formats and enums, draft settings, the full handoff into the validator (document reported valid), Zod v4 output with `z.infer`, and no console errors or third-party requests.
+- **Phase 5:** added four tools sharing one worker module (`src/workers/ops/ndjson.ts`): `ndjson-validator`, `ndjson-to-json`, `json-to-ndjson`, and `ndjson-to-csv`. They read lines from a transferred ArrayBuffer in 64 KB chunks using a streaming `TextDecoder`, report progress, and remain cancellable. The validator counts total, valid, invalid, and blank lines, keeps the first 1,000 issues with the true total, and renders them in a virtualized list whose rows jump to the source line. Conversion options cover skip-invalid, stop-at-first, pretty printing, blank trimming, and the existing CSV delimiter/flatten/header/formula-guard settings via a shared `rowsToCsv` helper.
+- Decision — `json-to-ndjson` rejects non-array roots with an explicit hint rather than guessing a shape, and writes compact one-line records; number text is preserved by serializing from the typed AST and minifying, not by a `JSON.parse` round-trip.
+- Phase 5 verification: `pnpm validate` passes 541 keys per locale and all metadata/CSP checks; `pnpm astro check` 0 errors; `pnpm test` 65/65; `pnpm build` 191 pages. Browser checks covered valid and invalid line reporting with jump rows, NDJSON→JSON array output, JSON→NDJSON compact lines and the non-array error, NDJSON→CSV flattened output, zero third-party requests, and no console errors after making the validator-only DOM nodes optional in the shared session.
 
 ## Product identity
 

@@ -23,6 +23,10 @@ const loaders: Record<string, () => Promise<ToolModule>> = {
   'jwt-decoder': () => import('../tools/jwt-decoder/ui'),
   'json-to-json-schema': () => import('../tools/json-to-json-schema/ui'),
   'json-to-zod': () => import('../tools/json-to-zod/ui'),
+  'ndjson-validator': () => import('../tools/ndjson-validator/ui'),
+  'ndjson-to-json': () => import('../tools/ndjson-to-json/ui'),
+  'json-to-ndjson': () => import('../tools/json-to-ndjson/ui'),
+  'ndjson-to-csv': () => import('../tools/ndjson-to-csv/ui'),
 };
 
 function readStrings(shell: HTMLElement): Record<string, string> {

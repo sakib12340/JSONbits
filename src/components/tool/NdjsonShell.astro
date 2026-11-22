@@ -1,0 +1,181 @@
+---
+import ToolPage from './ToolPage.astro';
+import Toolbar from './Toolbar.astro';
+import EditorPane from './EditorPane.astro';
+import ErrorPanel from './ErrorPanel.astro';
+import OutputMeta from './OutputMeta.astro';
+import StatsBar from './StatsBar.astro';
+import ShortcutsDialog from './ShortcutsDialog.astro';
+import type { Locale } from '../../i18n/config';
+import type { ToolDef } from '../../tools/types';
+import { t } from '../../i18n/t';
+import { commonToolStrings } from '../../i18n/tool-strings';
+
+interface Props {
+  locale: Locale;
+  tool: ToolDef;
+}
+
+const { locale, tool } = Astro.props;
+const validate = tool.workerOp === 'ndjsonValidate';
+const label = validate ? t(locale, 'tool.ndjson.validate') : t(locale, 'tool.ndjson.run');
+const csv = tool.workerOp === 'ndjsonToCsv';
+const stats = [
+  { key: 'lines', label: t(locale, 'tool.ndjson.stats.lines') },
+  { key: 'valid', label: t(locale, 'tool.ndjson.stats.valid') },
+  { key: 'invalid', label: t(locale, 'tool.ndjson.stats.invalid') },
+  { key: 'blank', label: t(locale, 'tool.ndjson.stats.blank') },
+  { key: 'time', label: t(locale, 'tool.stats.time') },
+];
+
+const strings = {
+  ...commonToolStrings(locale),
+  largeRun: t(locale, 'tool.largeRunAction', { action: label }),
+  largeLoaded: t(locale, 'tool.largeLoadedAction', { action: label }),
+  largeWarning: t(locale, 'tool.largeWarningAction', { action: label }),
+  placeholder: t(locale, 'tool.ndjson.placeholder'),
+  outputPlaceholder: t(locale, 'tool.ndjson.outputPlaceholder'),
+  summary: t(locale, 'tool.ndjson.summary'),
+  noIssues: t(locale, 'tool.ndjson.noIssues'),
+  issues: t(locale, 'tool.ndjson.issues'),
+  showingIssues: t(locale, 'tool.ndjson.showingIssues'),
+  done: t(locale, 'tool.ndjson.done'),
+  meta: t(locale, 'tool.ndjson.meta'),
+  goto: t(locale, 'tool.ndjson.goto'),
+  inputLabel: t(locale, 'tool.inputLabel.generic'),
+  outputLabel: t(locale, 'tool.outputLabel.generic'),
+};
+const check = 'inline-flex min-h-11 cursor-pointer items-center gap-2 text-[14px] leading-5 text-ink';
+const box = 'size-4 rounded-[3px] accent-[var(--primary)]';
+---
+
+<ToolPage locale={locale} tool={tool} strings={strings}>
+  <div class="mt-5 overflow-hidden rounded-[16px] border border-line bg-canvas sm:mt-7" data-tool-frame>
+    <Toolbar
+      locale={locale}
+      action={tool.workerOp}
+      label={label}
+      showIndent={false}
+      showFind={true}
+      showFullscreen
+      accept=".ndjson,.jsonl,.json,.txt,application/json,text/plain"
+    />
+
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line px-3 py-2 sm:px-4" role="group" aria-label={t(locale, 'tool.settings')} data-options>
+      {!validate && !csv && (
+        <>
+          <label class={check}>
+            <input type="checkbox" class={box} data-option="skipInvalid" />
+            <span>{t(locale, 'tool.ndjson.option.skipInvalid')}</span>
+          </label>
+          <label class={check}>
+            <input type="checkbox" class={box} data-option="pretty" />
+            <span>{t(locale, 'tool.ndjson.option.pretty')}</span>
+          </label>
+          <label class={check}>
+            <input type="checkbox" class={box} data-option="trimBlank" checked />
+            <span>{t(locale, 'tool.ndjson.option.trimBlank')}</span>
+          </label>
+        </>
+      )}
+      {validate && (
+        <label class={check}>
+          <input type="checkbox" class={box} data-option="stopAtFirst" />
+          <span>{t(locale, 'tool.ndjson.option.stopFirst')}</span>
+        </label>
+      )}
+      {csv && (
+        <>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-[12px] font-medium leading-4 text-body-mid">{t(locale, 'tool.ndjson.option.delimiter')}</span>
+            <select data-option="delimiter" class="h-11 rounded-[8px] border border-line bg-canvas px-3 text-[14px] text-ink">
+              <option value=",">,</option>
+              <option value=";">;</option>
+              <option value="&#9;">Tab</option>
+              <option value="|">|</option>
+            </select>
+          </label>
+          <label class={check}>
+            <input type="checkbox" class={box} data-option="flatten" checked />
+            <span>{t(locale, 'tool.ndjson.option.flatten')}</span>
+          </label>
+          <label class={check}>
+            <input type="checkbox" class={box} data-option="header" checked />
+            <span>{t(locale, 'tool.ndjson.option.header')}</span>
+          </label>
+          <label class={check}>
+            <input type="checkbox" class={box} data-option="guard" />
+            <span>{t(locale, 'tool.ndjson.option.guard')}</span>
+          </label>
+        </>
+      )}
+    </div>
+
+    <div class="flex items-center gap-1 border-b border-line px-2 md:hidden" role="tablist" aria-label={`${t(locale, 'tool.input')} / ${t(locale, 'tool.output')}`} data-mobile-tabs>
+      <button type="button" id="tab-input" data-tab="input" role="tab" aria-selected="true" aria-controls="pane-input" tabindex="0" class="tool-tab">{t(locale, 'tool.input')}</button>
+      <button type="button" id="tab-output" data-tab="output" role="tab" aria-selected="false" aria-controls="pane-output" tabindex="-1" class="tool-tab">
+        {t(locale, 'tool.output')}
+        <span class="ml-1 inline-block size-1.5 rounded-full bg-primary align-middle" data-output-dot hidden></span>
+      </button>
+    </div>
+
+    <div class="tool-panes md:grid md:grid-cols-2" data-mobile-view="input">
+      <section class="tool-pane is-active flex min-w-0 flex-col" data-pane="input" id="pane-input" role="tabpanel" aria-label={t(locale, 'tool.input')}>
+        <div class="pane-head">
+          <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">{t(locale, 'tool.input')}</h2>
+          <span data-file-chip hidden class="inline-flex max-w-[60%] items-center gap-1.5 rounded-full bg-cream px-2.5 py-1 font-mono text-[11px] leading-4 text-body">
+            <span data-file-name class="truncate" />
+          </span>
+        </div>
+        <EditorPane kind="input" locale={locale} largeAction={`${tool.workerOp}-large`} largeLabel={t(locale, 'tool.ndjson.run')} />
+      </section>
+
+      <section class="tool-pane flex min-w-0 flex-col md:border-l md:border-line" data-pane="output" id="pane-output" role="tabpanel" aria-label={t(locale, 'tool.output')}>
+        <div class="pane-head">
+          <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">{t(locale, 'tool.output')}</h2>
+          <OutputMeta locale={locale} />
+        </div>
+        {validate ? (
+          <div class="flex min-h-0 flex-1 flex-col">
+            <div data-ndjson-summary class="border-b border-line px-3 py-2 text-[13px] text-body" aria-live="polite"></div>
+            <div data-ndjson-issues class="min-h-0 flex-1 overflow-y-auto" tabindex="0" role="listbox" aria-label={strings.issues}>
+              <div class="relative" data-ndjson-spacer style="height:0px">
+                <div class="absolute inset-x-0 top-0" data-ndjson-rows></div>
+              </div>
+            </div>
+            <ErrorPanel locale={locale} canRepair={false} />
+          </div>
+        ) : (
+          <EditorPane kind="output" locale={locale}>
+            <ErrorPanel locale={locale} canRepair={false} />
+          </EditorPane>
+        )}
+      </section>
+    </div>
+
+    <StatsBar locale={locale} stats={stats} />
+  </div>
+</ToolPage>
+
+<ShortcutsDialog locale={locale} runLabel={label} />
+
+<style>
+  .tool-tab {
+    position: relative;
+    display: inline-flex;
+    height: 44px;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--body-mid);
+  }
+  .tool-tab[aria-selected="true"] {
+    color: var(--ink);
+    box-shadow: inset 0 -2px 0 var(--primary);
+  }
+  @media (max-width: 767px) {
+    .tool-pane { display: none; }
+    .tool-pane.is-active { display: flex; }
+  }
+</style>

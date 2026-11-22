@@ -13,6 +13,12 @@ import { transformEscapes } from './ops/escape';
 import { queryJsonPath } from './ops/jsonpath';
 import { jsonToTypescript } from './ops/typescript';
 import { decodeJwt } from './ops/jwt';
+import {
+  jsonToNdjson,
+  ndjsonToCsv,
+  ndjsonToJson,
+  ndjsonValidate,
+} from './ops/ndjson';
 import { jsonToJsonSchema } from './ops/schema-infer';
 import { jsonToZod } from './ops/zod';
 import { validateSchema } from './ops/schema';
@@ -39,8 +45,8 @@ function post(message: WorkerResponse): void {
   scope.postMessage(message);
 }
 
-function progress(id: number, phase: ProgressPhase): void {
-  post({ id, type: 'progress', progress: { phase } });
+function progress(id: number, phase: ProgressPhase, percent?: number): void {
+  post({ id, type: 'progress', progress: { phase, percent } });
 }
 
 /** Let queued progress messages reach the main thread before heavy work starts. */
@@ -235,6 +241,47 @@ async function handle(request: WorkerRequest): Promise<void> {
         return;
       }
 
+      case 'ndjsonValidate': {
+        progress(id, 'validating', 0);
+        await tick();
+        post({
+          id,
+          ok: true,
+          result: ndjsonValidate(request.payload, request.options, (percent) =>
+            progress(id, 'validating', percent),
+          ),
+        });
+        return;
+      }
+
+      case 'ndjsonToJson': {
+        progress(id, 'converting', 0);
+        await tick();
+        const result = ndjsonToJson(request.payload, request.options, (percent) =>
+          progress(id, 'converting', percent),
+        );
+        withOutput(id, { output: result.output, blob: result.blob, stats: result.stats }, 'application/json');
+        return;
+      }
+
+      case 'jsonToNdjson': {
+        const result = jsonToNdjson(request.payload, request.options, (percent) =>
+          progress(id, 'converting', percent),
+        );
+        withOutput(id, { output: result.output, blob: result.blob, stats: result.stats }, 'application/x-ndjson');
+        return;
+      }
+
+      case 'ndjsonToCsv': {
+        progress(id, 'converting', 0);
+        await tick();
+        const result = ndjsonToCsv(request.payload, request.options, (percent) =>
+          progress(id, 'converting', percent),
+        );
+        withOutput(id, { output: result.output, blob: result.blob, stats: result.stats }, 'text/csv');
+        return;
+      }
+
       case 'jwtDecode': {
         const text = await readText(id, request.payload, 'decoding');
         if (text === null) return;
@@ -338,6 +385,10 @@ async function handle(request: WorkerRequest): Promise<void> {
       escape: 'escape tool',
       jsonpath: 'JSONPath tester',
       jsonToTypescript: 'TypeScript generator',
+      ndjsonValidate: 'NDJSON validator',
+      ndjsonToJson: 'NDJSON converter',
+      jsonToNdjson: 'NDJSON converter',
+      ndjsonToCsv: 'NDJSON converter',
       jwtDecode: 'JWT decoder',
       jsonToJsonSchema: 'schema generator',
       jsonToZod: 'Zod generator',
