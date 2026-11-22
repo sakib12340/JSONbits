@@ -1,7 +1,18 @@
 # Decisions — JSON Bits
 
-Last updated: 2026-11-19
-Status: Phase 10 complete. All 17 tools, six category hubs, five guides, and the privacy page are implemented in five locales; Tier 3 articles are English-first. Cloudflare Pages settings are documented below and awaiting deploy approval.
+Last updated: 2026-11-22
+Status: Feature Pack 2 in progress. Phases 1–3 are complete: repair-review UI, JSONPath extract modes, and the JWT decoder are shipped. There are now 18 tools. Phases 4–8 remain. Cloudflare Pages settings are documented below and awaiting deploy approval.
+
+## Feature Pack 2 — Phases 1–3
+
+- A reuse plan was written to `docs/FEATURE-PACK-2.md` before any code. Every new op lives in the existing worker; no new framework or dependency was added.
+- **Phase 1:** repair now records each fix with kind, line/column, before/after text, and an ambiguity flag, plus a worker-side text diff. JSON Repair shows a polite "Repaired N issues" notice, a focus-trapped review dialog with clickable fixes, a side-by-side diff, and Revert to original. `None → null` is flagged "Check this".
+- **Phase 2:** JSONPath gained five result modes (Values, Flatten arrays, First value, Paths, Path + value), positioned query errors, top-level-key example chips, capped visible matches with a full-result download, and output handoff from the same shared header "Send to" menu used everywhere else.
+- **Phase 3:** added `jwt-decoder` (category `view`). It base64url-decodes header and payload in the worker, warns on `alg: none`, missing signatures and expiry, rejects five-part JWE tokens, and states that signatures are never verified. All token data stays in the browser.
+- UI consistency fixes: the repair review dialog is centered and mobile-safe; JSONPath options align on one row, example chips use the site's bordered-control style, the output send menu matches the input menu, and editor panes now grow to fill their pane instead of leaving dead space below a fixed-height editor.
+- New English content follows the existing schema (140–155 character descriptions, 3 steps, 4–6 FAQs, ≥500 words). New UI keys exist in all five locales with English fallback and English-first articles.
+- Verification so far: `pnpm validate` passes key parity, title/description ranges and the CSP hash; `pnpm astro check` 0 errors; `pnpm test` 50/50; `pnpm build` 161 pages. Browser checks covered repair review, all JSONPath modes and handoff, JWT decode/warnings/JWE rejection, and desktop plus 390 px layouts with no console errors or third-party requests.
+- Known limitation until Phase 4: the JSONPath "JSON to Schema" handoff target does not exist yet, so that menu entry resolves only after `json-to-json-schema` ships.
 
 ## Product identity
 

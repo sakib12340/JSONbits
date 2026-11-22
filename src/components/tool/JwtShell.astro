@@ -104,7 +104,7 @@ const strings = {
     </div>
 
     <div class="tool-panes md:grid md:grid-cols-2" data-mobile-view="input">
-      <section class="tool-pane is-active min-w-0 flex-col" data-pane="input" id="pane-input" role="tabpanel" aria-label={t(locale, 'tool.input')}>
+      <section class="tool-pane is-active flex min-w-0 flex-col" data-pane="input" id="pane-input" role="tabpanel" aria-label={t(locale, 'tool.input')}>
         <div class="pane-head">
           <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
             {t(locale, 'tool.input')}
@@ -116,7 +116,7 @@ const strings = {
         <EditorPane kind="input" locale={locale} largeAction="jwtDecode-large" largeLabel={t(locale, 'tool.jwt.decodeFile')} />
       </section>
 
-      <section class="tool-pane min-w-0 flex-col md:border-l md:border-line" data-pane="output" id="pane-output" role="tabpanel" aria-label={t(locale, 'tool.output')}>
+      <section class="tool-pane flex min-w-0 flex-col md:border-l md:border-line" data-pane="output" id="pane-output" role="tabpanel" aria-label={t(locale, 'tool.output')}>
         <div class="pane-head">
           <h2 class="whitespace-nowrap font-sans text-[12px] font-semibold uppercase leading-5 tracking-[0.08em] text-body-mid">
             {t(locale, 'tool.output')}

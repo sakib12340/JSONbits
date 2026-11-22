@@ -231,6 +231,7 @@
 .pane-head {
   display: flex;
   height: 48px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
