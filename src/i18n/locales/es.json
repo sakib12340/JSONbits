@@ -433,5 +433,6 @@
   "tool.repairAmbiguous": "Check this",
   "tool.reviewTitle": "Review repair changes",
   "tool.diffOriginal": "Original",
-  "tool.diffRepaired": "Repaired"
+  "tool.diffRepaired": "Repaired",
+  "tool.reviewDiff": "Diferencias"
 }

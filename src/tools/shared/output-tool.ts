@@ -917,7 +917,7 @@ export class OutputToolSession {
       fixesList.replaceChildren(
         ...this.lastFixes.map((fix) => {
           const row = document.createElement('li');
-          row.className = 'flex items-start gap-2 rounded-md border border-line px-2 py-1';
+          row.className = 'flex flex-wrap items-start gap-x-2 gap-y-1 rounded-md border border-line px-2 py-1';
           const loc = document.createElement('span');
           loc.className = 'font-mono text-[11px] text-body-mid';
           loc.textContent = `${fix.line}:${fix.column}`;
@@ -925,7 +925,7 @@ export class OutputToolSession {
           kind.className = 'font-semibold text-ink';
           kind.textContent = this.strings.fix[fix.kind] ?? fix.kind;
           const arrow = document.createElement('span');
-          arrow.className = 'font-mono text-[11px] text-body';
+          arrow.className = 'min-w-0 break-all font-mono text-[11px] text-body';
           arrow.textContent = `${fix.before} → ${fix.after}`;
           row.append(loc, kind, arrow);
           if (fix.ambiguous) {
