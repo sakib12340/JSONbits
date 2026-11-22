@@ -3,7 +3,6 @@ import ToolPage from './ToolPage.astro';
 import Toolbar from './Toolbar.astro';
 import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
-import FileDropzone from './FileDropzone.astro';
 import OutputMeta from './OutputMeta.astro';
 import StatsBar from './StatsBar.astro';
 import SendMenu from './SendMenu.astro';
@@ -144,7 +143,6 @@ const strings = {
           largeAction={`${kind}-large`}
           largeLabel={kind === 'minify' ? t(locale, 'tool.minifyFile') : t(locale, 'tool.repairFile')}
         >
-          <FileDropzone locale={locale} />
         </EditorPane>
       </section>
 

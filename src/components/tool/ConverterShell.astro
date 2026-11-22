@@ -4,7 +4,6 @@ import Toolbar from './Toolbar.astro';
 import ConverterOptions from './ConverterOptions.astro';
 import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
-import FileDropzone from './FileDropzone.astro';
 import OutputMeta from './OutputMeta.astro';
 import StatsBar from './StatsBar.astro';
 import SendMenu from './SendMenu.astro';
@@ -142,10 +141,6 @@ const strings = {
           largeAction="convert-large"
           largeLabel={t(locale, 'tool.convertFile')}
         >
-          <FileDropzone
-            locale={locale}
-            label={t(locale, `tool.drop.${source}` as TranslationKey)}
-          />
         </EditorPane>
       </section>
 

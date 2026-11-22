@@ -121,6 +121,7 @@
   "tool.noscript": "Esta ferramenta precisa de JavaScript. Quando roda, cada operação fica no seu dispositivo.",
   "tool.drop": "Solte um arquivo JSON",
   "tool.dropHint": "Ele fica neste dispositivo.",
+  "tool.dragDropHint": "Arraste e solte um arquivo em qualquer lugar para carregá-lo",
   "tool.stats.size": "Tamanho",
   "tool.stats.lines": "Linhas",
   "tool.stats.depth": "Profundidade",

@@ -121,6 +121,7 @@
   "tool.noscript": "Dieses Werkzeug benötigt JavaScript. Danach bleibt jeder Vorgang auf deinem Gerät.",
   "tool.drop": "JSON-Datei ablegen",
   "tool.dropHint": "Sie bleibt auf diesem Gerät.",
+  "tool.dragDropHint": "Datei per Drag-and-Drop überall ablegen, um sie zu laden",
   "tool.stats.size": "Größe",
   "tool.stats.lines": "Zeilen",
   "tool.stats.depth": "Tiefe",

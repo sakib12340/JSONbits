@@ -1,5 +1,5 @@
 import type { EditorHandle } from '../../lib/editor';
-import { attachDropzone, guardDocumentDrops } from '../../lib/dropzone';
+import { setupPageDropzone } from '../../lib/dropzone';
 import { setupTabs } from '../../lib/tabs';
 import { setupShortcuts } from '../../lib/tool-shortcuts';
 import { readStrings } from '../shared/strings';
@@ -77,12 +77,13 @@ export async function mount(shell: HTMLElement): Promise<void> {
   for (const side of ['left', 'right'] as const) {
     const wrap = shell.querySelector<HTMLElement>(`[data-editor-wrap="${side}"]`);
     if (!wrap) continue;
-
-    attachDropzone(wrap, (file) => void session?.loadFile(side, file));
     wrap.addEventListener('focusin', () => session?.setActiveSide(side));
   }
 
-  guardDocumentDrops();
+  setupPageDropzone(shell, (file, side) => {
+    const target = side === 'right' ? 'right' : 'left';
+    void session?.loadFile(target, file);
+  });
 
   window.addEventListener(
     'pagehide',

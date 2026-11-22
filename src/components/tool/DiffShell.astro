@@ -3,7 +3,6 @@ import ToolPage from './ToolPage.astro';
 import Toolbar from './Toolbar.astro';
 import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
-import FileDropzone from './FileDropzone.astro';
 import StatsBar from './StatsBar.astro';
 import SendMenu from './SendMenu.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
@@ -177,7 +176,6 @@ const strings = {
         </div>
 
         <EditorPane kind="left" locale={locale}>
-          <FileDropzone locale={locale} />
         </EditorPane>
       </section>
 
@@ -213,7 +211,6 @@ const strings = {
         </div>
 
         <EditorPane kind="right" locale={locale}>
-          <FileDropzone locale={locale} />
         </EditorPane>
       </section>
 

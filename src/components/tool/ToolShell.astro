@@ -3,7 +3,6 @@ import ToolPage from './ToolPage.astro';
 import Toolbar from './Toolbar.astro';
 import EditorPane from './EditorPane.astro';
 import ErrorPanel from './ErrorPanel.astro';
-import FileDropzone from './FileDropzone.astro';
 import OutputMeta from './OutputMeta.astro';
 import StatsBar from './StatsBar.astro';
 import SendMenu from './SendMenu.astro';
@@ -87,7 +86,6 @@ const strings = commonToolStrings(locale);
         </div>
 
         <EditorPane kind="input" locale={locale}>
-          <FileDropzone locale={locale} />
         </EditorPane>
       </section>
 

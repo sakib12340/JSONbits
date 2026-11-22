@@ -2,7 +2,6 @@
 import ToolPage from './ToolPage.astro';
 import Toolbar from './Toolbar.astro';
 import EditorPane from './EditorPane.astro';
-import FileDropzone from './FileDropzone.astro';
 import StatsBar from './StatsBar.astro';
 import SendMenu from './SendMenu.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
@@ -77,7 +76,6 @@ const strings = {
         largeAction="validate-large"
         largeLabel={t(locale, 'tool.validateFile')}
       >
-        <FileDropzone locale={locale} />
       </EditorPane>
     </section>
 

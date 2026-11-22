@@ -2,7 +2,6 @@
 import ToolPage from './ToolPage.astro';
 import Toolbar from './Toolbar.astro';
 import EditorPane from './EditorPane.astro';
-import FileDropzone from './FileDropzone.astro';
 import StatsBar from './StatsBar.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
 import type { Locale } from '../../i18n/config';
@@ -137,7 +136,6 @@ const strings = {
           largeAction="schema-large"
           largeLabel={t(locale, 'tool.schema.runSchemaFile')}
         >
-          <FileDropzone locale={locale} label={t(locale, 'tool.schema.drop')} />
         </EditorPane>
       </section>
 
@@ -161,7 +159,6 @@ const strings = {
           largeAction="document-large"
           largeLabel={t(locale, 'tool.schema.runDocumentFile')}
         >
-          <FileDropzone locale={locale} label={t(locale, 'tool.document.drop')} />
         </EditorPane>
       </section>
     </div>

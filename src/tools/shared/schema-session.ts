@@ -1,6 +1,6 @@
 import { copyText } from '../../lib/clipboard';
 import { downloadBlob } from '../../lib/download';
-import { attachDropzone } from '../../lib/dropzone';
+import { setupPageDropzone } from '../../lib/dropzone';
 import type { EditorHandle } from '../../lib/editor';
 import { InvalidFileError, readTextFile } from '../../lib/file-text';
 import { formatBytes, formatInteger, formatMilliseconds } from '../../lib/format-bytes';
@@ -160,11 +160,13 @@ export class SchemaSession {
     for (const wrap of this.shell.querySelectorAll<HTMLElement>('[data-editor-wrap]')) {
       const side = wrap.dataset.editorWrap === 'right' ? 'document' : 'schema';
       wrap.addEventListener('focusin', () => this.setActiveSide(side));
-      attachDropzone(wrap, (file) => {
-        this.setActiveSide(side);
-        void this.loadFile(side, file);
-      });
     }
+
+    setupPageDropzone(this.shell, (file, side) => {
+      const target = side === 'right' ? 'document' : 'schema';
+      this.setActiveSide(target);
+      void this.loadFile(target, file);
+    });
 
     const fileInput = el<HTMLInputElement>(this.shell, '[data-file-input]');
     fileInput.addEventListener('change', () => {

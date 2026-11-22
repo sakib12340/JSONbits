@@ -121,6 +121,7 @@
   "tool.noscript": "Cet outil nécessite JavaScript. Une fois lancé, chaque opération reste sur votre appareil.",
   "tool.drop": "Déposez un fichier JSON",
   "tool.dropHint": "Il reste sur cet appareil.",
+  "tool.dragDropHint": "Glissez-déposez un fichier n'importe où pour le charger",
   "tool.stats.size": "Taille",
   "tool.stats.lines": "Lignes",
   "tool.stats.depth": "Profondeur",
