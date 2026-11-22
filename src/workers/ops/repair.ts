@@ -1,4 +1,5 @@
 import type { RepairFix, RepairFixKind, RepairResult } from '../protocol';
+import { JsonFormatError } from './errors';
 import { formatJson } from './format';
 
 interface FixCounts {
@@ -303,7 +304,19 @@ export function repairJson(
   repaired = replacePythonLiterals(repaired, counts);
   repaired = dropTrailingCommas(repaired, counts);
 
-  const formatted = formatJson(repaired, options);
+  let formatted: ReturnType<typeof formatJson>;
+  try {
+    formatted = formatJson(repaired, options);
+  } catch (error) {
+    if (error instanceof JsonFormatError) throw error;
+    throw new JsonFormatError(
+      'This document could not be repaired automatically.',
+      'Fix automatically only handles common mistakes such as trailing commas, comments, and quote styles. Check the error above for the exact problem.',
+      0,
+      0,
+      0,
+    );
+  }
   const fixes = toFixes(counts);
 
   return {

@@ -12,6 +12,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "validate": "node scripts/validate.mjs",
     "test": "vitest run",
     "astro": "astro"
   },

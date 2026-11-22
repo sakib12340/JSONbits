@@ -17,7 +17,6 @@ function readSlugs(collection) {
 
 const toolSlugs = readSlugs('tools');
 const hubSlugs = readSlugs('hubs');
-const guideSlugs = readSlugs('guides');
 
 const collectionByKind = {
   tool: 'tools',

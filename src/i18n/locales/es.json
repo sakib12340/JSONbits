@@ -36,6 +36,7 @@
   "category.generate": "Generar",
   "category.generate.description": "Convierte JSON en tipos de TypeScript y esquemas.",
   "header.tools": "Herramientas",
+  "header.menu": "Menú",
   "theme.light": "Claro",
   "theme.dark": "Oscuro",
   "theme.toggle": "Tema: {mode}. Activa para cambiar.",

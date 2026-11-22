@@ -36,6 +36,7 @@
   "category.generate": "Generieren",
   "category.generate.description": "Erzeuge TypeScript-Typen und Schemas aus JSON.",
   "header.tools": "Tools",
+  "header.menu": "Menü",
   "theme.light": "Hell",
   "theme.dark": "Dunkel",
   "theme.toggle": "Design: {mode}. Aktivieren zum Ändern.",

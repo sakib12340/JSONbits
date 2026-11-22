@@ -104,7 +104,7 @@ export function setupDropzone(shell: HTMLElement, onFile: (file: File) => void):
 /** Backwards-compatible alias; side is derived from the drop target. */
 export function attachDropzone(_wrap: HTMLElement, onFile: (file: File) => void): void {
   const shell = _wrap.closest<HTMLElement>('[data-tool-shell], [data-tool-frame]')?.parentElement ?? document.body;
-  setupPageDropzone(shell, (file, side) => onFile(file));
+  setupPageDropzone(shell, (file) => onFile(file));
 }
 
 /** Stop the browser from navigating when a file is dropped outside an editor. */

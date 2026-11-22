@@ -15,6 +15,7 @@ const { locale, langPath } = Astro.props;
 const home = localePath(locale, '/');
 const toolsHref = `${home}#tools`;
 const learnHref = localePath(locale, '/learn');
+const privacyHref = localePath(locale, '/privacy');
 ---
 
 <header class="sticky top-0 z-40 border-b border-line bg-canvas">
@@ -39,6 +40,122 @@ const learnHref = localePath(locale, '/learn');
       </a>
       <ThemeToggle locale={locale} />
       <LangSwitcher locale={locale} path={langPath} />
+
+      <button
+        type="button"
+        class="grid size-11 place-items-center rounded-[8px] text-ink hover:bg-cream sm:hidden"
+        data-mobile-menu-toggle
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label={t(locale, 'header.menu')}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="size-5"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M4 7h16" />
+          <path d="M4 12h16" />
+          <path d="M4 17h16" />
+        </svg>
+      </button>
+    </nav>
+  </div>
+
+  <div
+    id="mobile-menu"
+    hidden
+    class="border-t border-line bg-canvas sm:hidden"
+    data-mobile-menu
+  >
+    <nav class="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3" aria-label={t(locale, 'header.menu')}>
+      <a
+        href={toolsHref}
+        class="flex min-h-11 items-center rounded-[8px] px-3 text-[15px] font-medium text-ink hover:bg-cream"
+        data-mobile-menu-link
+      >
+        {t(locale, 'header.tools')}
+      </a>
+      <a
+        href={learnHref}
+        class="flex min-h-11 items-center rounded-[8px] px-3 text-[15px] font-medium text-ink hover:bg-cream"
+        data-mobile-menu-link
+      >
+        {t(locale, 'footer.learn')}
+      </a>
+      <a
+        href={privacyHref}
+        class="flex min-h-11 items-center rounded-[8px] px-3 text-[15px] font-medium text-ink hover:bg-cream"
+        data-mobile-menu-link
+      >
+        {t(locale, 'footer.privacy')}
+      </a>
     </nav>
   </div>
 </header>
+
+<script>
+  for (const header of document.querySelectorAll('header')) {
+    const toggle = header.querySelector<HTMLButtonElement>('[data-mobile-menu-toggle]');
+    const menu = header.querySelector<HTMLElement>('[data-mobile-menu]');
+    if (!toggle || !menu) continue;
+
+    const links = Array.from(menu.querySelectorAll<HTMLAnchorElement>('[data-mobile-menu-link]'));
+
+    const open = (): void => {
+      menu.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      requestAnimationFrame(() => links[0]?.focus());
+    };
+
+    const close = (): void => {
+      menu.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    };
+
+    toggle.addEventListener('click', () => {
+      if (menu.hidden) open();
+      else close();
+    });
+
+    for (const link of links) {
+      link.addEventListener('click', () => {
+        close();
+      });
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (menu.hidden) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+        return;
+      }
+      if (event.key === 'Tab' && links.length > 0) {
+        const first = links[0];
+        const last = links[links.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      if (menu.hidden) return;
+      const target = event.target as Node | null;
+      if (target && !header.contains(target)) close();
+    });
+  }
+</script>
