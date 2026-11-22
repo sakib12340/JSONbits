@@ -15,6 +15,7 @@ interface Props {
 
 const { locale, tool, copy } = Astro.props;
 const { Content } = await render(copy);
+const contentLang = copy.data.locale;
 
 const relatedIds = copy.data.related ?? tool.relatedIds;
 const related = relatedIds
@@ -35,12 +36,12 @@ const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related
       {heading('what')}
     </h2>
 
-    <div class="md-body mt-5">
+    <div class="md-body mt-5" lang={contentLang}>
       <Content />
     </div>
 
     <h2 class="article-heading">{heading('how')}</h2>
-    <ol class="article-steps">
+    <ol class="article-steps" lang={contentLang}>
       {
         copy.data.steps.map((step) => (
           <li>
@@ -51,7 +52,7 @@ const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related
     </ol>
 
     <h2 class="article-heading">{heading('example')}</h2>
-    <p class="article-lead">{copy.data.example.caption}</p>
+    <p class="article-lead" lang={contentLang}>{copy.data.example.caption}</p>
     <div class="mt-4 grid gap-3 sm:grid-cols-2">
       <figure class="min-w-0">
         <figcaption class="article-caption">{t(locale, 'article.input')}</figcaption>
@@ -68,7 +69,7 @@ const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related
     </div>
 
     <h2 class="article-heading">{heading('mistakes')}</h2>
-    <ul class="article-list">
+    <ul class="article-list" lang={contentLang}>
       {
         copy.data.mistakes.map((mistake) => (
           <li>{mistake}</li>
@@ -77,7 +78,7 @@ const heading = (key: 'what' | 'how' | 'example' | 'mistakes' | 'faq' | 'related
     </ul>
 
     <h2 class="article-heading">{heading('faq')}</h2>
-    <div class="faq-list">
+    <div class="faq-list" lang={contentLang}>
       {
         copy.data.faq.map((entry) => (
           <details class="faq-item">

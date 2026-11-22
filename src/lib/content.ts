@@ -1,5 +1,5 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
-import { defaultLocale, type Locale } from '../i18n/config';
+import { defaultLocale, locales, type Locale } from '../i18n/config';
 import type { ToolCategory } from '../tools/types';
 
 export type ToolCopy = CollectionEntry<'tools'>;
@@ -55,4 +55,26 @@ export async function listGuides(locale: Locale): Promise<GuideCopy[]> {
   }
 
   return [...bySlug.values()].sort((a, b) => a.data.title.localeCompare(b.data.title));
+}
+
+function orderedLocales(present: Set<Locale>): Locale[] {
+  return locales.filter((locale) => present.has(locale));
+}
+
+/** Locales with genuine copy for this tool. Fallback pages are not included. */
+export async function getToolLocales(toolId: string): Promise<Locale[]> {
+  const entries = await getCollection('tools', (entry) => entry.data.toolId === toolId);
+  return orderedLocales(new Set(entries.map((entry) => entry.data.locale)));
+}
+
+/** Locales with genuine copy for this category hub. */
+export async function getHubLocales(category: ToolCategory): Promise<Locale[]> {
+  const entries = await getCollection('hubs', (entry) => entry.data.category === category);
+  return orderedLocales(new Set(entries.map((entry) => entry.data.locale)));
+}
+
+/** Locales with genuine copy for this guide. */
+export async function getGuideLocales(slug: string): Promise<Locale[]> {
+  const entries = await getCollection('guides', (entry) => entry.data.slug === slug);
+  return orderedLocales(new Set(entries.map((entry) => entry.data.locale)));
 }

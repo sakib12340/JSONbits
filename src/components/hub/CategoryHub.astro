@@ -5,7 +5,7 @@ import JsonLd from '../seo/JsonLd.astro';
 import ToolCard from '../home/ToolCard.astro';
 import { tools } from '../../tools/registry';
 import type { Locale } from '../../i18n/config';
-import { getHubCopy, listGuides } from '../../lib/content';
+import { getHubCopy, getHubLocales, listGuides } from '../../lib/content';
 import { categoryHubs, hubBySlug } from '../../lib/categories';
 import { localePath } from '../../lib/paths';
 import { localeUrl, SITE_NAME } from '../../lib/site';
@@ -23,6 +23,9 @@ const hub = hubBySlug(slug);
 if (!hub) throw new Error(`Unknown category hub "${slug}"`);
 
 const copy = await getHubCopy(locale, hub.category);
+const translatedLocales = await getHubLocales(hub.category);
+const isFallback = copy.data.locale !== locale;
+const contentLang = copy.data.locale;
 const { Content } = await render(copy);
 
 const categoryTools = tools.filter((tool) => tool.available && tool.category === hub.category);
@@ -64,6 +67,8 @@ const structuredData = [
   title={metaTitle}
   description={copy.data.description}
   path={`/${hub.slug}`}
+  noindex={isFallback}
+  alternateLocales={translatedLocales}
 >
   <JsonLd slot="head" data={structuredData} />
 
@@ -86,7 +91,7 @@ const structuredData = [
       >
         {heading}
       </h1>
-      <div class="md-body mt-5 max-w-3xl">
+      <div class="md-body mt-5 max-w-3xl" lang={contentLang}>
         <Content />
       </div>
     </header>
@@ -151,7 +156,7 @@ const structuredData = [
       >
         {t(locale, 'article.faq')}
       </h2>
-      <div class="faq-list">
+      <div class="faq-list" lang={contentLang}>
         {
           copy.data.faq.map((entry) => (
             <details class="faq-item">

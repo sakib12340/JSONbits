@@ -4,7 +4,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import JsonLd from '../seo/JsonLd.astro';
 import ToolCard from '../home/ToolCard.astro';
 import type { Locale } from '../../i18n/config';
-import { getGuideCopy } from '../../lib/content';
+import { getGuideCopy, getGuideLocales } from '../../lib/content';
 import { tools } from '../../tools/registry';
 import { localePath } from '../../lib/paths';
 import { localeUrl, SITE_NAME } from '../../lib/site';
@@ -18,6 +18,9 @@ interface Props {
 
 const { locale, slug } = Astro.props;
 const copy = await getGuideCopy(locale, slug);
+const translatedLocales = await getGuideLocales(slug);
+const isFallback = copy.data.locale !== locale;
+const contentLang = copy.data.locale;
 const { Content } = await render(copy);
 
 const url = localeUrl(locale, `/learn/${slug}`);
@@ -51,6 +54,8 @@ const structuredData = [
   description={copy.data.description}
   path={`/learn/${slug}`}
   type="article"
+  noindex={isFallback}
+  alternateLocales={translatedLocales}
 >
   <JsonLd slot="head" data={structuredData} />
 
@@ -73,6 +78,7 @@ const structuredData = [
     <article class="mt-8">
       <h1
         id="guide-title"
+        lang={contentLang}
         class="text-[30px] font-medium leading-[1.1] tracking-[-0.03em] text-ink sm:text-[40px]"
       >
         {copy.data.title}
@@ -83,7 +89,7 @@ const structuredData = [
         </time>
       </p>
 
-      <div class="md-body mt-6">
+      <div class="md-body mt-6" lang={contentLang}>
         <Content />
       </div>
 
@@ -121,7 +127,7 @@ const structuredData = [
             >
               {t(locale, 'article.faq')}
             </h2>
-            <div class="faq-list">
+            <div class="faq-list" lang={contentLang}>
               {faq.map((entry) => (
                 <details class="faq-item">
                   <summary>{entry.q}</summary>

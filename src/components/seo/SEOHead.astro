@@ -10,13 +10,16 @@ interface Props {
   path: string;
   type?: 'website' | 'article';
   noindex?: boolean;
+  /** Locales with genuine content for this path. Defaults to all locales. */
+  alternateLocales?: readonly Locale[];
 }
 
-const { title, description, locale, path, type = 'website', noindex = false } = Astro.props;
+const { title, description, locale, path, type = 'website', noindex = false, alternateLocales } = Astro.props;
 
 const canonical = localeUrl(locale, path);
 const image = absoluteUrl('/og-default.png');
-const alternates = locales.map((entry) => ({
+const alternateSet = alternateLocales ?? locales;
+const alternates = alternateSet.map((entry) => ({
   lang: localeMeta[entry].lang,
   href: localeUrl(entry, path),
 }));
