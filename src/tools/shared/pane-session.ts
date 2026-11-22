@@ -1111,7 +1111,7 @@ export class PaneSession {
       ...keys.map((key) => {
         const chip = document.createElement('button');
         chip.type = 'button';
-        chip.className = 'min-h-11 rounded-full bg-cream px-2.5 font-mono text-[12px] text-body hover:text-ink';
+        chip.className = 'rounded-[8px] border border-line bg-canvas px-2.5 py-1 font-mono text-[12px] text-body-mid hover:border-line-strong hover:text-ink';
         chip.dataset.example = `$.${key}`;
         chip.textContent = key;
         return chip;

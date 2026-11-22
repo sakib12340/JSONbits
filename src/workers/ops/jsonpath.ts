@@ -636,7 +636,8 @@ export function queryJsonPath(text: string, options: JsonPathOptions): JsonPathR
   };
 
   let visibleText = build(visible);
-  let allText = matches.length === visible.length ? visibleText : build(matches);
+  // Only expose a separate full result when the visible output was capped.
+  let allText: string | null = matches.length > visible.length ? build(matches) : null;
 
   // Keep the visible result small; the full result is offered as a download.
   let visibleBlob: Blob | null = null;
@@ -645,9 +646,9 @@ export function queryJsonPath(text: string, options: JsonPathOptions): JsonPathR
     visibleText = '';
   }
   let allBlob: Blob | null = null;
-  if (allText !== visibleText && utf8Length(allText) > OUTPUT_LIMIT) {
+  if (allText !== null && utf8Length(allText) > OUTPUT_LIMIT) {
     allBlob = new Blob([allText], { type: 'application/json' });
-    allText = '';
+    allText = null;
   }
 
   const timeMs = Math.round((performance.now() - started) * 10) / 10;
