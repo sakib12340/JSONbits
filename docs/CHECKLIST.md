@@ -190,9 +190,9 @@ Google's technical requirements are basic: Googlebot isn't blocked, the page wor
 - [ ] [PRO] Favicon set (SVG + PNG + Apple touch icon) and web manifest (decide PWA separately; see Z notes)
 
 ## P: PERFORMANCE
-- [ ] [MIN] Entry JS tiny; editor, worker, and heavy libraries lazy-loaded per tool
-- [ ] [MIN] Zero third-party requests (until ads, which load after consent and after the page is interactive)
-- [ ] [MIN] Fonts: system stack or one self-hosted subset with `font-display: swap`; images sized and compressed
+- [x] [MIN] Entry JS tiny; editor, worker, and heavy libraries lazy-loaded per tool — evidence: home initial scripts total 5,970 bytes (~2 KB gzip); editor 348 KB and worker 279 KB are lazy chunks; converter libs behind `import()`
+- [x] [MIN] Zero third-party requests (until ads, which load after consent and after the page is interactive) — evidence: browser resource-origin scan across all 24 tool pages: only `http://localhost:4322`; 0 console errors
+- [x] [MIN] Fonts: system stack or one self-hosted subset with `font-display: swap`; images sized and compressed — evidence: `global.css:5` self-hosted Inter latin subset (48 KB) with `font-display: swap`; no `<img>` elements in source
 - [!] [MIN] LCP < 2.5s, CLS < 0.1, INP < 200ms on a mid-range phone profile (target LCP < 1.5s) — blocked: available browser Lighthouse tool reports only a11y/best-practices/SEO; trace showed 0 long tasks, prior DECISIONS records LCP 0.9s
 - [~] [MIN] Ad slots reserve fixed height so ads cause no layout shift — N/A: no ad slots ship today (ads intentionally deferred); when enabled they must reserve fixed height
 - [!] [PRO] Lighthouse ≥ 90 on every page type; bundle-size budget enforced in CI — blocked: Lighthouse tool exposes no performance score here; a11y/best-practices/SEO were 100 on all tested pages; no CI exists
