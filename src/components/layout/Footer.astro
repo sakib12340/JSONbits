@@ -47,6 +47,12 @@ const year = new Date().getFullYear();
           >
             {t(locale, 'footer.privacy')}
           </a>
+          <a
+            href={localePath(locale, '/terms')}
+            class="inline-flex min-h-11 items-center text-[14px] font-medium text-ink hover:underline hover:underline-offset-4"
+          >
+            {t(locale, 'footer.terms')}
+          </a>
         </nav>
         <p class="max-w-sm text-[14px] leading-[22px] text-body">
           {t(locale, 'home.privacy')}

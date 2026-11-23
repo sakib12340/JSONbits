@@ -1,7 +1,7 @@
 {
   "site.name": "JSON Bits",
   "site.description": "Herramientas JSON rápidas y privadas que se ejecutan por completo en tu navegador. No se sube nada.",
-  "home.metaTitle": "JSON Bits — Herramientas JSON privadas en tu navegador",
+  "home.metaTitle": "JSON Bits: Herramientas JSON privadas en tu navegador",
   "home.title": "Herramientas JSON privadas, directamente en tu navegador.",
   "home.intro": "Un conjunto de utilidades JSON para formatear, validar, convertir y comparar datos. Cada operación se queda en tu dispositivo.",
   "home.eyebrow": "Caja de herramientas JSON",
@@ -46,7 +46,7 @@
   "footer.copyright": "© {year} JSON Bits",
   "a11y.skipToContent": "Saltar al contenido",
   "a11y.breadcrumb": "Ruta de navegación",
-  "tool.metaTitle": "{tool} online — gratis y privado | JSON Bits",
+  "tool.metaTitle": "{tool} online: gratis y privado | JSON Bits",
   "tool.metaDescription": "{description} Gratis y privado: se ejecuta en tu navegador y nunca sube tus datos.",
   "tool.input": "Entrada",
   "tool.output": "Salida",
@@ -325,10 +325,10 @@
   "guide.tools": "Herramientas de esta guía",
   "guide.updated": "Actualizado el {date}",
   "guide.back": "Todas las guías",
-  "privacy.metaTitle": "Privacidad — JSON Bits",
+  "privacy.metaTitle": "Privacidad: JSON Bits",
   "privacy.title": "Privacidad",
   "privacy.description": "Qué guarda JSON Bits, qué no ve nunca y por qué las herramientas funcionan sin enviar tus datos a ninguna parte. Todo ocurre en tu navegador.",
-  "notFound.metaTitle": "Página no encontrada — JSON Bits",
+  "notFound.metaTitle": "Página no encontrada: JSON Bits",
   "notFound.title": "Página no encontrada",
   "notFound.body": "Esa URL no coincide con ninguna herramienta ni guía. Prueba con una de estas.",
   "notFound.tools": "Herramientas populares",
@@ -543,5 +543,9 @@
   "palette.title": "Search tools and guides",
   "palette.placeholder": "Search tools, guides, and keywords…",
   "palette.empty": "No results",
-  "palette.hint": "Ctrl+K / Cmd+K to open"
+  "palette.hint": "Ctrl+K / Cmd+K to open",
+  "footer.terms": "Terms",
+  "terms.metaTitle": "Terms of Use: JSON Bits",
+  "terms.title": "Terms of Use",
+  "terms.description": "The terms for using JSON Bits: free, local tools provided as is, no guarantees about output, and a reminder not to paste secrets you cannot risk exposing."
 }

@@ -53,7 +53,7 @@ const registry = readFileSync(join(root, 'src/tools/registry.ts'), 'utf8');
 const nameMatches = [...registry.matchAll(/name:\s*'([^']+)'/g)];
 for (const m of nameMatches) {
   const name = m[1];
-  const title = `${name} Online — Free & Private | JSON Bits`;
+  const title = `${name} Online: Free & Private | JSON Bits`;
   if (title.length > 60) fail(`tool "${name}": title ${title.length} chars — "${title}"`);
 }
 ok('title checks done');

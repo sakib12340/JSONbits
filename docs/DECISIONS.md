@@ -257,6 +257,13 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - No console errors on any tested Tier 3 page. The schema page loaded only same-origin documents, modules, CSS, and the self-hosted font (plus the Vite HMR socket in dev); there were no third-party origins.
 - At a 390×844 viewport, the sorter's panes stacked, the tab bar measured 45 px with 44 px controls, switching to Output changed the visible pane, and the page had no horizontal overflow.
 
+## AI crawler policy
+
+- `robots.txt` stays permissive: `User-agent: * / Allow: /`. Search engines and AI crawlers are treated the same, and no training or retrieval bot is blocked.
+- `public/llms.txt` states the canonical URL, the main tool/guide/legal pages, and that the whole product runs client-side with no API or account. It is plain text with no generated or hidden content.
+- The policy is deliberate: the site has no paywall, login, or crawler-only content, so there is nothing to protect from AI crawlers. If this changes, `robots.txt` and `llms.txt` will be updated together.
+- Privacy and Terms pages explain that the site makes no outbound data requests and that hosting logs contain only ordinary request metadata.
+
 ## Deployment — Cloudflare Pages
 
 | Setting | Value |

@@ -208,7 +208,7 @@ Google's technical requirements are basic: Googlebot isn't blocked, the page wor
 - [ ] [PRO] HTML validity, link check, spell check on content
 - [!] [PRO] Cross-browser: latest Chrome, Firefox, Safari, Edge (+ one older version) — blocked: only Chromium is available in this environment
 - [ ] [PRO] Final review with `web-design-guidelines`; periodic `improve-codebase-architecture` review
-- [x] [PRO] Git history clean; docs (`AGENTS.md`, `DECISIONS.md`, this file) up to date — evidence: `git status --short` empty after commit `a46370e`; DECISIONS and CHECKLIST updated this session
+- [x] [PRO] Git history clean; docs (`AGENTS.md`, `DECISIONS.md`, this file) up to date — evidence: `git status --short` empty after the final polish commit; DECISIONS and CHECKLIST updated
 
 ## R: ROBOTS, SITEMAP & CRAWLING
 - [x] [MIN] `robots.txt` at root: allows crawling, lists `Sitemap:` with the absolute URL — evidence: `cat public/robots.txt` → `User-agent: *`, `Allow: /`, `Sitemap: https://jsonbits.com/sitemap-index.xml`
@@ -216,7 +216,7 @@ Google's technical requirements are basic: Googlebot isn't blocked, the page wor
 - [x] [MIN] Sitemap excludes `noindex`, redirected, 404, and untranslated-fallback URLs — evidence: script compared 196 built pages: 85 `noindex` fallback pages have 0 hreflang and are absent from sitemap; 111 indexable pages are present
 - [x] [MIN] Not blocking CSS/JS needed to render pages — evidence: `robots.txt` has only `Allow: /` and no `Disallow` rules
 - [ ] [MIN] `ads.txt` plan documented (added after AdSense approval)
-- [!] [PRO] Decide a policy for AI crawlers and write it down — blocked: no policy decision has been made yet; `robots.txt` currently uses only `*`
+- [x] [PRO] Decide a policy for AI crawlers and write it down — evidence: `docs/DECISIONS.md` “AI crawler policy” + `public/llms.txt` (served 200); `robots.txt` remains `User-agent: * / Allow: /` with no AI-specific blocks
 - [x] [PRO] Sitemap URL count matches what you expect after each build (add a test) — evidence: new check in `scripts/validate.mjs`; `pnpm validate` → `✓ 111 sitemap URLs = 111 indexable pages`
 
 ## S: SEARCH ENGINES BEYOND GOOGLE

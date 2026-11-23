@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+---
+
+<BaseLayout
+  locale={locale}
+  title={t(locale, 'terms.metaTitle')}
+  description={t(locale, 'terms.description')}
+  path="/terms"
+>
+  <div class="mx-auto max-w-3xl px-4 pb-20 pt-10 sm:px-6 sm:pt-14" lang="en">
+    <h1 class="text-[32px] font-medium leading-[1.05] tracking-[-0.03em] text-ink sm:text-[44px]">
+      {t(locale, 'terms.title')}
+    </h1>
+    <p class="mt-4 text-[16px] leading-[26px] text-body">{t(locale, 'terms.description')}</p>
+
+    <div class="md-body mt-8">
+      <p>
+        JSON Bits is a free set of browser-based tools for working with JSON and nearby data formats.
+        By using it you agree to the simple terms below. They exist to be read, not to trap you.
+      </p>
+
+      <h2>What the site provides</h2>
+      <p>
+        Every tool runs inside your own browser tab. You can paste text, drop a file, or open a file
+        from your device, and the result is produced locally by a Web Worker. There are no accounts,
+        no paid plans, and no uploads. The site is offered free of charge and may change over time.
+      </p>
+
+      <h2>Provided as is</h2>
+      <p>
+        The tools are provided “as is” and “as available”, without warranties of any kind, express
+        or implied. We do not promise that a tool will be uninterrupted, error-free, or suitable for
+        a particular purpose. Output is generated mechanically from the input you give it; always
+        review a result before relying on it in production, a financial record, or any other context
+        where a mistake would matter.
+      </p>
+
+      <h2>Your data and secrets</h2>
+      <p>
+        Although documents never leave your browser, you should still avoid pasting secrets,
+        credentials, private keys, tokens, or personal data that you cannot risk exposing. Anything
+        you paste is visible on your own screen, may be held in the tab's memory while a tool runs,
+        and can be copied or downloaded by you. Closing the tab discards it. The site does not store
+        document content, but it cannot protect you from your own clipboard or from someone looking
+        at your screen.
+      </p>
+
+      <h2>Acceptable use</h2>
+      <p>
+        Use the site lawfully. Do not attempt to disrupt it, reverse-engineer it for harmful purposes,
+        or use it to process data you have no right to handle. Because everything runs locally, most
+        misuse would only affect your own device, but the spirit of this rule still applies.
+      </p>
+
+      <h2>Third-party services</h2>
+      <p>
+        The site intentionally uses no analytics, no advertising, and no third-party scripts. The
+        hosting provider delivers static files and may log ordinary request metadata such as IP
+        address and browser version. If advertising is added in the future, this page and the Privacy
+        Policy will be updated before it appears.
+      </p>
+
+      <h2>Changes and contact</h2>
+      <p>
+        We may update these terms when the site changes. The date below records the last revision.
+        Questions can be sent to the contact address published on the site's GitHub repository or
+        project page; no account or support contract is implied.
+      </p>
+      <p>
+        <time datetime="2026-11-23">Last updated 23 November 2026</time>
+      </p>
+    </div>
+  </div>
+</BaseLayout>

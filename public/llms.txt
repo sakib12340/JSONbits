@@ -1,0 +1,22 @@
+# JSON Bits
+
+> Free, private JSON tools that run entirely in the browser. Nothing is uploaded.
+
+JSON Bits is a static site of client-side utilities: format, validate, minify, repair, view, diff, convert, and generate JSON. Every operation runs in a Web Worker inside the visitor's browser. There is no server-side processing, no account, no API, and no user data sent to the site.
+
+Canonical URL: https://jsonbits.com/
+
+## Key pages
+
+- [Home](https://jsonbits.com/): tool directory grouped by category.
+- [JSON Formatter](https://jsonbits.com/json-formatter): reference tool with precise line/column errors.
+- [Converters](https://jsonbits.com/converters): JSON to CSV/YAML/XML and back.
+- [Learn](https://jsonbits.com/learn): guides about JSON errors and format comparisons.
+- [Privacy](https://jsonbits.com/privacy): what runs locally and what is stored.
+- [Terms](https://jsonbits.com/terms): terms of use and disclaimer.
+
+## Crawling policy
+
+Search engines and AI crawlers are welcome. `robots.txt` currently allows all user agents and does not block training or retrieval bots. If that changes, this file and `robots.txt` will be updated together. The site contains no paywall, login, or bot-only content: what a crawler sees is what a visitor sees.
+
+Last updated: 2026-11-23
