@@ -71,7 +71,7 @@ const index = [
       aria-modal="true"
       aria-labelledby="palette-title"
     >
-      <h2 id="palette-title" class="sr-only">{t(locale, 'palette.title')}</h2>
+      <span id="palette-title" class="sr-only">{t(locale, 'palette.title')}</span>
       <div class="border-b border-line px-4 py-3">
         <input
           data-palette-input
@@ -79,12 +79,17 @@ const index = [
           name="palette-search"
           autocomplete="off"
           spellcheck="false"
+          role="combobox"
+          aria-expanded="false"
+          aria-controls="palette-list"
+          aria-autocomplete="list"
           placeholder={t(locale, 'palette.placeholder')}
           aria-label={t(locale, 'palette.placeholder')}
           class="w-full rounded-[4px] bg-transparent text-[15px] text-ink placeholder:text-body-mid"
         />
       </div>
       <ul
+        id="palette-list"
         data-palette-list
         role="listbox"
         aria-label={t(locale, 'palette.title')}
@@ -127,6 +132,7 @@ const index = [
 
     function close() {
       overlay.hidden = true;
+      input.setAttribute('aria-expanded', 'false');
       document.body.style.overflow = '';
       trigger.focus();
     }
@@ -184,6 +190,7 @@ const index = [
 
     function open() {
       overlay.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
       document.body.style.overflow = 'hidden';
       input.value = '';
       filter('');

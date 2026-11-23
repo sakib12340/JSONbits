@@ -91,7 +91,39 @@ const privacyDesc = 'What JSON Bits stores, what it never sees, and why every to
 if (privacyDesc.length < 140 || privacyDesc.length > 155) fail(`privacy description: ${privacyDesc.length} chars`);
 ok('description checks done');
 
-// 4. CSP inline-script hash vs built output
+// 4. Content integrity: unique IDs, resolvable related tools, word counts
+console.log('Content integrity');
+const registryIds = new Set([...registry.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]));
+const seenToolIds = new Map();
+const seenGuideSlugs = new Map();
+let contentIssues = 0;
+for (const collection of ['tools', 'guides']) {
+  for (const locale of locales) {
+    const dir = join(root, 'src/content', collection, locale);
+    if (!existsSync(dir)) continue;
+    for (const file of readdirSync(dir).filter((f) => f.endsWith('.md'))) {
+      const raw = readFileSync(join(dir, file), 'utf8');
+      const parts = raw.split('---');
+      const fm = parts.length >= 3 ? parseYaml(parts[1]) : {};
+      const id = collection === 'tools' ? fm.toolId : fm.slug;
+      const key = `${locale}:${id}`;
+      const seen = collection === 'tools' ? seenToolIds : seenGuideSlugs;
+      if (seen.has(key)) fail(`${collection}/${locale}/${file}: duplicate ${id}`);
+      else seen.set(key, file);
+      const words = `${JSON.stringify(fm)} ${parts.slice(2).join('---')}`.trim().split(/\s+/).length;
+      if (words < 350) fail(`${collection}/${locale}/${file}: ${words} words (<350)`);
+      if (collection === 'tools') {
+        for (const rel of fm.related ?? []) {
+          if (!registryIds.has(rel)) fail(`${collection}/${locale}/${file}: related id "${rel}" not in registry`);
+        }
+      }
+    }
+  }
+}
+contentIssues = errors.length;
+if (contentIssues === 0) ok('unique IDs, related IDs, and word counts pass');
+
+// 5. CSP inline-script hash vs built output
 console.log('CSP inline-script hash');
 const distIndex = join(root, 'dist/index.html');
 const headersFile = existsSync(join(root, 'dist/_headers')) ? join(root, 'dist/_headers') : join(root, 'public/_headers');
