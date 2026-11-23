@@ -7,6 +7,7 @@ import OutputMeta from './OutputMeta.astro';
 import StatsBar from './StatsBar.astro';
 import SendMenu from './SendMenu.astro';
 import ShortcutsDialog from './ShortcutsDialog.astro';
+import Icon from '../ui/Icon.astro';
 import type { Locale } from '../../i18n/config';
 import type { ToolDef } from '../../tools/types';
 import { t } from '../../i18n/t';
@@ -201,19 +202,7 @@ const strings = {
         class="grid size-11 shrink-0 place-items-center rounded-[8px] text-body-mid hover:bg-cream hover:text-ink"
         aria-label={t(locale, 'tool.close')}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          class="size-4"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M6 6l12 12M18 6 6 18" />
-        </svg>
+        <Icon name="x" class="size-[18px]" />
       </button>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto p-4">
