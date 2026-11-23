@@ -37,7 +37,7 @@ const index = [
   <button
     type="button"
     data-palette-trigger
-    class="flex h-11 items-center gap-2 rounded-[8px] border border-line bg-canvas px-2.5 text-ink hover:bg-cream sm:px-3"
+    class="grid size-11 place-items-center rounded-[8px] text-ink hover:bg-cream"
     aria-label={t(locale, 'palette.title')}
     aria-keyshortcuts="Control+K Meta+K"
     title={t(locale, 'palette.hint')}
@@ -50,19 +50,13 @@ const index = [
       stroke-width="1.8"
       stroke-linecap="round"
       stroke-linejoin="round"
-      class="size-[18px]"
+      class="size-5"
       aria-hidden="true"
       focusable="false"
     >
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3.5-3.5" />
     </svg>
-    <kbd
-      data-palette-key
-      class="hidden rounded-[6px] border border-line bg-cream px-1.5 py-0.5 font-mono text-[11px] leading-none text-body-mid sm:inline"
-    >
-      Ctrl K
-    </kbd>
   </button>
 
   <div
@@ -116,11 +110,7 @@ const index = [
     const input = root.querySelector<HTMLInputElement>('[data-palette-input]')!;
     const list = root.querySelector<HTMLUListElement>('[data-palette-list]')!;
     const empty = root.querySelector<HTMLParagraphElement>('[data-palette-empty]')!;
-    const keyHint = root.querySelector<HTMLElement>('[data-palette-key]')!;
-
     // elements are guaranteed by the template above
-    const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent);
-    keyHint.textContent = isMac ? '⌘ K' : 'Ctrl K';
 
     const index = JSON.parse(root.getAttribute('data-index') || '[]') as Array<{
       kind: string;
