@@ -1,0 +1,227 @@
+---
+import { tools } from '../../tools/registry';
+import { listGuides } from '../../lib/content';
+import { localePath } from '../../lib/paths';
+import type { Locale } from '../../i18n/config';
+import { t } from '../../i18n/t';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const guides = await listGuides(locale);
+
+const index = [
+  ...tools
+    .filter((tool) => tool.available)
+    .map((tool) => ({
+      kind: 'tool' as const,
+      title: tool.name,
+      description: tool.description,
+      href: localePath(locale, `/${tool.slug}`),
+      keywords: `${tool.keywords.join(' ')} ${tool.category}`,
+    })),
+  ...guides.map((guide) => ({
+    kind: 'guide' as const,
+    title: guide.data.title,
+    description: guide.data.description,
+    href: localePath(locale, `/learn/${guide.data.slug}`),
+    keywords: 'guide learn',
+  })),
+];
+---
+
+<div data-palette-root data-index={JSON.stringify(index)} class="relative">
+  <button
+    type="button"
+    data-palette-trigger
+    class="grid size-11 place-items-center rounded-[8px] text-ink hover:bg-cream"
+    aria-label={t(locale, 'palette.title')}
+    aria-keyshortcuts="Control+K Meta+K"
+    title={t(locale, 'palette.hint')}
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="size-5"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  </button>
+
+  <div
+    data-palette
+    hidden
+    class="fixed inset-0 z-50 flex items-start justify-center bg-ink/40 px-4 pt-[12vh]"
+    role="presentation"
+  >
+    <div
+      class="w-full max-w-xl overflow-hidden rounded-[16px] border border-line bg-canvas shadow-2"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="palette-title"
+    >
+      <h2 id="palette-title" class="sr-only">{t(locale, 'palette.title')}</h2>
+      <div class="border-b border-line px-4 py-3">
+        <input
+          data-palette-input
+          type="search"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder={t(locale, 'palette.placeholder')}
+          class="w-full bg-transparent text-[15px] text-ink placeholder:text-body-mid focus:outline-none"
+        />
+      </div>
+      <ul
+        data-palette-list
+        role="listbox"
+        aria-label={t(locale, 'palette.title')}
+        class="max-h-[60vh] overflow-y-auto p-2"
+      ></ul>
+      <p
+        data-palette-empty
+        hidden
+        class="px-4 py-6 text-center text-[14px] text-body-mid"
+      >
+        {t(locale, 'palette.empty')}
+      </p>
+      <div class="flex items-center justify-between border-t border-line px-4 py-2 text-[12px] text-body-mid">
+        <span>{t(locale, 'palette.hint')}</span>
+        <span>Esc</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  for (const root of document.querySelectorAll('[data-palette-root]')) {
+    const trigger = root.querySelector<HTMLButtonElement>('[data-palette-trigger]')!;
+    const overlay = root.querySelector<HTMLDivElement>('[data-palette]')!;
+    const input = root.querySelector<HTMLInputElement>('[data-palette-input]')!;
+    const list = root.querySelector<HTMLUListElement>('[data-palette-list]')!;
+    const empty = root.querySelector<HTMLParagraphElement>('[data-palette-empty]')!;
+    // elements are guaranteed by the template above
+
+    const index = JSON.parse(root.getAttribute('data-index') || '[]') as Array<{
+      kind: string;
+      title: string;
+      description: string;
+      href: string;
+      keywords: string;
+    }>;
+
+    let filtered = index.slice();
+    let active = 0;
+
+    function close() {
+      overlay.hidden = true;
+      document.body.style.overflow = '';
+      trigger.focus();
+    }
+
+    function navigate(href: string) {
+      close();
+      window.location.href = href;
+    }
+
+    function render() {
+      list.innerHTML = '';
+      filtered.forEach((item, i) => {
+        const li = document.createElement('li');
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', String(i === active));
+        li.className =
+          'flex cursor-pointer flex-col gap-0.5 rounded-[8px] px-3 py-2 ' +
+          (i === active ? 'bg-cream' : 'hover:bg-cream/60');
+
+        const title = document.createElement('div');
+        title.className = 'text-[14px] font-medium text-ink';
+        title.textContent = item.title;
+
+        const desc = document.createElement('div');
+        desc.className = 'line-clamp-1 text-[12px] text-body-mid';
+        desc.textContent = item.description;
+
+        const kind = document.createElement('span');
+        kind.className = 'text-[11px] uppercase tracking-wide text-body-mid';
+        kind.textContent = item.kind;
+
+        li.appendChild(title);
+        li.appendChild(desc);
+        li.appendChild(kind);
+
+        li.addEventListener('click', () => navigate(item.href));
+        list.appendChild(li);
+      });
+      empty.hidden = filtered.length !== 0;
+    }
+
+    function filter(query: string) {
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        filtered = index.slice();
+      } else {
+        filtered = index.filter((item) => {
+          const haystack = `${item.title} ${item.description} ${item.keywords}`.toLowerCase();
+          return haystack.includes(q);
+        });
+      }
+      active = 0;
+      render();
+    }
+
+    function open() {
+      overlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+      input.value = '';
+      filter('');
+      requestAnimationFrame(() => input.focus());
+    }
+
+    trigger.addEventListener('click', open);
+
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) close();
+    });
+
+    input.addEventListener('input', () => filter(input.value));
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        if (filtered.length === 0) return;
+        active = Math.min(active + 1, filtered.length - 1);
+        render();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (filtered.length === 0) return;
+        active = Math.max(active - 1, 0);
+        render();
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        if (filtered[active]) navigate(filtered[active].href);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        if (overlay.hidden) open();
+        else close();
+      }
+    });
+  }
+</script>

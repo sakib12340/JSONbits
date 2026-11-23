@@ -1,6 +1,7 @@
 ---
 import LangSwitcher from './LangSwitcher.astro';
 import ThemeToggle from './ThemeToggle.astro';
+import CommandPalette from './CommandPalette.astro';
 import BrandMark from '../ui/BrandMark.astro';
 import type { Locale } from '../../i18n/config';
 import { localePath } from '../../lib/paths';
@@ -40,6 +41,7 @@ const privacyHref = localePath(locale, '/privacy');
       </a>
       <ThemeToggle locale={locale} />
       <LangSwitcher locale={locale} path={langPath} />
+      <CommandPalette locale={locale} />
 
       <button
         type="button"

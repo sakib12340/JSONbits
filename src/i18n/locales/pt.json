@@ -539,5 +539,9 @@
   "tool.ndjson-validator.description": "Validate JSON Lines files line by line with precise line numbers, blank-line counts, and a capped list of errors you can click to jump to directly.",
   "tool.ndjson-to-json.description": "Convert JSON Lines into a JSON array, skipping invalid records or stopping at the first error, with optional pretty printing and blank-line control.",
   "tool.json-to-ndjson.description": "Turn a top-level JSON array into newline-delimited JSON, one compact record per line, ready for logs, datasets, and streaming data pipelines.",
-  "tool.ndjson-to-csv.description": "Convert JSON Lines records into CSV with dot-path flattening, RFC 4180 quoting, an optional header row, and a spreadsheet formula injection guard."
+  "tool.ndjson-to-csv.description": "Convert JSON Lines records into CSV with dot-path flattening, RFC 4180 quoting, an optional header row, and a spreadsheet formula injection guard.",
+  "palette.title": "Search tools and guides",
+  "palette.placeholder": "Search tools, guides, and keywords…",
+  "palette.empty": "No results",
+  "palette.hint": "Ctrl+K / Cmd+K to open"
 }

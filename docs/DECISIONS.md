@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
 Last updated: 2026-11-22
-Status: Feature Pack 2 in progress. Phases 1–5 are complete: repair-review UI, JSONPath extract modes, the JWT decoder, the two inference tools (JSON Schema and Zod), and the four JSON Lines tools are shipped. There are now 24 tools. Phases 6–8 remain. Cloudflare Pages settings are documented below and awaiting deploy approval.
+Status: Feature Pack 2 in progress. Phases 1–6 are complete: repair-review UI, JSONPath extract modes, the JWT decoder, the two inference tools (JSON Schema and Zod), the four JSON Lines tools, and the command palette plus a JSONPath guide are shipped. There are now 24 tools and 6 guides. Phases 7–8 remain. Cloudflare Pages settings are documented below and awaiting deploy approval.
 
 ## Feature Pack 2 — Phases 1–3
 
