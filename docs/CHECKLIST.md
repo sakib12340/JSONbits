@@ -79,13 +79,13 @@ Client-side static site · Astro + Tailwind · Cloudflare Pages · .com · SEO o
 - [ ] [PRO] Caching: hashed assets `immutable` long-cache; HTML short TTL; Brotli and HTTP/3 on
 
 ## E: ERRORS & REDIRECTS
-- [ ] [MIN] Custom 404 page (returns real HTTP 404) with search/tool suggestions
-- [ ] [MIN] No soft-404s (an "empty" page returning 200)
-- [ ] [MIN] Trailing-slash policy chosen, consistent everywhere (links, canonicals, sitemap, redirects)
-- [ ] [MIN] Any changed or removed URL has a 301 in `_redirects`; no redirect chains or loops
-- [ ] [MIN] No broken internal links; no broken external links
-- [ ] [PRO] Link checker runs in CI
-- [ ] [PRO] Friendly in-tool error states (worker crash, out of memory, unsupported browser) with recovery
+- [x] [MIN] Custom 404 page (returns real HTTP 404) with search/tool suggestions — evidence: `curl -I http://localhost:4322/does-not-exist` → 404; `dist/404.html` contains Search + JSON Formatter/Validator suggestions
+- [x] [MIN] No soft-404s (an "empty" page returning 200) — evidence: python over 196 pages: all have exactly 1 `<h1>` and body text; unknown paths return HTTP 404
+- [x] [MIN] Trailing-slash policy chosen, consistent everywhere — evidence: `astro.config.mjs` `trailingSlash: "never"`; canonicals and sitemap use no trailing slash on inner pages
+- [~] [MIN] Any changed or removed URL has a 301 in `_redirects`; no redirect chains or loops — N/A: pre-launch site has no changed or removed URLs
+- [x] [MIN] No broken internal links; no broken external links — evidence: python link scan of 5,285 internal hrefs → 0 missing; only external host is `jsonbits.com` (self)
+- [!] [PRO] Link checker runs in CI — blocked: no CI workflow exists; link check was run locally instead
+- [x] [PRO] Friendly in-tool error states (worker crash, out of memory, unsupported browser) with recovery — evidence: `src/tools/shared/failure.ts` maps `oom`/`runtime`/`encoding` to hinted errors; error panel shows Fix automatically / Go to error / Dismiss
 
 ## F: FEATURES (functional QA of every tool)
 - [ ] [MIN] Every tool tested with: empty input, tiny valid input, invalid input, unicode/emoji, deeply nested, very long strings
@@ -112,25 +112,25 @@ Google's technical requirements are basic: Googlebot isn't blocked, the page wor
 - [ ] [PRO] Check Google's spam policies against the site: no doorway pages, scaled low-value pages, hidden text, misleading functionality
 
 ## H: HEADERS & SECURITY (`public/_headers`)
-- [ ] [MIN] CSP: `default-src 'self'`; `connect-src 'none'`; inline theme-script allowed by hash (and the hash matches the built output)
-- [ ] [MIN] `X-Content-Type-Options: nosniff`; `Referrer-Policy: strict-origin-when-cross-origin`; `Permissions-Policy` restricting unused APIs
-- [ ] [MIN] Clickjacking protection (`frame-ancestors 'none'` in CSP)
-- [ ] [MIN] Verify with `curl -I` on the live URL that headers are actually served
-- [ ] [MIN] No secrets, keys, or `.env` values in the repo or build output
-- [ ] [PRO] Build-time check compares the inline-script hash to the CSP
-- [ ] [PRO] Cross-origin isolation headers only if actually needed; documented CSP changes for ads
-- [ ] [PRO] Run an external security-headers scan after launch and fix findings
+- [x] [MIN] CSP: `default-src 'self'`; `connect-src 'none'`; inline theme-script allowed by hash — evidence: `public/_headers` carries the CSP; `pnpm validate` → CSP hash matches `sha256-CtQmZyoMJ13kQnOdERJ7npj7WO9CaNmDLCSuzqixowU=`
+- [x] [MIN] `X-Content-Type-Options: nosniff`; `Referrer-Policy: strict-origin-when-cross-origin`; `Permissions-Policy` restricting unused APIs — evidence: all three present in `public/_headers`
+- [x] [MIN] Clickjacking protection (`frame-ancestors 'none'` in CSP) — evidence: `public/_headers` CSP includes `frame-ancestors 'none'` plus `X-Frame-Options: DENY`
+- [!] [MIN] Verify with `curl -I` on the live URL that headers are actually served — blocked: no live Cloudflare deployment yet; `_headers` file verified locally
+- [x] [MIN] No secrets, keys, or `.env` values in the repo or build output — evidence: grep for key/secret/token/password in `src` + `public` found only JWT UI copy, no credentials
+- [x] [PRO] Build-time check compares the inline-script hash to the CSP — evidence: `scripts/validate.mjs` recomputes SHA-256 of the inline theme script and compares to `_headers`
+- [~] [PRO] Cross-origin isolation headers only if actually needed; documented CSP changes for ads — N/A: no SharedArrayBuffer/cross-origin isolation needed; ad-time CSP changes are documented in `docs/DECISIONS.md`
+- [!] [PRO] Run an external security-headers scan after launch and fix findings — blocked: site not launched yet
 - [ ] [PRO] Source maps decision made (public or not) and documented
 
 ## I: i18n & HREFLANG
-- [ ] [MIN] Each locale URL is a real translated page, or is `noindex,follow` with no hreflang and not in the sitemap
-- [ ] [MIN] `hreflang` set for every genuine translation + `x-default`; all references are reciprocal
-- [ ] [MIN] Language switcher keeps the user on the same tool
-- [ ] [MIN] No hardcoded UI strings; locale key parity check passes; English fallback works
-- [ ] [MIN] `<html lang>` correct; fallback article bodies marked `lang="en"`
-- [ ] [PRO] Translations reviewed by a human before being indexable
-- [ ] [PRO] RTL layout tested (if an RTL locale is added); date/number formatting uses `Intl`
-- [ ] [PRO] Translation roadmap: Tier 1 tools first, then top-traffic tools
+- [x] [MIN] Each locale URL is a real translated page, or is `noindex,follow` with no hreflang and not in the sitemap — evidence: script: 111 indexable pages all with hreflang; 85 fallback pages `noindex, follow`, 0 hreflang, 0 sitemap entries
+- [x] [MIN] `hreflang` set for every genuine translation + `x-default`; all references are reciprocal — evidence: python reciprocity check over 111 indexable pages → 0 issues; each has 6 alternates including x-default
+- [x] [MIN] Language switcher keeps the user on the same tool — evidence: `LangSwitcher.astro` builds every option with `switchLocalePath(path ?? Astro.url.pathname, code)`
+- [x] [MIN] No hardcoded UI strings; locale key parity check passes; English fallback works — evidence: `pnpm validate` → 545 keys in each of 5 locales; `t()` falls back to `en`
+- [x] [MIN] `<html lang>` correct; fallback article bodies marked `lang="en"` — evidence: python over 196 pages: 196/196 have lang+dir; 156/156 non-en pages contain `lang="en"` fallback markers
+- [!] [PRO] Translations reviewed by a human before being indexable — blocked: no native reviewer available; disclosed in `docs/DECISIONS.md`
+- [~] [PRO] RTL layout tested (if an RTL locale is added); date/number formatting uses `Intl` — N/A: no RTL locale in launch set; `Intl.NumberFormat`/`Intl.DateTimeFormat`/`Intl.RelativeTimeFormat` used in `src/lib` and JWT session
+- [x] [PRO] Translation roadmap: Tier 1 tools first, then top-traffic tools — evidence: `docs/DECISIONS.md` Localization section defines Tier 1 first and records Feature Pack 2 translations
 
 ## J: JSON-LD (structured data)
 - [ ] [MIN] `WebApplication` (free, DeveloperApplication) on each tool page
@@ -161,30 +161,30 @@ Google's technical requirements are basic: Googlebot isn't blocked, the page wor
 - [ ] [PRO] Review applicable privacy laws for your visitors (GDPR, CCPA/CPRA) once ads add cookies
 
 ## M: MOBILE & RESPONSIVE
-- [ ] [MIN] Test widths 320, 375, 414, 768, 1024, 1440; no horizontal scroll at any
-- [ ] [MIN] Input/output become tabs or stacked panes on mobile; both reachable
-- [ ] [MIN] Header menu available on mobile (Tools, Guides, Privacy), 44px targets
+- [x] [MIN] Test widths 320, 375, 414, 768, 1024, 1440; no horizontal scroll at any — evidence: iframe width sweep in browser at all six widths → `overflow: false` for every width
+- [x] [MIN] Input/output become tabs or stacked panes on mobile; both reachable — evidence: `EditorToolShell.astro` tablist + CSS `@media (max-width:767px) .tool-pane.is-active`; 390px browser check recorded in DECISIONS
+- [x] [MIN] Header menu available on mobile (Tools, Guides, Privacy), 44px targets — evidence: `Header.astro` mobile menu with three 44px links and `data-mobile-menu-toggle`
 - [ ] [MIN] Text ≥ 16px in inputs (prevents iOS zoom); viewport meta present
-- [ ] [PRO] Real devices tested (Android Chrome, iOS Safari); landscape works
-- [ ] [PRO] Large-file behavior on mobile tested; friendly size warning
+- [!] [PRO] Real devices tested (Android Chrome, iOS Safari); landscape works — blocked: no physical devices available
+- [x] [PRO] Large-file behavior on mobile tested; friendly size warning — evidence: DECISIONS Phase 10 records 390×844 mobile check with large-file panel and >50 MB warning
 - [ ] [PRO] Virtual keyboard doesn't hide the toolbar or output
 
 ## N: NAVIGATION & INFORMATION ARCHITECTURE
-- [ ] [MIN] Every page reachable within 3 clicks from home; no orphan pages
+- [x] [MIN] Every page reachable within 3 clicks from home; no orphan pages — evidence: BFS over built pages from `/` with depth 3 → 0 unreachable pages
 - [ ] [MIN] Header: Tools, Guides, About; footer: Privacy, Terms, Contact, Sitemap link
-- [ ] [MIN] Breadcrumbs on tool, hub, and guide pages
-- [ ] [MIN] Related-tools block on every tool page, driven from the registry
+- [x] [MIN] Breadcrumbs on tool, hub, and guide pages — evidence: python check: every tool and guide article contains `Breadcrumb` JSON-LD; indexes/home excluded by design
+- [x] [MIN] Related-tools block on every tool page, driven from the registry — evidence: `ToolArticle.astro` builds `related` from `tool.relatedIds` via `src/tools/registry.ts`
 - [ ] [PRO] Command palette (Ctrl/Cmd+K), recents and favorites
-- [ ] [PRO] Category hubs (`/converters`, `/formatters`, …) with intro text, not just link lists
+- [x] [PRO] Category hubs (`/converters`, `/formatters`, …) with intro text, not just link lists — evidence: `src/content/hubs/en/*.md` plus `CategoryHub.astro` render intro copy and FAQs
 - [ ] [PRO] "Related guide" block on tool pages and "Open in tool" CTAs in guides
 
 ## O: ON-PAGE SEO
-- [ ] [MIN] `<title>` ≤ 60 chars, unique per page: `{Tool} Online: Free & Private | {Site}`
+- [x] [MIN] `<title>` ≤ 60 chars, unique per page: `{Tool} Online: Free & Private | {Site}` — evidence: python decoded-title check over 196 pages → 0 over 60 after shortening the German metaTitle template; duplicate guide titles occur only on `noindex` fallback pages
 - [ ] [MIN] Meta description 140–155 chars, unique, mentions "runs in your browser / nothing uploaded"
-- [ ] [MIN] Self-referencing canonical on every indexable page
-- [ ] [MIN] One H1 matching the search intent; H2/H3 structure logical
-- [ ] [MIN] Descriptive internal link text (no "click here"); images have alt text
-- [ ] [MIN] Open Graph + Twitter card tags on every page
+- [x] [MIN] Self-referencing canonical on every indexable page — evidence: python over all pages → 0 canonical mismatches
+- [x] [MIN] One H1 matching the search intent; H2/H3 structure logical — evidence: python over 196 pages: exactly 1 H1 and 0 heading-order violations
+- [x] [MIN] Descriptive internal link text (no "click here"); images have alt text — evidence: grep found no "click here"/"read more" links; 0 `<img>` elements in source
+- [x] [MIN] Open Graph + Twitter card tags on every page — evidence: python over 196 pages: every page has ≥4 `og:` and ≥3 `twitter:` tags
 - [ ] [PRO] Per-category OG images (1200×630)
 - [ ] [PRO] Content validator in the build enforces all the above
 - [ ] [PRO] Favicon set (SVG + PNG + Apple touch icon) and web manifest (decide PWA separately; see Z notes)
@@ -211,13 +211,13 @@ Google's technical requirements are basic: Googlebot isn't blocked, the page wor
 - [x] [PRO] Git history clean; docs (`AGENTS.md`, `DECISIONS.md`, this file) up to date — evidence: `git status --short` empty after commit `a46370e`; DECISIONS and CHECKLIST updated this session
 
 ## R: ROBOTS, SITEMAP & CRAWLING
-- [ ] [MIN] `robots.txt` at root: allows crawling, lists `Sitemap:` with the absolute URL
-- [ ] [MIN] `sitemap.xml` (or index) includes only canonical, indexable, 200-status URLs, with `lastmod`
-- [ ] [MIN] Sitemap excludes `noindex`, redirected, 404, and untranslated-fallback URLs
-- [ ] [MIN] Not blocking CSS/JS needed to render pages
+- [x] [MIN] `robots.txt` at root: allows crawling, lists `Sitemap:` with the absolute URL — evidence: `cat public/robots.txt` → `User-agent: *`, `Allow: /`, `Sitemap: https://jsonbits.com/sitemap-index.xml`
+- [x] [MIN] `sitemap.xml` (or index) includes only canonical, indexable, 200-status URLs, with `lastmod` — evidence: `python` count → 111 `<loc>`, 111 `<lastmod>`, 0 `/404`; sitemap integration now sets `lastmod: new Date()`
+- [x] [MIN] Sitemap excludes `noindex`, redirected, 404, and untranslated-fallback URLs — evidence: script compared 196 built pages: 85 `noindex` fallback pages have 0 hreflang and are absent from sitemap; 111 indexable pages are present
+- [x] [MIN] Not blocking CSS/JS needed to render pages — evidence: `robots.txt` has only `Allow: /` and no `Disallow` rules
 - [ ] [MIN] `ads.txt` plan documented (added after AdSense approval)
-- [ ] [PRO] Decide a policy for AI crawlers and write it down (e.g. search bots vs training bots); use `robots.txt` tokens accordingly
-- [ ] [PRO] Sitemap URL count matches what you expect after each build (add a test)
+- [!] [PRO] Decide a policy for AI crawlers and write it down — blocked: no policy decision has been made yet; `robots.txt` currently uses only `*`
+- [x] [PRO] Sitemap URL count matches what you expect after each build (add a test) — evidence: new check in `scripts/validate.mjs`; `pnpm validate` → `✓ 111 sitemap URLs = 111 indexable pages`
 
 ## S: SEARCH ENGINES BEYOND GOOGLE
 - [ ] [MIN] 👤 Bing Webmaster Tools: add the site (import from Search Console, or verify via XML file/meta/DNS) and confirm the sitemap is listed
@@ -246,25 +246,25 @@ Google's technical requirements are basic: Googlebot isn't blocked, the page wor
 - [!] [PRO] Test with 3 real users (or friends) on first-use tasks; fix what confuses them — blocked: no real users available
 
 ## V: VERIFY THE PRIVACY CLAIM
-- [ ] [MIN] After page load and while using each tool, the browser Network tab shows no request carrying user data
-- [ ] [MIN] Search the source for `fetch`, `XMLHttpRequest`, `sendBeacon`, `WebSocket`, `EventSource`, analytics snippets; each hit explained
-- [ ] [MIN] User input is never saved to localStorage/IndexedDB/cookies; only theme, locale, indent size, recents/favorites (tool IDs)
-- [ ] [MIN] No third-party scripts, fonts, or images; no tracking pixels
-- [ ] [MIN] Test with the network offline after load: tools still work
+- [x] [MIN] After page load and while using each tool, the browser Network tab shows no request carrying user data — evidence: resource-origin scan across 24 tool pages → only `http://localhost:4322`; CSP `connect-src 'none'` forbids outgoing connections
+- [x] [MIN] Search the source for `fetch`, `XMLHttpRequest`, `sendBeacon`, `WebSocket`, `EventSource`, analytics snippets; each hit explained — evidence: grep found no network calls; the only `fetch` hits are a private method name in `json-viewer/store.ts` that posts to the worker, and explanatory copy in PrivacyPage
+- [x] [MIN] User input is never saved to localStorage/IndexedDB/cookies; only theme, locale, indent size, recents/favorites — evidence: storage grep: `localStorage` only in `theme.ts`/`storage.ts` (theme + indent); `sessionStorage` only in one-shot handoff in `lib/handoff.ts`; no IndexedDB or cookies
+- [x] [MIN] No third-party scripts, fonts, or images; no tracking pixels — evidence: 24-page origin scan found only same-origin resources; self-hosted Inter subset and SVG favicon
+- [!] [MIN] Test with the network offline after load: tools still work — blocked: no offline/network emulation available in the browser harness
 - [ ] [PRO] Dependency review: none of the libraries phone home; lockfile audited
-- [ ] [PRO] Privacy claims in copy are exactly true (reword them when ads start)
-- [ ] [PRO] Automated "no requests after load" test in CI (e.g. Playwright)
+- [x] [PRO] Privacy claims in copy are exactly true (reword them when ads start) — evidence: `PrivacyPage.astro` states no ads today, no analytics, no uploads, and notes future ads require reworded copy
+- [!] [PRO] Automated "no requests after load" test in CI (e.g. Playwright) — blocked: no CI workflow exists
 
 ## W: WEB WORKERS & LARGE-FILE ROBUSTNESS
-- [ ] [MIN] The main thread never parses/stringifies/diffs/converts JSON; the worker does
-- [ ] [MIN] Typed worker protocol; cancel/terminate+respawn works; stale requests are discarded
-- [ ] [MIN] Fallback when `Worker` is unavailable (size-capped, with a notice)
+- [x] [MIN] The main thread never parses/stringifies/diffs/converts JSON; the worker does — evidence: grep of `src/tools`/`src/lib` shows JSON.parse/stringify only for metadata/samples/handoff; all user JSON ops go through `WorkerClient` → `json.worker.ts`
+- [x] [MIN] Typed worker protocol; cancel/terminate+respawn works; stale requests are discarded — evidence: `protocol.ts` `OpMap`/typed messages; `run-controller.test.ts` covers cancel, staleness and progress filtering (vitest 65/65)
+- [x] [MIN] Fallback when `Worker` is unavailable (size-capped, with a notice) — evidence: `run-controller.ts` uses `local-ops.ts` fallback with `FALLBACK_LIMIT`; `WorkerUnavailableError` surfaces a typed failure notice
 - [ ] [MIN] Test files of 1MB, 10MB, 50MB, 100MB: the UI stays responsive, progress shows, and the tab doesn't crash
-- [ ] [MIN] Out-of-memory handled with a friendly error and a live tab
-- [ ] [MIN] Output for huge data rendered virtually (editor viewport / virtual list), never one giant DOM node
-- [ ] [PRO] Buffers transferred, not copied; memory released after clear
+- [x] [MIN] Out-of-memory handled with a friendly error and a live tab — evidence: `tool.oom`/`tool.oomHint` strings and `failure.ts` map `code: "oom"` to a hinted error panel
+- [x] [MIN] Output for huge data rendered virtually (editor viewport / virtual list), never one giant DOM node — evidence: `json-viewer/view.ts:24` virtualized ARIA tree keeps only visible rows; CodeMirror output uses viewport rendering; large results returned as Blob
+- [x] [PRO] Buffers transferred, not copied; memory released after clear — evidence: `WorkerClient.run()` transfers `ArrayBuffer` via `postMessage(request, transfer)`; sessions clear state and call `dispose()` on teardown
 - [ ] [PRO] Benchmarks recorded (device, browser, time) for the public benchmark page
-- [ ] [PRO] Tested on low-spec hardware, Firefox, and Safari/iOS memory limits
+- [!] [PRO] Tested on low-spec hardware, Firefox, and Safari/iOS memory limits — blocked: only Chromium on this machine; no Firefox/Safari/iOS available
 
 ## X: EXTERNAL PRESENCE (backlinks & discovery)
 - [ ] [MIN] 👤 Social/profile accounts for the brand reserved (GitHub, X, etc.); the site is linked from each

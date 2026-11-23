@@ -123,7 +123,22 @@ for (const collection of ['tools', 'guides']) {
 contentIssues = errors.length;
 if (contentIssues === 0) ok('unique IDs, related IDs, and word counts pass');
 
-// 5. CSP inline-script hash vs built output
+// 5. Sitemap URL count matches indexable built pages (when a build exists)
+console.log('Sitemap URL count');
+const sitemapFile = join(root, 'dist/sitemap-0.xml');
+if (existsSync(sitemapFile)) {
+  const xml = readFileSync(sitemapFile, 'utf8');
+  const count = (xml.match(/<loc>/g) || []).length;
+  const built = readdirSync(join(root, 'dist'), { recursive: true })
+    .filter((f) => typeof f === 'string' && f.endsWith('index.html'))
+    .filter((f) => !readFileSync(join(root, 'dist', f), 'utf8').includes('noindex')).length;
+  if (count !== built) fail(`sitemap has ${count} URLs but ${built} indexable pages`);
+  else ok(`${count} sitemap URLs = ${built} indexable pages`);
+} else {
+  console.log('  (skip: run pnpm build first)');
+}
+
+// 6. CSP inline-script hash vs built output
 console.log('CSP inline-script hash');
 const distIndex = join(root, 'dist/index.html');
 const headersFile = existsSync(join(root, 'dist/_headers')) ? join(root, 'dist/_headers') : join(root, 'public/_headers');

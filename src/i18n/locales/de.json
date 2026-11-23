@@ -46,7 +46,7 @@
   "footer.copyright": "© {year} JSON Bits",
   "a11y.skipToContent": "Zum Inhalt springen",
   "a11y.breadcrumb": "Navigationspfad",
-  "tool.metaTitle": "{tool} online — kostenlos, privat | JSON Bits",
+  "tool.metaTitle": "{tool} — kostenlos, privat | JSON Bits",
   "tool.metaDescription": "{description} Kostenlos und privat: läuft in deinem Browser, deine Daten werden nie hochgeladen.",
   "tool.input": "Eingabe",
   "tool.output": "Ausgabe",

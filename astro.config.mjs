@@ -16,6 +16,7 @@ export default defineConfig({
   },
   integrations: [
     sitemap({
+      lastmod: new Date(),
       serialize(item) {
         return localizeSitemapItem(item);
       },
