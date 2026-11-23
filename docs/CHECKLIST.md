@@ -208,7 +208,7 @@ Google's technical requirements are basic: Googlebot isn't blocked, the page wor
 - [ ] [PRO] HTML validity, link check, spell check on content
 - [!] [PRO] Cross-browser: latest Chrome, Firefox, Safari, Edge (+ one older version) — blocked: only Chromium is available in this environment
 - [ ] [PRO] Final review with `web-design-guidelines`; periodic `improve-codebase-architecture` review
-- [ ] [PRO] Git history clean; docs (`AGENTS.md`, `DECISIONS.md`, this file) up to date
+- [x] [PRO] Git history clean; docs (`AGENTS.md`, `DECISIONS.md`, this file) up to date — evidence: `git status --short` empty after commit `a46370e`; DECISIONS and CHECKLIST updated this session
 
 ## R: ROBOTS, SITEMAP & CRAWLING
 - [ ] [MIN] `robots.txt` at root: allows crawling, lists `Sitemap:` with the absolute URL
