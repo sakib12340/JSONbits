@@ -1,7 +1,7 @@
 # Decisions — JSON Bits
 
 Last updated: 2026-11-22
-Status: Feature Pack 2 in progress. Phases 1–7 are complete: repair-review UI, JSONPath extract modes, the JWT decoder, the two inference tools (JSON Schema and Zod), the four JSON Lines tools, the command palette plus a JSONPath guide, and full localization of the new content are shipped. There are now 24 tools and 6 guides, all with localized articles in five locales. Phase 8 remains. Cloudflare Pages settings are documented below and awaiting deploy approval.
+Status: Feature Pack 2 complete. Phases 1–8 are complete: repair-review UI, JSONPath extract modes, the JWT decoder, the two inference tools (JSON Schema and Zod), the four JSON Lines tools, the command palette plus a JSONPath guide, full localization of the new content, and the final audit are shipped. There are now 24 tools and 6 guides, all with localized articles in five locales. Cloudflare Pages settings are documented below and awaiting deploy approval.
 
 ## Feature Pack 2 — Phases 1–3
 
@@ -207,6 +207,16 @@ Work resumed on a fresh OS with no Node/pnpm installed; the project files were i
 - Guide titles are localized prose (“Cómo usar JSONPath”, “Comment utiliser JSONPath”, “So nutzt du JSONPath”, “Como usar JSONPath”); tool titles remain product names. No machine-review claim is made.
 - Fixed a content-layer collision: the `guides` collection used frontmatter `slug` as the entry ID, so localized files with the same shared route slug overwrote the English entry and silently removed the guide’s pages. `src/content.config.ts` now sets `generateId` from the file path, keeping one entry per locale while `data.slug` stays the shared route slug.
 - Verified in the built output: 196 pages (restored from 191 during the collision), five localized `/learn/how-to-use-jsonpath` pages, correct `<html lang>`, canonical, and six hreflang alternates on localized tool and guide pages, and genuinely localized article text. `pnpm validate`, `pnpm astro check` (0 errors), and `pnpm test` (65/65) all pass.
+
+## Feature Pack 2 Phase 8 — audit verification
+
+- Web Interface Guidelines source review of header, command palette, tool shells, and dialogs: no `transition: all`, no click-handler divs, no autofocus. Anti-pattern scan clean.
+- Fixed an a11y defect in the command palette: the search input used `focus:outline-none`, which suppressed the global `:focus-visible` ring. It now has a `name`, `aria-label`, and a visible focus outline. The modal also traps Tab inside the input and sets `overscroll-behavior: contain`.
+- Lighthouse on the production preview (light and dark, home + formatter + repair + viewer): accessibility 100, best practices 100, SEO 100, zero failures. The dev-server-only SEO 80 came from Astro's toolbar “Learn more” link and is absent in production.
+- Console/network sweep across all 24 tool pages on the production preview: zero errors and only same-origin resource requests.
+- Worker stress test through `WorkerClient` with transferred `ArrayBuffer` payloads: 10 MB formatted in ~0.7–1.1 s, 50 MB in ~1.1 s. With the tab focused, 63 animation frames ran during a 10 MB format with a worst frame gap of 53 ms; no app-attributable freeze.
+- Synthetic `DragEvent` drops were unreliable in the browser harness (DataTransfer file types not materialized for page listeners); the direct worker test above covers the same transfer path. Prior large-file drop evidence remains in the original Phase 8 notes.
+- `pnpm validate`, `pnpm astro check` (0 errors), `pnpm test` (65/65), and `pnpm build` (196 pages) all pass.
 
 ## Phase 8 audit verification
 

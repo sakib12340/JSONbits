@@ -76,10 +76,12 @@ const index = [
         <input
           data-palette-input
           type="search"
+          name="palette-search"
           autocomplete="off"
           spellcheck="false"
           placeholder={t(locale, 'palette.placeholder')}
-          class="w-full bg-transparent text-[15px] text-ink placeholder:text-body-mid focus:outline-none"
+          aria-label={t(locale, 'palette.placeholder')}
+          class="w-full rounded-[4px] bg-transparent text-[15px] text-ink placeholder:text-body-mid"
         />
       </div>
       <ul
@@ -213,6 +215,9 @@ const index = [
       } else if (event.key === 'Escape') {
         event.preventDefault();
         close();
+      } else if (event.key === 'Tab') {
+        // The input is the only focusable control; keep focus inside the dialog.
+        event.preventDefault();
       }
     });
 
@@ -225,3 +230,9 @@ const index = [
     });
   }
 </script>
+
+<style>
+  [data-palette] > div {
+    overscroll-behavior: contain;
+  }
+</style>
