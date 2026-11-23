@@ -36,7 +36,13 @@ const tools = defineCollection({
 });
 
 const guides = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/guides' }),
+  loader: glob({
+    pattern: '**/*.md',
+    base: './src/content/guides',
+    // Keep one entry per locale: frontmatter `slug` is the shared route slug,
+    // so the collection id must stay unique per file path.
+    generateId: ({ entry }) => entry.replace(/\.md$/, ''),
+  }),
   schema: z.object({
     locale,
     slug: z.string().min(3),
